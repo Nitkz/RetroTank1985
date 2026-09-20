@@ -140,18 +140,21 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 ---
 
 ### 💡 Phase 8: 👑 Epic Boss Battles & Special Munitions (New Expansion)
-- [ ] **End-of-Stage Boss Encounters (บอสใหญ่ท้ายฉาก)**:
+> 📄 **Detailed Design Document:** [BOSS_DESIGN_SPEC.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/BOSS_DESIGN_SPEC.md)
+- [x] **Boss Mech Sprite & Anatomy Studio**:
+  - Interactive Sprite preview in Stage Inspector with 64×48 Bilateral Mirror Metasprite matrix, NES 8×8 CHR grid, layer toggles, and live combat simulation.
+- [ ] **End-of-Stage Boss Encounters (บอสใหญ่ท้ายฉาก: "ปลา" Demon Manta Leviathan)**:
   - Giant multi-tile Boss Mech Tank appearing after standard 20-tank wave clearance or at landmark stages (Stage 05, 10, 15, 20, 25, 30, 35).
-  - Multi-phase health bar with progressive armor destruction visuals.
-- [ ] **Minion Deployment (Boss ปล่อยลูกน้อง)**:
-  - Boss summons active support battalions (Basic/Fast/Flashing drones) to flank the player.
-- [ ] **Dual-Arm Heavy Cannons (ยิงกระสุนจากแขนสองข้าง)**:
+  - Multi-phase health bar: 10 Special Armor HP + 20 Core HP (4 blocks of 5) + Phase 3 Rage Mode when HP $\le 3$.
+- [ ] **Minion Deployment (Boss ปล่อยลูกน้อง "คนร้าย")**:
+  - Boss summons active support battalion ("คนร้าย" Villain Assault Tanks) to flank the player.
+- [ ] **Dual-Arm Heavy Cannons & Stinger Blast (ยิงเลเซอร์คู่ + ดาวพิษ)**:
   - Simultaneous twin-cannon firing with spread and cross-fire trajectory patterns.
 - [ ] **Multi-Tile Jump & Leap Ability (กระโดดข้ามสิ่งกีดขวางได้หลายช่อง)**:
   - Boss can leap airborne over brick, steel, and water obstacles to reposition or attempt ground-pound slam attacks.
   - Screen shake & shockwave effect upon landing.
-- [ ] **Special Munition / Heavy Weapon Crates (หีบกระสุนแรงพิเศษ)**:
-  - Droppable tactical weapon crates spawning during boss encounters.
+- [ ] **Player "คนดี โหมดแรง" & Ammo Management (กระสุนปืน 20 นัด + หีบกระสุนแรงพิเศษ)**:
+  - Limited 20-ammo capacity with resupply crates spawning during boss encounters.
   - Special ammo types:
     - ⚡ **Laser / Railgun**: Pierces through multiple walls in a straight beam.
     - 💥 **Heavy Artillery Plasma Bomb**: Area-of-effect blast destroying 4×4 sub-tiles.

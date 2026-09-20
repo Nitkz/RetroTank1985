@@ -7,4 +7,6 @@ import './nes-synth.js';
 import './nes-chr.js';
 import './stage-renderer.js';
 import './stage-inspector.js';
+import './boss-studio.js';
 import './game-bridge.js';
+

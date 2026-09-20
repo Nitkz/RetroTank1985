@@ -20,6 +20,7 @@ public partial class StageInspector : ComponentBase
     private StageArenaTab? _stageArenaRef;
     private ChrTileCatalogTab? _chrCatalogRef;
     private PowerUpsSpecialsTab? _powerUpsRef;
+    private BossMechStudioTab? _bossStudioRef;
 
     protected override async Task OnInitializedAsync()
     {
@@ -54,7 +55,16 @@ public partial class StageInspector : ComponentBase
         {
             await _powerUpsRef.RenderAllItemsAsync();
         }
+        else if (tabIndex == 3 && _bossStudioRef != null)
+        {
+            await _bossStudioRef.RenderBossAsync();
+            await _bossStudioRef.RenderPlayerHyperAsync();
+            await _bossStudioRef.StartSimulationAsync();
+        }
     }
+
+
+
 
     private async Task LoadStage(int stageNum)
     {

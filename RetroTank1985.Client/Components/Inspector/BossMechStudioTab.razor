@@ -1,0 +1,301 @@
+@namespace RetroTank1985.Client.Components.Inspector
+
+<MudCard Elevation="2" Class="pa-4 retro-card">
+    <div class="d-flex align-center justify-space-between flex-wrap gap-4 mb-4">
+        <div>
+            <div class="d-flex align-center gap-2">
+                <MudText Typo="Typo.h6" Class="pixel-text font-bold" Style="color: #f1c40f; font-size: 1rem;">
+                    👑 BOSS MECH STUDIO: &ldquo;ปลา&rdquo; (DEMON MANTA RAY BOSS)
+                </MudText>
+                <MudChip T="string" Color="Color.Success" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
+                    PIXEL ART CONVERSION (64×48 PX)
+                </MudChip>
+            </div>
+            <MudText Typo="Typo.caption" Style="color: #94a3b8; font-family: 'Rajdhani', sans-serif;">
+                ต้นแบบบอสขนาดไททัน 64×48 พิกเซล (8×6 ตาราง NES CHR Tiles): ปีกปลากระเบนลายสายฟ้า + ดวงตาทอง 4 ดวง + ฮู้ดคอสีแดง + หางดอกไม้ดาวพิษ 6 กลีบ
+            </MudText>
+        </div>
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Refresh" Class="pixel-text" Style="font-size: 0.7rem;"
+                       OnClick="RenderBossAsync">
+                REDRAW SPRITE
+            </MudButton>
+        </div>
+    </div>
+
+    <MudGrid Spacing="4">
+        <!-- LEFT COLUMN: BOSS SPRITE CANVAS & CONTROLS -->
+        <MudItem xs="12" lg="7">
+            <MudCard Elevation="3" Class="pa-4" Style="background: #0f121a; border: 1px solid #1e293b; border-radius: 8px;">
+                <div class="d-flex align-center justify-space-between mb-3">
+                    <div class="pixel-text font-bold" style="color: #22c55e; font-size: 0.85rem;">
+                        🐟 &ldquo;ปลา&rdquo; (DEMON MANTA LEVIATHAN - 64×48 PX / 8×6 NES TILES)
+                    </div>
+                    <div class="d-flex align-center gap-2">
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8;">SCALE:</MudText>
+                        <MudButtonGroup Size="Size.Small" Variant="Variant.Outlined">
+                            <MudButton Color="@(_scale == 4 ? Color.Warning : Color.Default)" OnClick="() => SetScale(4)">4X</MudButton>
+                            <MudButton Color="@(_scale == 6 ? Color.Warning : Color.Default)" OnClick="() => SetScale(6)">6X</MudButton>
+                            <MudButton Color="@(_scale == 8 ? Color.Warning : Color.Default)" OnClick="() => SetScale(8)">8X</MudButton>
+                        </MudButtonGroup>
+                    </div>
+                </div>
+
+                <!-- Canvas Preview -->
+                <div class="d-flex justify-center align-center py-4 my-2" style="background: radial-gradient(circle, #102a1e 0%, #090a0f 100%); border-radius: 6px; border: 1px dashed #166534; min-height: 340px;">
+                    <canvas id="bossPreviewCanvas" style="image-rendering: pixelated; box-shadow: 0 0 30px rgba(34, 197, 94, 0.25);"></canvas>
+                </div>
+
+                <!-- Palette & Animation State Controls -->
+                <MudGrid Spacing="2" Class="mt-2">
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Class="font-bold mb-1" Style="color: #f1c40f;">COLOR PALETTE</MudText>
+                        <MudSelect T="string" Value="@_selectedPalette" ValueChanged="OnPaletteChanged" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined">
+                            <MudSelectItem Value="@("manta")">🐟 มัจฉาปีศาจ / ปลา (Emerald Manta Official)</MudSelectItem>
+                            <MudSelectItem Value="@("crimson")">🔴 Blood Leviathan ($0F, $16, $27, $30)</MudSelectItem>
+                            <MudSelectItem Value="@("steel")">⚪ Cyber Manta Steel ($0F, $00, $10, $20)</MudSelectItem>
+                            <MudSelectItem Value="@("void")">🟣 Void Ray Abomination ($0F, $14, $24, $38)</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Class="font-bold mb-1" Style="color: #f1c40f;">ACTION / ANIMATION</MudText>
+                        <MudSelect T="string" Value="@_selectedAnim" ValueChanged="OnAnimChanged" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined">
+                            <MudSelectItem Value="@("idle")">⏸️ IDLE / UNDULATING HOVER</MudSelectItem>
+                            <MudSelectItem Value="@("fire")">⚡ DUAL LASER &amp; FLOWER STINGER BLAST</MudSelectItem>
+                            <MudSelectItem Value="@("jump")">🦘 AIRBORNE LEAP &amp; SHOCKWAVE SLAM</MudSelectItem>
+                            <MudSelectItem Value="@("damaged")">💥 PHASE 3 CORE SPARK EXPOSED</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+
+                <!-- Grid & Layer Switches -->
+                <div class="mt-4 pt-3" style="border-top: 1px solid #1e293b;">
+                    <MudText Typo="Typo.caption" Class="font-bold mb-2 d-block" Style="color: #94a3b8;">
+                        SPRITE LAYERS &amp; GRID OVERLAYS (สลับเปิด-ปิดชิ้นส่วน):
+                    </MudText>
+                    <div class="d-flex flex-wrap gap-4 align-center">
+                        <MudSwitch @bind-Value="_showTileGrid" Label="8×8 NES CHR Grid (8×6)" Color="Color.Warning" Size="Size.Small" @bind-Value:after="RenderBossAsync" />
+                        <MudSwitch @bind-Value="_showPixelGrid" Label="1px Grid" Color="Color.Default" Size="Size.Small" @bind-Value:after="RenderBossAsync" />
+                        <MudSwitch @bind-Value="_layerHorns" Label="Horns (เขาชี้)" Color="Color.Error" Size="Size.Small" @bind-Value:after="RenderBossAsync" />
+                        <MudSwitch @bind-Value="_layerEyes" Label="4 Gold Eyes (ตาทอง 4 ดวง)" Color="Color.Warning" Size="Size.Small" @bind-Value:after="RenderBossAsync" />
+                        <MudSwitch @bind-Value="_layerWings" Label="Manta Wings (ปีกสายฟ้า + กรงเล็บ 3 แฉก)" Color="Color.Success" Size="Size.Small" @bind-Value:after="RenderBossAsync" />
+                        <MudSwitch @bind-Value="_layerCannons" Label="4 Curved Tusks (ก้ามโค้ง 4 เล่ม)" Color="Color.Info" Size="Size.Small" @bind-Value:after="RenderBossAsync" />
+                        <MudSwitch @bind-Value="_layerCore" Label="Red Hood / Beak (ฮู้ดแดง/หน้ากาก)" Color="Color.Secondary" Size="Size.Small" @bind-Value:after="RenderBossAsync" />
+                        <MudSwitch @bind-Value="_layerTracks" Label="Flower Tail (หางดอกไม้ 6 กลีบ)" Color="Color.Primary" Size="Size.Small" @bind-Value:after="RenderBossAsync" />
+                    </div>
+                </div>
+            </MudCard>
+        </MudItem>
+
+        <!-- RIGHT COLUMN: SKETCH ANATOMY BREAKDOWN & VEHICLE COMBATANTS -->
+        <MudItem xs="12" lg="5">
+            <!-- ANATOMY BREAKDOWN CARD -->
+            <MudCard Elevation="3" Class="pa-4 mb-4" Style="background: #0f121a; border: 1px solid #1e293b; border-radius: 8px;">
+                <div class="pixel-text font-bold mb-3" style="color: #f1c40f; font-size: 0.85rem;">
+                    ⚙️ ป้อมปราการลอยฟ้าลับ &ldquo;MANTA-85&rdquo; (SUPER HOVER-FORTRESS)
+                </div>
+
+                <div class="d-flex flex-column gap-2" style="font-size: 0.8rem; color: #cbd5e1;">
+                    <div class="pa-2 d-flex align-center gap-3" style="background: #161b26; border-radius: 4px; border-left: 3px solid #a855f7;">
+                        <span style="font-size: 1.1rem;">🛡️</span>
+                        <div>
+                            <strong style="color: #c084fc;">1. เกราะพิเศษ 10 ขีด + เกราะแกนกลาง 20 ขีด (บล็อกละ 5 ขีด)</strong>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">&ldquo;มีเลือดพิเศษ 10 เลือด&rdquo; + &ldquo;ถ้าเลือดละ 5 ประชัน ของเลือด 20&rdquo;</div>
+                        </div>
+                    </div>
+
+                    <div class="pa-2 d-flex align-center gap-3" style="background: #161b26; border-radius: 4px; border-left: 3px solid #ef4444;">
+                        <span style="font-size: 1.1rem;">🔥</span>
+                        <div>
+                            <strong style="color: #f87171;">2. Phase 3 Overheat / Rage Mode (เมื่อ Core HP $\le 3$)</strong>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">&ldquo;จากพิเศษเลือดเหลือ 3&rdquo; เครื่องยนต์โอเวอร์ฮีต ยิงรัวและกระโดดทุบพื้นถี่ขึ้น</div>
+                        </div>
+                    </div>
+
+                    <div class="pa-2 d-flex align-center gap-3" style="background: #161b26; border-radius: 4px; border-left: 3px solid #eab308;">
+                        <span style="font-size: 1.1rem;">🎯</span>
+                        <div>
+                            <strong style="color: #fde047;">3. บริหารกระสุนปืน 20 นัด + หีบเสบียงทหาร</strong>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">&ldquo;กระสุนปืน 20&rdquo; + &ldquo;เติมได้กี่ข้อ ยิงได้&rdquo; เก็บกล่องเสบียง 📦 +10 นัด / 🎯 AP Shells</div>
+                        </div>
+                    </div>
+
+                    <div class="pa-2 d-flex align-center gap-3" style="background: #161b26; border-radius: 4px; border-left: 3px solid #38bdf8;">
+                        <span style="font-size: 1.1rem;">🦅</span>
+                        <div>
+                            <strong style="color: #7dd3fc;">4. ปกป้องฐานทัพนกอินทรี (Eagle HQ) &amp; แผงกำแพงอิฐ</strong>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">คลื่น Shockwave และกระสุนบอสทำลายก้อนอิฐได้ ผู้เล่นต้องใช้แนวกำแพงเหล็กกำบัง</div>
+                        </div>
+                    </div>
+                </div>
+            </MudCard>
+
+            <!-- VEHICLES ROW: "คนดี โหมดแรง" & "คนร้าย" -->
+            <MudGrid Spacing="2">
+                <!-- PLAYER "คนดี โหมดแรง" CARD -->
+                <MudItem xs="12" sm="6">
+                    <MudCard Elevation="3" Class="pa-3" Style="background: #0f121a; border: 1px solid #1e293b; border-radius: 8px; height: 100%;">
+                        <div class="d-flex align-center justify-space-between mb-2">
+                            <div class="pixel-text font-bold" style="color: #38bdf8; font-size: 0.75rem;">
+                                🛡️ คนดี โหมดแรง
+                            </div>
+                            <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Filled" Style="font-size: 0.55rem;">
+                                24×24 PX
+                            </MudChip>
+                        </div>
+                        <div class="d-flex justify-center align-center pa-2 mb-2" style="background: #000; border: 1px solid #334155; border-radius: 6px;">
+                            <canvas id="playerHyperCanvas" style="image-rendering: pixelated;"></canvas>
+                        </div>
+                        <div style="font-size: 0.68rem; color: #94a3b8; line-height: 1.3;">
+                            • ปืนใหญ่คู่ยาวพิเศษ + Muzzle Brakes<br/>
+                            • สายพานหนา 3 ล้อกลิ้ง<br/>
+                            • เกราะลาดเอียงหน้า + ช่องระบายลม
+                        </div>
+                    </MudCard>
+                </MudItem>
+
+                <!-- ENEMY "คนร้าย" CARD -->
+                <MudItem xs="12" sm="6">
+                    <MudCard Elevation="3" Class="pa-3" Style="background: #0f121a; border: 1px solid #1e293b; border-radius: 8px; height: 100%;">
+                        <div class="d-flex align-center justify-space-between mb-2">
+                            <div class="pixel-text font-bold" style="color: #ef4444; font-size: 0.75rem;">
+                                😈 คนร้าย (VILLAIN)
+                            </div>
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled" Style="font-size: 0.55rem;">
+                                24×24 PX
+                            </MudChip>
+                        </div>
+                        <div class="d-flex justify-center align-center pa-2 mb-2" style="background: #000; border: 1px solid #450a0a; border-radius: 6px;">
+                            <canvas id="villainCanvas" style="image-rendering: pixelated;"></canvas>
+                        </div>
+                        <div style="font-size: 0.68rem; color: #94a3b8; line-height: 1.3;">
+                            • ปืนใหญ่ชี้กระดกมุมสูงเฉียง<br/>
+                            • ล้อโต 2 ล้อด้านข้างลำตัว<br/>
+                            • ใบมีดเกราะแหลมยื่นด้านหน้า
+                        </div>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+    </MudGrid>
+
+    <!-- LIVE MINI-ARENA BATTLE SIMULATOR -->
+    <div class="mt-6">
+        <div class="d-flex align-center justify-space-between flex-wrap gap-4 mb-3">
+            <div>
+                <MudText Typo="Typo.subtitle1" Class="pixel-text font-bold" Style="color: #22c55e; font-size: 0.95rem;">
+                    🎮 LIVE BOSS BATTLE SIMULATOR (สังเวียนจำลองการต่อสู้ตาม Concept Sketch)
+                </MudText>
+                <MudText Typo="Typo.caption" Style="color: #94a3b8;">
+                    บอส &ldquo;ปลา&rdquo; (เลือดพิเศษ 10 + เลือดจริง 20) vs &ldquo;คนดี โหมดแรง&rdquo; (กระสุน 20 นัด) + สมุน &ldquo;คนร้าย&rdquo;
+                </MudText>
+            </div>
+            <div class="d-flex align-center gap-2">
+                <MudSelect T="string" Value="@_selectedTerrain" ValueChanged="OnTerrainChanged" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="width: 210px; background: #0f121a;">
+                    <MudSelectItem Value="@("cave")">🌌 สีน้ำเงินจากถ้ำ (Cave)</MudSelectItem>
+                    <MudSelectItem Value="@("ground")">🏞️ สีน้ำตาลจากพื้นดิน (Ground)</MudSelectItem>
+                </MudSelect>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.PlayArrow" Class="pixel-text" Style="font-size: 0.7rem;"
+                           OnClick="StartSimulationAsync">
+                    RESTART ARENA
+                </MudButton>
+            </div>
+        </div>
+
+        <MudGrid Spacing="4">
+            <!-- Arena Canvas -->
+            <MudItem xs="12" md="6" Class="d-flex justify-center">
+                <div class="pa-2" style="background: #000; border: 2px solid #22c55e; border-radius: 8px; box-shadow: 0 0 25px rgba(34, 197, 94, 0.35);">
+                    <canvas id="bossArenaCanvas" style="image-rendering: pixelated; width: 416px; height: 416px;"></canvas>
+                </div>
+            </MudItem>
+
+            <!-- Simulator Interactive Controls -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2" Class="pa-4" Style="background: #11141c; border: 1px solid #334155; border-radius: 8px; height: 100%;">
+                    <!-- Player Actions -->
+                    <div class="d-flex align-center justify-space-between mb-2">
+                        <MudText Typo="Typo.subtitle2" Class="pixel-text" Style="color: #38bdf8; font-size: 0.75rem;">
+                            🕹️ ควบคุมผู้เล่น &ldquo;คนดี โหมดแรง&rdquo; (กระสุนปืน 20 นัด):
+                        </MudText>
+                        <MudButton Variant="Variant.Text" Color="Color.Warning" Size="Size.Small" OnClick="PlayerReloadAsync">
+                            🔄 เติมกระสุน (RELOAD)
+                        </MudButton>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <MudButton Variant="Variant.Filled" Color="Color.Dark" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="() => PlayerMove(-1)">
+                            MOVE LEFT
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Dark" Size="Size.Small"
+                                   EndIcon="@Icons.Material.Filled.ArrowForward" OnClick="() => PlayerMove(1)">
+                            MOVE RIGHT
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.GpsFixed" OnClick='() => PlayerFire("ap")'>
+                            🎯 AP SHELL (15 DMG)
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Bolt" OnClick='() => PlayerFire("railgun")'>
+                            ⚡ RAILGUN
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Warning" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Grain" OnClick='() => PlayerFire("plasma")'>
+                            💥 PLASMA
+                        </MudButton>
+                    </div>
+
+                    <!-- Boss Action Triggers -->
+                    <MudText Typo="Typo.subtitle2" Class="pixel-text mb-2" Style="color: #22c55e; font-size: 0.75rem;">
+                        👾 สั่งการท่าโจมตีของบอส &ldquo;ปลา&rdquo;:
+                    </MudText>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Whatshot" OnClick="BossTriggerFire">
+                            🔥 DUAL LASER + FLOWER STINGER
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Warning" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.FlightTakeoff" OnClick="BossTriggerJump">
+                            🦘 MANTA LEAP SLAM &amp; SHAKE
+                        </MudButton>
+                    </div>
+
+                    <!-- Audio SFX Buttons -->
+                    <MudText Typo="Typo.subtitle2" Class="pixel-text mb-2" Style="color: #f1c40f; font-size: 0.75rem;">
+                        🔊 ทดสอบเสียงประกอบ (NES SYNTH):
+                    </MudText>
+                    <div class="d-flex flex-wrap gap-2">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.VolumeUp" OnClick="PlayBossShootSfx">
+                            DUAL SHOT SFX
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.VolumeUp" OnClick="PlayBossSlamSfx">
+                            SLAM SHOCKWAVE SFX
+                        </MudButton>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="mt-4 pa-3" style="background: #090b10; border-radius: 4px; border: 1px solid #1e293b;">
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8; line-height: 1.5;">
+                            💡 <strong>ถอดรหัสกลไกจากภาพวาด:</strong> มีบอส &ldquo;ปลา&rdquo; เกราะพิเศษ 10 ขีด + เลือดจริง 20 ขีด (หลอดละ 5 ขีด), สมุน &ldquo;คนร้าย&rdquo; วิ่งยิงเสริม, ผู้เล่น &ldquo;คนดี โหมดแรง&rdquo; มีกระสุน 20 นัด ต้องคอยเก็บกล่องเติมกระสุนในฉากถ้ำ/พื้นดิน!
+                        </MudText>
+                    </div>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </div>
+
+    <!-- CODE EXPORT SECTION -->
+    <div class="mt-6">
+        <MudExpansionPanels MultiExpansion="true">
+            <MudExpansionPanel Text="📋 EXPORT C# &amp; METASPRITE TILE DEFINITION (PHASE 8 ENGINE INTEGRATION)" Class="retro-card">
+                <div class="pa-3" style="background: #090b10; border-radius: 6px; border: 1px solid #1e293b;">
+                    <pre style="color: #4ade80; font-family: monospace; font-size: 0.75rem; overflow-x: auto; max-height: 250px;"><code>@_exportedCSharpCode</code></pre>
+                </div>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </div>
+</MudCard>
