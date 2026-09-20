@@ -1,4 +1,4 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
 <MudThemeProvider Theme="_retroTheme" IsDarkMode="true" />
 <MudPopoverProvider />
@@ -20,8 +20,11 @@
         <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="" StartIcon="@Icons.Material.Filled.Home">
             Hub
         </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" Href="stage-inspector" StartIcon="@Icons.Material.Filled.Map">
+            Stage &amp; Tiles
+        </MudButton>
         <MudButton Variant="Variant.Text" Color="Color.Warning" Href="sound-bgm" StartIcon="@Icons.Material.Filled.GraphicEq">
-            Sound & BGM
+            Sound &amp; BGM
         </MudButton>
         <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com" Target="_blank" />
     </MudAppBar>

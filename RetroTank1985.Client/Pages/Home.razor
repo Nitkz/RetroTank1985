@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 <PageTitle>RetroTank 1985 | Hub</PageTitle>
 
 <div class="mb-8 text-center">
@@ -40,28 +40,30 @@
         </a>
     </MudItem>
 
-    <!-- Planned Section: ROM & Tilemap Inspector -->
+    <!-- Active Section: ROM & Tilemap Inspector -->
     <MudItem xs="12" sm="6" md="4">
-        <MudCard Elevation="4" Class="retro-card pa-4" Style="opacity: 0.6;">
-            <div class="d-flex align-center mb-3">
-                <MudIcon Icon="@Icons.Material.Filled.GridOn" Color="Color.Default" Size="Size.Large" Class="mr-3" />
-                <div>
-                    <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #94a3b8; font-size: 0.95rem;">
-                        ROM &amp; TILES
-                    </MudText>
-                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined" Style="font-size: 0.65rem;">
-                        UPCOMING
-                    </MudChip>
+        <a href="stage-inspector" class="hub-card">
+            <MudCard Elevation="4" Class="retro-card pa-4">
+                <div class="d-flex align-center mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Map" Color="Color.Warning" Size="Size.Large" Class="mr-3" />
+                    <div>
+                        <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.95rem;">
+                            STAGE &amp; TILES
+                        </MudText>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Style="font-size: 0.65rem;">
+                            AVAILABLE NOW
+                        </MudChip>
+                    </div>
                 </div>
-            </div>
-            <MudText Typo="Typo.body2" Style="color: #64748b;" Class="mb-4">
-                ถอดรหัส CHR-ROM 8KB สำหรับ Sprites (รถถัง, ระเบิด, เหรียญรางวัล) และ Tilemap ฉากกำแพงอิฐ เหล็ก ป่า น้ำ
-            </MudText>
-            <div class="d-flex justify-space-between align-center">
-                <span class="pixel-text" style="font-size: 0.7rem; color: #64748b;">LOCKED</span>
-                <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Default" />
-            </div>
-        </MudCard>
+                <MudText Typo="Typo.body2" Style="color: #cbd5e1;" Class="mb-4">
+                    ตรวจสอบแผนที่ด่าน 1 - 35 แบบ JSON แยกไฟล์ ($F07A), ตารางเกิดศัตรู ($E4EC), และสไปรต์ CHR-ROM 512 ไทล์พร้อมพาเลตต์สี NES ($D44A)
+                </MudText>
+                <div class="d-flex justify-space-between align-center">
+                    <span class="pixel-text" style="font-size: 0.7rem; color: #f1c40f;">OPEN INSPECTOR &rarr;</span>
+                    <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Color="Color.Warning" />
+                </div>
+            </MudCard>
+        </a>
     </MudItem>
 
     <!-- Planned Section: Game Core Engine -->

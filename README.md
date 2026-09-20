@@ -92,9 +92,18 @@ Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behav
 | **Stage Start BGM** | Pulse 1 + Triangle | 2-track lead and bass transcription calibrated from ROM `$ED36` |
 | **Game Over BGM** | Pulse 1 | Chromatic step-down game over sequence |
 
-### 3. Upcoming Modules
-- **ROM & CHR Tilemap Inspector (`/tiles-maps`)**: Visualizing 35 original stage maps and CHR sprite sheets.
-- **Stage Arena**: 60 FPS HTML5 Canvas game loop, tank movement physics, and classic enemy AI logic.
+### 3. Stage, CHR & Item Inspector (`/stage-inspector`)
+- **35 Stages Map Viewer**: Decoded from ROM `$F07A` and saved into modular JSON files (`data/stages/stage_01.json` ... `stage_35.json`).
+- **Authentic Eagle Fortification**: Strict ROM `EAGLE_WALL` 8px sub-tile Π-wall geometry.
+- **Enemy Intelligence Recon**: 20-tank spawn breakdown per stage across 4 tiers (Basic, Fast, Power, Armor) based on ROM `$E4EC` & `$E578`.
+- **CHR Tile & Sprite Catalog**: Real-time rendering of all 512 8×8 tiles (`chr_all.png`) with palette switching (BG0–BG3, SP0–SP3) and 4-way metasprite tank previews.
+- **Power-ups & Specials Gallery**: Interactive preview of all 6 classic droppable items (Helmet, Timer, Shovel, Star, Grenade, 1-UP) + Phoenix HQ status (Intact/Destroyed) and Force Shield with instant SFX testing.
+
+### 4. Upcoming Modules (Phase 2-5)
+- **Phase 2: 60 FPS Game Loop & Tank Controller (`/play`)**: Tank physics, WASM tick loop, and mobile touch D-Pad.
+- **Phase 3: Collision & Destruction**: 4×4 sub-tile brick damage and steel ricochets.
+- **Phase 4: Enemy AI & Spawning**: AI targeting, flashing tanks, and power-up drops.
+- **Phase 5: Game Polish & Construction Mode**: Custom stage builder and score tally screen.
 
 ---
 
@@ -114,16 +123,24 @@ RetroTank1985/
 ├── RetroTank1985.Client/        # Pure WebAssembly Client (Runs locally & in Cloudflare)
 │   ├── Layout/
 │   │   └── MainLayout.razor     # Retro arcade layout & MudBlazor theme
+│   ├── Models/
+│   │   └── StageModel.cs        # Stage, Tile, and Enemy data models
 │   ├── Pages/
 │   │   ├── Home.razor           # Navigation Hub
-│   │   └── SoundBgm.razor       # Sound & BGM test bench
+│   │   ├── SoundBgm.razor       # Sound & BGM test bench
+│   │   └── StageInspector.razor # 35-stage map & CHR tile inspector
+│   ├── Services/
+│   │   └── StageService.cs      # Stage JSON loader with in-memory caching
 │   ├── wwwroot/
 │   │   ├── app.css              # Pixel font and CRT styling
 │   │   ├── favicon.png          # 64x64 ROM-extracted retro tank icon
+│   │   ├── assets/sprites/      # CHR tile sheets (chr_all.png)
+│   │   ├── data/stages/         # 35 individual stage JSONs + manifest.json
 │   │   ├── index.html           # Standalone entry point for Cloudflare Pages
 │   │   └── js/
-│   │       ├── interop.js       # Runtime environment detector (Standalone vs Server)
-│   │       └── nes-synth.js     # NES APU sound synthesizer engine
+│   │       ├── interop.js       # Runtime environment detector
+│   │       ├── nes-synth.js     # NES APU sound synthesizer engine
+│   │       └── stage-renderer.js# Stage canvas & CHR sprite rendering engine
 │   ├── Program.cs               # Dynamic client bootstrapper
 │   └── RetroTank1985.Client.csproj
 │

@@ -8,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 builder.Services.AddMudServices();
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5085/") });
+builder.Services.AddScoped<RetroTank1985.Client.Services.StageService>();
 
 var app = builder.Build();
 
@@ -24,6 +26,7 @@ else
 
 app.UseAntiforgery();
 
+app.UseStaticFiles();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()

@@ -1,0 +1,425 @@
+{
+  "totalStages": 35,
+  "stages": [
+    {
+      "stageNumber": 1,
+      "name": "Stage 1",
+      "file": "stage_01.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 18,
+        "fast": 2,
+        "power": 0,
+        "armor": 0
+      }
+    },
+    {
+      "stageNumber": 2,
+      "name": "Stage 2",
+      "file": "stage_02.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 14,
+        "fast": 4,
+        "power": 0,
+        "armor": 2
+      }
+    },
+    {
+      "stageNumber": 3,
+      "name": "Stage 3",
+      "file": "stage_03.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 14,
+        "fast": 4,
+        "power": 0,
+        "armor": 2
+      }
+    },
+    {
+      "stageNumber": 4,
+      "name": "Stage 4",
+      "file": "stage_04.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 2,
+        "fast": 5,
+        "power": 10,
+        "armor": 3
+      }
+    },
+    {
+      "stageNumber": 5,
+      "name": "Stage 5",
+      "file": "stage_05.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 8,
+        "fast": 5,
+        "power": 5,
+        "armor": 2
+      }
+    },
+    {
+      "stageNumber": 6,
+      "name": "Stage 6",
+      "file": "stage_06.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 9,
+        "fast": 2,
+        "power": 7,
+        "armor": 2
+      }
+    },
+    {
+      "stageNumber": 7,
+      "name": "Stage 7",
+      "file": "stage_07.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 10,
+        "fast": 4,
+        "power": 6,
+        "armor": 0
+      }
+    },
+    {
+      "stageNumber": 8,
+      "name": "Stage 8",
+      "file": "stage_08.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 7,
+        "fast": 4,
+        "power": 7,
+        "armor": 2
+      }
+    },
+    {
+      "stageNumber": 9,
+      "name": "Stage 9",
+      "file": "stage_09.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 6,
+        "fast": 4,
+        "power": 7,
+        "armor": 3
+      }
+    },
+    {
+      "stageNumber": 10,
+      "name": "Stage 10",
+      "file": "stage_10.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 12,
+        "fast": 2,
+        "power": 4,
+        "armor": 2
+      }
+    },
+    {
+      "stageNumber": 11,
+      "name": "Stage 11",
+      "file": "stage_11.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 0,
+        "fast": 10,
+        "power": 4,
+        "armor": 6
+      }
+    },
+    {
+      "stageNumber": 12,
+      "name": "Stage 12",
+      "file": "stage_12.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 0,
+        "fast": 6,
+        "power": 8,
+        "armor": 6
+      }
+    },
+    {
+      "stageNumber": 13,
+      "name": "Stage 13",
+      "file": "stage_13.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 0,
+        "fast": 8,
+        "power": 8,
+        "armor": 4
+      }
+    },
+    {
+      "stageNumber": 14,
+      "name": "Stage 14",
+      "file": "stage_14.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 0,
+        "fast": 4,
+        "power": 10,
+        "armor": 6
+      }
+    },
+    {
+      "stageNumber": 15,
+      "name": "Stage 15",
+      "file": "stage_15.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 2,
+        "fast": 10,
+        "power": 0,
+        "armor": 8
+      }
+    },
+    {
+      "stageNumber": 16,
+      "name": "Stage 16",
+      "file": "stage_16.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 16,
+        "fast": 2,
+        "power": 0,
+        "armor": 2
+      }
+    },
+    {
+      "stageNumber": 17,
+      "name": "Stage 17",
+      "file": "stage_17.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 8,
+        "fast": 2,
+        "power": 8,
+        "armor": 2
+      }
+    },
+    {
+      "stageNumber": 18,
+      "name": "Stage 18",
+      "file": "stage_18.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 2,
+        "fast": 8,
+        "power": 6,
+        "armor": 4
+      }
+    },
+    {
+      "stageNumber": 19,
+      "name": "Stage 19",
+      "file": "stage_19.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 4,
+        "fast": 4,
+        "power": 4,
+        "armor": 8
+      }
+    },
+    {
+      "stageNumber": 20,
+      "name": "Stage 20",
+      "file": "stage_20.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 2,
+        "fast": 8,
+        "power": 2,
+        "armor": 8
+      }
+    },
+    {
+      "stageNumber": 21,
+      "name": "Stage 21",
+      "file": "stage_21.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 6,
+        "fast": 2,
+        "power": 8,
+        "armor": 4
+      }
+    },
+    {
+      "stageNumber": 22,
+      "name": "Stage 22",
+      "file": "stage_22.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 6,
+        "fast": 8,
+        "power": 2,
+        "armor": 4
+      }
+    },
+    {
+      "stageNumber": 23,
+      "name": "Stage 23",
+      "file": "stage_23.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 0,
+        "fast": 10,
+        "power": 4,
+        "armor": 6
+      }
+    },
+    {
+      "stageNumber": 24,
+      "name": "Stage 24",
+      "file": "stage_24.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 10,
+        "fast": 4,
+        "power": 4,
+        "armor": 2
+      }
+    },
+    {
+      "stageNumber": 25,
+      "name": "Stage 25",
+      "file": "stage_25.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 0,
+        "fast": 8,
+        "power": 2,
+        "armor": 10
+      }
+    },
+    {
+      "stageNumber": 26,
+      "name": "Stage 26",
+      "file": "stage_26.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 4,
+        "fast": 6,
+        "power": 4,
+        "armor": 6
+      }
+    },
+    {
+      "stageNumber": 27,
+      "name": "Stage 27",
+      "file": "stage_27.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 2,
+        "fast": 8,
+        "power": 2,
+        "armor": 8
+      }
+    },
+    {
+      "stageNumber": 28,
+      "name": "Stage 28",
+      "file": "stage_28.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 15,
+        "fast": 2,
+        "power": 2,
+        "armor": 1
+      }
+    },
+    {
+      "stageNumber": 29,
+      "name": "Stage 29",
+      "file": "stage_29.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 0,
+        "fast": 4,
+        "power": 10,
+        "armor": 6
+      }
+    },
+    {
+      "stageNumber": 30,
+      "name": "Stage 30",
+      "file": "stage_30.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 4,
+        "fast": 8,
+        "power": 4,
+        "armor": 4
+      }
+    },
+    {
+      "stageNumber": 31,
+      "name": "Stage 31",
+      "file": "stage_31.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 0,
+        "fast": 8,
+        "power": 6,
+        "armor": 6
+      }
+    },
+    {
+      "stageNumber": 32,
+      "name": "Stage 32",
+      "file": "stage_32.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 6,
+        "fast": 4,
+        "power": 2,
+        "armor": 8
+      }
+    },
+    {
+      "stageNumber": 33,
+      "name": "Stage 33",
+      "file": "stage_33.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 0,
+        "fast": 8,
+        "power": 4,
+        "armor": 8
+      }
+    },
+    {
+      "stageNumber": 34,
+      "name": "Stage 34",
+      "file": "stage_34.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 0,
+        "fast": 10,
+        "power": 4,
+        "armor": 6
+      }
+    },
+    {
+      "stageNumber": 35,
+      "name": "Stage 35",
+      "file": "stage_35.json",
+      "totalEnemies": 20,
+      "enemyCounts": {
+        "basic": 0,
+        "fast": 6,
+        "power": 4,
+        "armor": 10
+      }
+    }
+  ]
+}
