@@ -12,6 +12,7 @@ public class TankPhysics : ITankPhysics
 {
     private const float SnappingThreshold = 6.0f;
     private const float TankCollisionSize = 15.0f; // 15px bounding box to prevent overlap
+    private int _iceSlideTicks = 0;
     private bool _engineSoundActive = false;
 
     public void UpdatePlayer(PlayerTank player, InputState input, IDestructibleMap map, IReadOnlyList<EnemyTank> enemies, IAudioEventQueue audioQueue)
@@ -24,21 +25,37 @@ public class TankPhysics : ITankPhysics
         else if (input.Left) requestedDir = Direction.Left;
         else if (input.Right) requestedDir = Direction.Right;
 
+        bool onIce = map.IsOnIce(player.X, player.Y, PlayerTank.TankSize);
+
         if (requestedDir.HasValue)
         {
-            player.IsMoving = true;
-            var newDir = requestedDir.Value;
+            _iceSlideTicks = onIce ? 14 : 0; // On ice, buffer ~14 ticks (~16px / 1 full tile) of slide momentum upon release
+        }
+        else if (_iceSlideTicks > 0)
+        {
+            _iceSlideTicks--;
+        }
+
+        bool isSliding = !requestedDir.HasValue && _iceSlideTicks > 0 && onIce;
+        bool shouldMove = requestedDir.HasValue || isSliding;
+
+        if (shouldMove)
+        {
+            var newDir = requestedDir ?? player.Direction;
 
             // Handle Turn & Famicom 8px Grid Alignment Snapping
             if (player.Direction != newDir)
             {
                 player.Direction = newDir;
 
+                // On normal ground snap threshold is 6px, on ice it's reduced to 2px (harder to align corridors)
+                float currentThreshold = onIce ? 2.0f : SnappingThreshold;
+
                 if (newDir.IsVertical())
                 {
                     // Snap X to nearest 8px grid line
                     float snappedX = MathF.Round(player.X / 8f) * 8f;
-                    if (MathF.Abs(player.X - snappedX) <= SnappingThreshold)
+                    if (MathF.Abs(player.X - snappedX) <= currentThreshold)
                     {
                         player.X = snappedX;
                     }
@@ -47,7 +64,7 @@ public class TankPhysics : ITankPhysics
                 {
                     // Snap Y to nearest 8px grid line
                     float snappedY = MathF.Round(player.Y / 8f) * 8f;
-                    if (MathF.Abs(player.Y - snappedY) <= SnappingThreshold)
+                    if (MathF.Abs(player.Y - snappedY) <= currentThreshold)
                     {
                         player.Y = snappedY;
                     }
@@ -65,10 +82,12 @@ public class TankPhysics : ITankPhysics
             {
                 player.X = nextX;
                 player.Y = nextY;
+                player.IsMoving = true;
             }
             else
             {
                 // Try gentle slide / nudge if close to grid corridor alignment
+                bool nudged = false;
                 if (player.Direction.IsVertical())
                 {
                     float snappedX = MathF.Round(player.X / 8f) * 8f;
@@ -76,6 +95,8 @@ public class TankPhysics : ITankPhysics
                     {
                         player.X = snappedX;
                         player.Y = nextY;
+                        player.IsMoving = true;
+                        nudged = true;
                     }
                 }
                 else // Horizontal
@@ -85,23 +106,38 @@ public class TankPhysics : ITankPhysics
                     {
                         player.X = nextX;
                         player.Y = snappedY;
+                        player.IsMoving = true;
+                        nudged = true;
                     }
+                }
+
+                if (!nudged)
+                {
+                    player.IsMoving = requestedDir.HasValue;
                 }
             }
 
-            // Tread animation (toggles every 4 frames while moving)
-            player.AnimCounter++;
-            if (player.AnimCounter >= 4)
+            if (player.IsMoving)
             {
-                player.AnimCounter = 0;
-                player.AnimFrame = (player.AnimFrame + 1) % 2;
-            }
+                // Tread animation (toggles every 4 frames while moving)
+                player.AnimCounter++;
+                if (player.AnimCounter >= 4)
+                {
+                    player.AnimCounter = 0;
+                    player.AnimFrame = (player.AnimFrame + 1) % 2;
+                }
 
-            // Audio Engine Sound Hum
-            if (!_engineSoundActive)
+                // Audio Engine Sound Hum
+                if (!_engineSoundActive)
+                {
+                    audioQueue.Enqueue(AudioSoundEffect.EngineStart);
+                    _engineSoundActive = true;
+                }
+            }
+            else if (_engineSoundActive && !requestedDir.HasValue)
             {
-                audioQueue.Enqueue(AudioSoundEffect.EngineStart);
-                _engineSoundActive = true;
+                audioQueue.Enqueue(AudioSoundEffect.EngineStop);
+                _engineSoundActive = false;
             }
         }
         else

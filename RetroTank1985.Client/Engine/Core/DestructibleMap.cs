@@ -14,6 +14,7 @@ public interface IDestructibleMap
 
     void LoadStage(List<List<int>>? stageGrid);
     bool CanTankMoveTo(float x, float y, float size = 16f);
+    bool IsOnIce(float x, float y, float size = 16f);
     SubTileType GetSubTile(int row, int col);
     void SetSubTile(int row, int col, SubTileType type);
     bool HandleBulletHit(Bullet bullet, out AudioSoundEffect soundEffect, out bool hitEagle);
@@ -194,6 +195,30 @@ public class DestructibleMap : IDestructibleMap
         }
 
         return true;
+    }
+
+    public bool IsOnIce(float x, float y, float size = 16f)
+    {
+        int minSubC = (int)(x / 8f);
+        int maxSubC = (int)((x + size - 0.01f) / 8f);
+        int minSubR = (int)(y / 8f);
+        int maxSubR = (int)((y + size - 0.01f) / 8f);
+
+        for (int r = minSubR; r <= maxSubR; r++)
+        {
+            for (int c = minSubC; c <= maxSubC; c++)
+            {
+                if (r >= 0 && r < IDestructibleMap.GridDimension && c >= 0 && c < IDestructibleMap.GridDimension)
+                {
+                    if (_grid[r, c] == SubTileType.Ice)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     public SubTileType GetSubTile(int row, int col)
