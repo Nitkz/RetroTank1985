@@ -701,18 +701,53 @@ function toggleSound() {
 
 // Bridge to Blazor WASM window.nesSynth
 window.nesSynth = {
+    isAudioUnlocked: false,
+
+    initAudioUnlock: function() {
+        if (this.isAudioUnlocked) return;
+        const self = this;
+
+        const unlockHandler = function() {
+            self.init();
+
+            if (audioCtx) {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(function(e) { console.warn('audioCtx resume:', e); });
+                }
+                // Play a 1-sample silent buffer to firmly unlock Web Audio on iOS Safari
+                try {
+                    const silentBuf = audioCtx.createBuffer(1, 1, 22050);
+                    const source = audioCtx.createBufferSource();
+                    source.buffer = silentBuf;
+                    source.connect(audioCtx.destination);
+                    source.start(0);
+                } catch(e) {}
+            }
+
+            self.isAudioUnlocked = true;
+            document.removeEventListener('touchstart', unlockHandler, true);
+            document.removeEventListener('touchend', unlockHandler, true);
+            document.removeEventListener('click', unlockHandler, true);
+            document.removeEventListener('keydown', unlockHandler, true);
+        };
+
+        document.addEventListener('touchstart', unlockHandler, { capture: true, passive: true });
+        document.addEventListener('touchend', unlockHandler, { capture: true, passive: true });
+        document.addEventListener('click', unlockHandler, { capture: true, passive: true });
+        document.addEventListener('keydown', unlockHandler, { capture: true, passive: true });
+    },
+
     init: function() {
         initAudio();
         if (audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume();
+            audioCtx.resume().catch(function(e) {});
         }
         if (!window._nesTicker) {
             window._nesTicker = setInterval(soundTick, 1000 / 60);
         }
     },
     setMasterVolume: function(val) {
-        this.init();
-        if (masterGain && audioCtx) {
+        if (audioCtx && masterGain) {
             masterGain.gain.setValueAtTime(Math.max(0, Math.min(1, val)), audioCtx.currentTime);
         }
     },
@@ -744,3 +779,9 @@ window.nesSynth = {
     playGameOverBGM: function() { this.init(); stopAllSounds(); sfxGameOver(); },
     stopBGM: function() { stopBGM(); stopAllSounds(); }
 };
+
+// Automatically arm unlock listeners on page load
+if (typeof window !== 'undefined') {
+    window.nesSynth.initAudioUnlock();
+}
+
