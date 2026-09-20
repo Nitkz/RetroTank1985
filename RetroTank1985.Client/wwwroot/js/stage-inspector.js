@@ -14,11 +14,21 @@ window.StageInspector = (function () {
 
   const TILE_PAL_MAP = [0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 1, 2, 3, 0];
 
+  async function waitForCanvas(canvasOrId) {
+    if (typeof canvasOrId !== 'string') return canvasOrId;
+    let canvas = document.getElementById(canvasOrId);
+    for (let i = 0; !canvas && i < 6; i++) {
+      await new Promise(r => setTimeout(r, 50));
+      canvas = document.getElementById(canvasOrId);
+    }
+    return canvas;
+  }
+
   return {
     async renderStage(canvasOrId, grid, options = {}) {
       if (!window.NesCHR) return;
       await window.NesCHR.init();
-      const canvas = typeof canvasOrId === 'string' ? document.getElementById(canvasOrId) : canvasOrId;
+      const canvas = await waitForCanvas(canvasOrId);
       if (!canvas || !grid) return;
 
       const { showGrid = false, showSpawns = true, showCoords = false, scale = 2 } = options;
@@ -120,7 +130,7 @@ window.StageInspector = (function () {
     async renderCHRSheet(canvasId, palIdx = 0, scale = 2) {
       if (!window.NesCHR) return;
       await window.NesCHR.init();
-      const canvas = document.getElementById(canvasId);
+      const canvas = await waitForCanvas(canvasId);
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       const size = 8 * scale;
@@ -135,7 +145,7 @@ window.StageInspector = (function () {
     async renderTankPreview(canvasId, enemyType, dir = 0, animFrame = 0, scale = 3) {
       if (!window.NesCHR) return;
       await window.NesCHR.init();
-      const canvas = document.getElementById(canvasId);
+      const canvas = await waitForCanvas(canvasId);
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       canvas.width = 16 * scale; canvas.height = 16 * scale;
@@ -155,7 +165,7 @@ window.StageInspector = (function () {
     async renderMetaspriteCustom(canvasId, tiles, palIdx, pt1 = false, scale = 4) {
       if (!window.NesCHR) return;
       await window.NesCHR.init();
-      const canvas = document.getElementById(canvasId);
+      const canvas = await waitForCanvas(canvasId);
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       canvas.width = 16 * scale; canvas.height = 16 * scale;

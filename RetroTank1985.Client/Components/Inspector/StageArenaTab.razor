@@ -1,0 +1,180 @@
+@namespace RetroTank1985.Client.Components.Inspector
+
+<MudGrid Spacing="4">
+    <!-- Left Column: Controls & Canvas Display -->
+    <MudItem xs="12" lg="7">
+        <MudCard Elevation="2" Class="pa-4 retro-card">
+            <!-- Stage Switcher Controls -->
+            <div class="d-flex align-center justify-space-between mb-4 flex-wrap gap-2">
+                <div class="d-flex align-center gap-2">
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowBackIos" Color="Color.Warning" Variant="Variant.Outlined" 
+                                   OnClick="PrevStage" Disabled="@(CurrentStageNum <= 1)" Size="Size.Small" />
+                    <MudText Typo="Typo.h5" Class="pixel-text px-2" Style="color: #f1c40f; min-width: 140px; text-align: center;">
+                        STAGE @(CurrentStageNum.ToString("D2"))
+                    </MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Warning" Variant="Variant.Outlined" 
+                                   OnClick="NextStage" Disabled="@(CurrentStageNum >= 35)" Size="Size.Small" />
+                </div>
+
+                <!-- Display Options -->
+                <div class="d-flex align-center gap-3">
+                    <MudCheckBox T="bool" Value="_showGrid" Color="Color.Warning" Dense="true" Label="Grid" 
+                                 ValueChanged="OnGridOptionChanged" />
+                    <MudCheckBox T="bool" Value="_showSpawns" Color="Color.Error" Dense="true" Label="Spawns" 
+                                 ValueChanged="OnSpawnsOptionChanged" />
+                    <MudCheckBox T="bool" Value="_showCoords" Color="Color.Info" Dense="true" Label="Coords" 
+                                 ValueChanged="OnCoordsOptionChanged" />
+                </div>
+            </div>
+
+            <!-- Slider quick jump -->
+            <div class="mb-4 px-2">
+                <MudSlider T="int" Value="CurrentStageNum" Min="1" Max="35" Step="1" Color="Color.Warning" 
+                           ValueChanged="OnSliderChanged" ValueLabel="true">
+                    <span class="pixel-text" style="font-size: 0.65rem; color: #94a3b8;">SELECT STAGE (1 - 35)</span>
+                </MudSlider>
+            </div>
+
+            <!-- Canvas Stage Container -->
+            <div class="d-flex justify-center align-center pa-2" style="background: #090a0f; border-radius: 8px; border: 2px solid #232938; overflow-x: auto;">
+                <canvas id="stageCanvas" width="480" height="480" style="image-rendering: pixelated; border-radius: 4px; box-shadow: 0 0 20px rgba(0,0,0,0.8); width: 480px; height: 480px;"></canvas>
+            </div>
+        </MudCard>
+    </MudItem>
+
+    <!-- Right Column: Stage Intel & Breakdown -->
+    <MudItem xs="12" lg="5">
+        <MudCard Elevation="2" Class="pa-4 retro-card mb-4">
+            <div class="d-flex align-center mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Warning" Class="mr-2" />
+                <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.9rem;">
+                    ENEMY RECON ($E4EC / $E578)
+                </MudText>
+            </div>
+
+            @if (CurrentStage != null)
+            {
+                <!-- Enemy count summary cards -->
+                <MudGrid Spacing="2" Class="mb-4">
+                    <!-- Basic Tank -->
+                    <MudItem xs="6" sm="3">
+                        <div class="pa-2 text-center" style="background: #11141c; border-radius: 6px; border: 1px solid #334155;">
+                            <div class="pixel-text" style="font-size: 0.6rem; color: #94a3b8;">BASIC (⚪)</div>
+                            <div class="pixel-text font-bold mt-1" style="font-size: 1.2rem; color: #f8fafc;">
+                                @CurrentStage.EnemyCounts.Basic
+                            </div>
+                            <div style="font-size: 0.7rem; color: #64748b;">100 PTS</div>
+                        </div>
+                    </MudItem>
+                    <!-- Fast Tank -->
+                    <MudItem xs="6" sm="3">
+                        <div class="pa-2 text-center" style="background: #11141c; border-radius: 6px; border: 1px solid #334155;">
+                            <div class="pixel-text" style="font-size: 0.6rem; color: #f1c40f;">FAST (🟡)</div>
+                            <div class="pixel-text font-bold mt-1" style="font-size: 1.2rem; color: #f1c40f;">
+                                @CurrentStage.EnemyCounts.Fast
+                            </div>
+                            <div style="font-size: 0.7rem; color: #64748b;">200 PTS</div>
+                        </div>
+                    </MudItem>
+                    <!-- Power Tank -->
+                    <MudItem xs="6" sm="3">
+                        <div class="pa-2 text-center" style="background: #11141c; border-radius: 6px; border: 1px solid #334155;">
+                            <div class="pixel-text" style="font-size: 0.6rem; color: #e74c3c;">POWER (🔴)</div>
+                            <div class="pixel-text font-bold mt-1" style="font-size: 1.2rem; color: #e74c3c;">
+                                @CurrentStage.EnemyCounts.Power
+                            </div>
+                            <div style="font-size: 0.7rem; color: #64748b;">300 PTS</div>
+                        </div>
+                    </MudItem>
+                    <!-- Armor Tank -->
+                    <MudItem xs="6" sm="3">
+                        <div class="pa-2 text-center" style="background: #11141c; border-radius: 6px; border: 1px solid #334155;">
+                            <div class="pixel-text" style="font-size: 0.6rem; color: #2ecc71;">ARMOR (🛡️)</div>
+                            <div class="pixel-text font-bold mt-1" style="font-size: 1.2rem; color: #2ecc71;">
+                                @CurrentStage.EnemyCounts.Armor
+                            </div>
+                            <div style="font-size: 0.7rem; color: #64748b;">400 PTS</div>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+
+                <!-- Total banner -->
+                <div class="d-flex justify-space-between align-center pa-2 px-3 mb-4" style="background: #1e293b; border-radius: 6px;">
+                    <span class="pixel-text" style="font-size: 0.7rem; color: #cbd5e1;">TOTAL ENEMIES DEPLOYED</span>
+                    <span class="pixel-text font-bold" style="font-size: 0.9rem; color: #f1c40f;">@CurrentStage.EnemyCounts.Total / 20</span>
+                </div>
+
+                <!-- Sequential Spawn Queue -->
+                <div class="mb-4">
+                    <div class="pixel-text mb-2" style="font-size: 0.65rem; color: #94a3b8;">
+                        SEQUENTIAL SPAWN QUEUE (1 → 20)
+                    </div>
+                    <div class="d-flex flex-wrap gap-1 pa-2" style="background: #090a0f; border-radius: 6px; border: 1px solid #232938;">
+                        @for (int i = 0; i < CurrentStage.SpawnOrder.Count; i++)
+                        {
+                            var type = CurrentStage.SpawnOrder[i];
+                            var (label, color) = GetEnemyBadge(type);
+                            <div class="d-flex flex-column align-center" style="width: 28px; padding: 2px; background: #161a23; border-radius: 3px; border: 1px solid @color;">
+                                <span style="font-size: 0.55rem; color: #64748b;">@(i + 1)</span>
+                                <span class="pixel-text" style="font-size: 0.65rem; color: @color; font-weight: bold;">@label</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Terrain breakdown -->
+                <div class="mb-2">
+                    <div class="pixel-text mb-2" style="font-size: 0.65rem; color: #94a3b8;">
+                        TERRAIN DISTRIBUTION
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error">
+                            BRICK: @_brickCount
+                        </MudChip>
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
+                            STEEL: @_steelCount
+                        </MudChip>
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info">
+                            WATER: @_waterCount
+                        </MudChip>
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success">
+                            TREES: @_treesCount
+                        </MudChip>
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
+                            ICE: @_iceCount
+                        </MudChip>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex justify-center pa-8">
+                    <MudProgressCircular Color="Color.Warning" Indeterminate="true" />
+                </div>
+            }
+        </MudCard>
+
+        <!-- Stage JSON Info Card -->
+        <MudCard Elevation="2" Class="pa-4 retro-card">
+            <div class="d-flex align-center justify-space-between">
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Code" Color="Color.Info" Class="mr-2" />
+                    <MudText Typo="Typo.subtitle2" Class="pixel-text" Style="color: #94a3b8; font-size: 0.75rem;">
+                        FILE: stage_@(CurrentStageNum.ToString("D2")).json
+                    </MudText>
+                </div>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" 
+                           StartIcon="@Icons.Material.Filled.Visibility" OnClick="ToggleJsonView">
+                    @(_showJson ? "HIDE JSON" : "VIEW JSON")
+                </MudButton>
+            </div>
+
+            @if (_showJson && CurrentStage != null)
+            {
+                <pre class="mt-3 pa-3" style="background: #090a0f; border-radius: 6px; max-height: 220px; overflow-y: auto; font-family: monospace; font-size: 0.7rem; color: #a5f3fc; border: 1px solid #232938;">
+@System.Text.Json.JsonSerializer.Serialize(CurrentStage, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })
+                </pre>
+            }
+        </MudCard>
+    </MudItem>
+</MudGrid>

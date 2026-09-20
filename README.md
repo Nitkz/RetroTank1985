@@ -12,14 +12,14 @@
 
 The project demonstrates:
 - **Hybrid Architecture (C# Game Brain + JS Fast Canvas/Audio Muscle)**:
-  - **100% C# Game Core**: Game state machine, 60Hz fixed timestep accumulator, Famicom 8px grid snapping physics, 26×26 sub-tile destructible terrain, bullet collision simulation, and audio event queuing.
-  - **Zero-Allocation 60 FPS Loop**: Pre-allocated entity object pools (`Bullet[16]`, `Explosion[16]`), DTO snapshot recycling (`RenderFrameDto`), double-buffered audio event queue, and cached HUD telemetry preventing Mono WASM GC stutters.
+  - **100% C# Game Core**: Game state machine, 60Hz fixed timestep accumulator, Famicom 8px grid snapping physics, 26×26 sub-tile destructible terrain, bullet collision simulation, power-up systems, and audio event queuing.
+  - **Zero-Allocation 60 FPS Loop**: Pre-allocated entity object pools (`Bullet[16]`, `Explosion[16]`, `EnemyTank[6]`), DTO snapshot recycling (`RenderFrameDto`), double-buffered audio event queue, and cached HUD telemetry preventing Mono WASM GC stutters.
   - **Modular High-Speed JS Muscle**: Lightweight 60 FPS HTML5 Canvas 2D Metasprite blitting (`stage-renderer.js`, `nes-chr.js`, `game-bridge.js`) and Web Audio API 2A03 APU Synthesizer (`nes-synth.js`).
 - **Single Source of Truth Bundler (`game-bundle.js`)**: ES6 module loader unifying scripts across both **ASP.NET Core Server Dev** (`App.razor`) and **Cloudflare Pages Standalone WASM** (`index.html`).
 - **Dual-Mode Execution**: Runs as a full-stack **ASP.NET Core Blazor Web App** during local development, and deploys as a pure **Standalone WebAssembly SPA** for static cloud hosting (e.g. Cloudflare Pages, GitHub Pages).
 - **NES APU Audio Synthesis**: Emulation of Ricoh 2A03 hardware (Pulse 1, Pulse 2, Triangle, and Noise channels) in Web Audio API without relying on pre-recorded audio files.
 - **ROM-Accurate Assets**: Native extraction of 8-bit NES CHR tiles, palettes (`$D44A`), and authentic game sprites (including player tanks, enemies, eagle base, and powerups).
-- **Modular Razor Components**: Clean separation of concerns with sub-components (`GameControlBar`, `TelemetryHud`, `MissionBriefingCard`, `VirtualDPad`) and code-behind architecture.
+- **Modular Component & Code-Behind Architecture**: Clean separation of concerns with sub-components (`Components/Play`, `Components/Inspector`) and isolated `.razor` (markup) and `.razor.cs` (logic) files.
 - **Automated Deployment**: One-click build script generating optimized WASM bundles, Cloudflare Pages headers (`_headers`, `_redirects`), and zip release packages.
 
 ---
@@ -125,14 +125,14 @@ Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behav
 | **Bonus Pickup** | Pulse 1/2 | Rapid rising 6-note arpeggio (C5 to G6) |
 | **Tank Engine** | Pulse + Gain Modulation | Looping engine hum with dynamic Idle (55Hz) vs Moving (95Hz) states |
 | **Stage Start BGM** | Pulse 1 + Triangle | 2-track lead and bass transcription calibrated from ROM `$ED36` |
+| **Stage Clear Jingle** | Pulse 1 + Pulse 2 + Tri | 3-track jingle decoded from ROM `$EEC1` |
+| **Victory Fanfare** | Pulse 1 + Pulse 2 + Tri | Full victory fanfare sequence decoded from ROM `$EF3C` |
 | **Game Over BGM** | Pulse 1 | Chromatic step-down game over sequence |
 
 ### 4. Stage, CHR & Item Inspector (`/stage-inspector`)
-- **35 Stages Map Viewer**: Decoded from ROM `$F07A` and saved into modular JSON files (`data/stages/stage_01.json` ... `stage_35.json`).
-- **Authentic Eagle Fortification**: Strict ROM `EAGLE_WALL` 8px sub-tile Π-wall geometry.
-- **Enemy Intelligence Recon**: 20-tank spawn breakdown per stage across 4 tiers (Basic, Fast, Power, Armor) based on ROM `$E4EC` & `$E578`.
-- **CHR Tile & Sprite Catalog**: Real-time rendering of all 512 8×8 tiles (`chr_all.png`) with palette switching (BG0–BG3, SP0–SP3) and 4-way metasprite tank previews.
-- **Power-ups & Specials Gallery**: Interactive preview of all 6 classic droppable items (Helmet, Timer, Shovel, Star, Grenade, 1-UP) + Phoenix HQ status (Intact/Destroyed) and Force Shield with instant SFX testing.
+- **Stage Arena Viewer (`StageArenaTab`)**: Decoded 35 stages from ROM `$F07A` with live canvas rendering, display toggles (Grid, Spawns, Coords), Enemy Recon ($E4EC / $E578), sequential spawn queue, terrain distribution stats, and JSON viewer.
+- **CHR-ROM Tile Catalog (`ChrTileCatalogTab`)**: 512 8×8 tilemap viewer with full NES palette switching (BG0–BG3, SP0–SP3) and interactive 4-direction Tank Metasprite live inspector.
+- **Power-ups & Specials Gallery (`PowerUpsSpecialsTab`)**: Interactive 16×16 metasprite catalog for 6 classic droppable items (Helmet, Timer, Shovel, Star, Grenade, 1-UP) with instant bonus SFX testing, along with Phoenix HQ intact/destroyed and Force Shield badges.
 
 ### 5. Upcoming: 👑 Epic Boss Battles & Tactical Munitions (Phase 8)
 - **Mega Boss Tank Encounters**: Giant multi-tile armored Boss Mechs with multi-phase HP bars.
@@ -159,15 +159,24 @@ RetroTank1985/
 │   └── Program.cs               # Host configuration & MapStaticAssets
 │
 ├── RetroTank1985.Client/        # Pure WebAssembly Client (Runs locally & in Cloudflare)
-│   ├── Components/Play/         # Modular Play Arena Sub-Components
-│   │   ├── GameControlBar.razor # Top stage picker & action buttons
-│   │   ├── TelemetryHud.razor   # Real-time HUD status strip
-│   │   ├── MissionBriefingCard.razor # Enemy battalion breakdown & key guide
-│   │   └── VirtualDPad.razor    # Mobile on-screen touch controller
+│   ├── Components/
+│   │   ├── Play/                # Play Arena Sub-Components
+│   │   │   ├── GameControlBar.razor       # Top stage picker & action controls
+│   │   │   ├── GameDebugSandboxPanel.razor# Live debug & entity sandbox panel
+│   │   │   ├── MissionBriefingCard.razor  # Enemy battalion breakdown & key guide
+│   │   │   ├── TelemetryHud.razor         # Real-time HUD status strip
+│   │   │   └── VirtualDPad.razor          # Mobile on-screen touch controller
+│   │   └── Inspector/           # Stage & CHR Inspector Sub-Components
+│   │       ├── StageArenaTab.razor        # 35-Stage map canvas & Recon UI
+│   │       ├── StageArenaTab.razor.cs     # StageArenaTab Code-Behind
+│   │       ├── ChrTileCatalogTab.razor    # 512 CHR Sheet & Tank metasprites UI
+│   │       ├── ChrTileCatalogTab.razor.cs # ChrTileCatalogTab Code-Behind
+│   │       ├── PowerUpsSpecialsTab.razor  # Power-ups & Specials metasprites UI
+│   │       └── PowerUpsSpecialsTab.razor.cs # PowerUpsSpecialsTab Code-Behind
 │   ├── Engine/                  # C# Game Core Layer (Brain)
-│   │   ├── Core/                # Physics, DestructibleMap, Bullets, AudioQueue, Engine
-│   │   ├── Enums/               # Direction, SubTileType, GameEnums
-│   │   └── Models/              # PlayerTank, GameEntities, RenderFrameDto, InputState
+│   │   ├── Core/                # Physics, DestructibleMap, EnemySystem, PowerUpSystem, Bullets, Engine
+│   │   ├── Enums/               # Direction, SubTileType, PowerUpType, GameEnums
+│   │   └── Models/              # PlayerTank, EnemyTank, PowerUp, GameEntities, RenderFrameDto, InputState
 │   ├── Layout/
 │   │   └── MainLayout.razor     # Retro arcade layout & MudBlazor theme
 │   ├── Models/
@@ -176,8 +185,10 @@ RetroTank1985/
 │   │   ├── Home.razor           # Navigation Hub
 │   │   ├── Play.razor           # Stage Arena Razor Template
 │   │   ├── Play.razor.cs        # Stage Arena Code-Behind
-│   │   ├── SoundBgm.razor       # Sound & BGM test bench
-│   │   └── StageInspector.razor # 35-stage map & CHR tile inspector
+│   │   ├── SoundBgm.razor       # Sound & BGM Synthesizer Razor Template
+│   │   ├── SoundBgm.razor.cs    # Sound & BGM Synthesizer Code-Behind
+│   │   ├── StageInspector.razor # Stage & CHR Inspector Razor Template
+│   │   └── StageInspector.razor.cs # Stage & CHR Inspector Code-Behind
 │   ├── Services/
 │   │   ├── GameEngineService.cs # Blazor JS Interop & Session lifecycle service
 │   │   └── StageService.cs      # Stage JSON loader with in-memory caching

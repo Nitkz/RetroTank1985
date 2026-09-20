@@ -1,0 +1,68 @@
+@namespace RetroTank1985.Client.Components.Inspector
+
+<MudCard Elevation="2" Class="pa-4 retro-card">
+    <div class="d-flex align-center justify-space-between flex-wrap gap-4 mb-4">
+        <div>
+            <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.95rem;">
+                512 CHR TILES (chr_all.png)
+            </MudText>
+            <MudText Typo="Typo.caption" Style="color: #94a3b8;">
+                Tiles 0–255: Background (Terrain, Eagle, HUD) • Tiles 256–511: Sprites (Tanks, Explosions, Power-ups)
+            </MudText>
+        </div>
+
+        <!-- Palette Selector -->
+        <div class="d-flex align-center gap-2">
+            <span class="pixel-text" style="font-size: 0.7rem; color: #94a3b8;">PALETTE:</span>
+            <MudSelect T="int" Value="_selectedPalIdx" ValueChanged="OnPaletteChanged" Dense="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width: 170px;">
+                <MudSelectItem Value="0">BG0 (Brick)</MudSelectItem>
+                <MudSelectItem Value="1">BG1 (Water)</MudSelectItem>
+                <MudSelectItem Value="2">BG2 (Trees)</MudSelectItem>
+                <MudSelectItem Value="3">BG3 (Steel/Ice)</MudSelectItem>
+                <MudSelectItem Value="4">SP0 (P1 Yellow)</MudSelectItem>
+                <MudSelectItem Value="5">SP1 (P2 Green)</MudSelectItem>
+                <MudSelectItem Value="6">SP2 (Enemy/Specials)</MudSelectItem>
+                <MudSelectItem Value="7">SP3 (Special Eagle)</MudSelectItem>
+            </MudSelect>
+        </div>
+    </div>
+
+    <!-- CHR Sheet Canvas -->
+    <div class="d-flex justify-center pa-4 mb-6" style="background: #090a0f; border-radius: 8px; border: 2px solid #232938; overflow-x: auto;">
+        <canvas id="chrCanvas" style="image-rendering: pixelated;"></canvas>
+    </div>
+
+    <!-- Interactive Tank Metasprite Inspector -->
+    <MudText Typo="Typo.subtitle1" Class="pixel-text font-bold mb-3" Style="color: #f1c40f; font-size: 0.85rem;">
+        TANK METASPRITE (2x2 CHR) LIVE PREVIEW
+    </MudText>
+    
+    <MudGrid Spacing="3">
+        @foreach (var tank in _previewTanks)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="2">
+                <div class="pa-3 text-center" style="background: #11141c; border-radius: 6px; border: 1px solid #334155;">
+                    <div class="pixel-text mb-2" style="font-size: 0.65rem; color: #f1c40f;">@tank.Name</div>
+                    <div class="d-flex justify-center my-2">
+                        <canvas id="@($"tankCanvas_{tank.Id}")" style="image-rendering: pixelated;"></canvas>
+                    </div>
+                    <!-- Direction Selector -->
+                    <div class="d-flex justify-center gap-1 mt-2">
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" 
+                                       Color="@(tank.Dir == 0 ? Color.Warning : Color.Default)"
+                                       OnClick="@(() => SetTankDir(tank, 0))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" 
+                                       Color="@(tank.Dir == 1 ? Color.Warning : Color.Default)"
+                                       OnClick="@(() => SetTankDir(tank, 1))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" 
+                                       Color="@(tank.Dir == 2 ? Color.Warning : Color.Default)"
+                                       OnClick="@(() => SetTankDir(tank, 2))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" 
+                                       Color="@(tank.Dir == 3 ? Color.Warning : Color.Default)"
+                                       OnClick="@(() => SetTankDir(tank, 3))" />
+                    </div>
+                </div>
+            </MudItem>
+        }
+    </MudGrid>
+</MudCard>
