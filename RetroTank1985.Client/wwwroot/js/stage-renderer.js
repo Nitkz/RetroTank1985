@@ -156,7 +156,38 @@ window.StageRenderer = (function () {
         }
       }
 
-      // 5. Explosions
+      // 5. Droppable Power-Up Items (0:Helmet=0x80, 1:Timer=0x84, 2:Shovel=0x88, 3:Star=0x8C, 4:Grenade=0x90, 5:TankLife=0x94)
+      if (frameData.powerUps && frameData.powerUps.length > 0) {
+        const pLen = frameData.powerUps.length;
+        const powerUpBaseTiles = [0x80, 0x84, 0x88, 0x8C, 0x90, 0x94];
+
+        for (let i = 0; i < pLen; i++) {
+          const p = frameData.powerUps[i];
+          if (!p.visible) continue;
+
+          const px = BORDER + Math.round(p.x) * SCALE;
+          const py = BORDER + Math.round(p.y) * SCALE;
+          const baseTile = powerUpBaseTiles[Math.min(p.type, 5)] || 0x8C;
+
+          // Power-up metasprites are arranged as [TL, TR, BL, BR] = [t, t+2, t+1, t+3]
+          window.NesCHR.drawMetasprite(ctx, [baseTile, baseTile + 2, baseTile + 1, baseTile + 3], 6, px, py, false, SCALE);
+        }
+      }
+
+      // 6. Floating Score Popups (e.g. +500 PTS 0x3A..0x3D)
+      if (frameData.scorePopups && frameData.scorePopups.length > 0) {
+        const spLen = frameData.scorePopups.length;
+        for (let i = 0; i < spLen; i++) {
+          const sp = frameData.scorePopups[i];
+          const spX = BORDER + Math.round(sp.x) * SCALE;
+          const spY = BORDER + Math.round(sp.y) * SCALE;
+
+          // Metasprite 0x3A..0x3D for 500 PTS
+          window.NesCHR.drawMetasprite(ctx, [0x3A, 0x3C, 0x3B, 0x3D], 6, spX, spY, false, SCALE);
+        }
+      }
+
+      // 7. Explosions
       if (frameData.explosions && frameData.explosions.length > 0) {
         const explosionFrames = [0xA0, 0xA2, 0xA4];
         const exLen = frameData.explosions.length;
@@ -167,7 +198,7 @@ window.StageRenderer = (function () {
         }
       }
 
-      // 6. Fast Foreground Trees
+      // 8. Fast Foreground Trees
       const treeCount = treeSubTiles.length;
       if (treeCount > 0) {
         for (let i = 0; i < treeCount; i++) {

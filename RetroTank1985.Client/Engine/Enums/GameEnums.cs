@@ -17,7 +17,8 @@ public enum AudioSoundEffect : byte
     EngineStop = 9,
     Bonus = 10,
     Life = 11,
-    HitArmor = 12
+    HitArmor = 12,
+    BonusAppear = 13
 }
 
 /// <summary>

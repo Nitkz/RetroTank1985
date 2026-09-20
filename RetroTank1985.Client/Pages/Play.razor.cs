@@ -106,6 +106,11 @@ public partial class Play : ComponentBase, IAsyncDisposable
         EngineService.Engine.ToggleEagleSteel(fortified);
     }
 
+    private void HandleDebugSpawnPowerUp(Engine.Enums.PowerUpType type)
+    {
+        EngineService.Engine.SpawnPowerUpDebug(type);
+    }
+
     public async ValueTask DisposeAsync()
     {
         EngineService.OnTelemetryUpdated -= HandleTelemetry;

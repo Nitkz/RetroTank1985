@@ -133,10 +133,17 @@ window.GameBridge = (function () {
           window.nesSynth.playBonus();
           break;
         case 11: // Life
-          window.nesSynth.playLife();
+          if (window.nesSynth.playLifeUp) {
+            window.nesSynth.playLifeUp();
+          } else if (window.nesSynth.playLife) {
+            window.nesSynth.playLife();
+          }
           break;
         case 12: // HitArmor
           window.nesSynth.playHitArmor();
+          break;
+        case 13: // BonusAppear
+          window.nesSynth.playBonusAppear();
           break;
       }
     }

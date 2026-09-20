@@ -12,7 +12,7 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 | **Phase 2** | C# 60 FPS NES Game Loop & Player Tank Controller | ✅ **Completed** | 2026-09-20 |
 | **Phase 3** | Destructible Terrain & Bullet-World Collisions | ✅ **Completed** | 2026-09-20 |
 | **Phase 4** | Enemy AI & Wave Spawning System | ✅ **Completed** | 2026-09-20 |
-| **Phase 5** | Phoenix Eagle Base & Droppable Power-Up System | ⏳ **Planned** | Upcoming |
+| **Phase 5** | Phoenix Eagle Base & Droppable Power-Up System | ✅ **Completed** | 2026-09-20 |
 
 | **Phase 6** | Stage Transitions, Score Tally & Game Over Flow | ⏳ **Planned** | Upcoming |
 | **Phase 7** | Two-Player Co-Op & High Score Persistence | ⏳ **Planned** | Future |
@@ -82,21 +82,22 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
   - Smart AI pathfinding (`PickOpenDirection`) finding open alternate headings when hitting obstacles or other tanks.
 - [x] **Dedicated Debug & Sandbox Panel (`GameDebugSandboxPanel.razor`)**: Direct spawner lab for all 4 types + Flashing, Star Power lab (Tiers 0-3), Eagle steel fortify, and Nuke all (Bomb).
 
-
 ---
 
-### ⏳ Phase 5: Phoenix Eagle Base & Droppable Power-Up System
-- [ ] **Phoenix HQ (Eagle Base)**:
+### ✅ Phase 5: Phoenix Eagle Base & Droppable Power-Up System (Done)
+- [x] **Phoenix HQ (Eagle Base)**:
   - Intact Eagle state (`0xC8..0xCB`).
-  - Destroyed Eagle state (`0xCC..0xCF`) triggering instant Stage Defeat.
-- [ ] **Droppable Power-Ups (6 Classic Items)**:
+  - Destroyed Eagle state (`0xCC..0xCF`) playing `EagleHit` + Alarm and triggering Game Over.
+- [x] **Droppable Power-Ups (6 Classic Items)**:
   - 🌟 **Star**: Weapon upgrades (Level 1: Fast bullet &rarr; Level 2: Dual bullets &rarr; Level 3: Steel destruction).
-  - 🛡️ **Helmet**: 10-second invulnerability force shield.
-  - ⏱️ **Timer**: Freezes all enemies for ~10 seconds.
-  - 💣 **Grenade**: Destroys all active enemies currently on screen.
-  - 🔨 **Shovel**: Temporarily turns eagle fortress into solid steel.
-  - 🚗 **Tank (1-Up)**: Grants an extra life.
-- [ ] **Score Popup Metasprite**: Floating 500 PTS banner when collecting power-ups.
+  - 🛡️ **Helmet**: 10-second invulnerability force shield with shimmering barrier.
+  - ⏱️ **Timer**: Freezes all active enemy tanks for 10 seconds (stops movement, shooting, animation).
+  - 💣 **Grenade**: Destroys all active enemies on screen immediately with large explosion cascade and point awards.
+  - 🔨 **Shovel**: Turns Eagle base perimeter into steel fortress for 20s (blinking warning in last 3s before reverting).
+  - 🚗 **Tank (1-Up)**: Awards +1 life to player with authentic NES 1-UP jingle SFX.
+- [x] **Flashing Red Tank Item Drops**: Defeating flashing red tanks spawns a power-up directly onto battlefield with `BonusAppear` SFX.
+- [x] **Floating Score Popup (+500 PTS)**: Floating sprite popup upon collecting items with `Bonus` SFX.
+- [x] **Power-Up Sandbox Lab**: Section 4 in `GameDebugSandboxPanel` for instant spawning of all 6 power-up types.
 
 ---
 

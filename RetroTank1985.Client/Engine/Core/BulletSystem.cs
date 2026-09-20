@@ -12,7 +12,7 @@ public interface IBulletSystem
 
     bool TryFirePlayerBullet(PlayerTank player, IAudioEventQueue audioQueue);
     bool TryFireEnemyBullet(EnemyTank enemy, IAudioEventQueue audioQueue);
-    void Update(PlayerTank player, IReadOnlyList<EnemyTank> enemies, IDestructibleMap map, IAudioEventQueue audioQueue, Action<int> onEnemyKilled);
+    void Update(PlayerTank player, IReadOnlyList<EnemyTank> enemies, IDestructibleMap map, IAudioEventQueue audioQueue, Action<EnemyTank> onEnemyKilled);
     void Clear();
     void SpawnExplosion(float x, float y, bool isBig = false);
 }
@@ -183,7 +183,7 @@ public class BulletSystem : IBulletSystem
         IReadOnlyList<EnemyTank> enemies, 
         IDestructibleMap map, 
         IAudioEventQueue audioQueue, 
-        Action<int> onEnemyKilled)
+        Action<EnemyTank> onEnemyKilled)
     {
         // 1. Update Bullets Movement & Terrain Collision
         for (int i = _bullets.Count - 1; i >= 0; i--)
@@ -241,7 +241,7 @@ public class BulletSystem : IBulletSystem
                             enemy.IsActive = false;
                             SpawnExplosion(enemy.X, enemy.Y, true);
                             audioQueue.Enqueue(AudioSoundEffect.Explosion);
-                            onEnemyKilled(enemy.PointValue);
+                            onEnemyKilled(enemy);
                         }
                         else
                         {

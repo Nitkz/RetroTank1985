@@ -11,10 +11,11 @@ public interface IEnemySystem
     int ActiveEnemyCount { get; }
 
     void InitializeWave(StageModel? stage);
-    void Update(PlayerTank player, IDestructibleMap map, IBulletSystem bullets, IAudioEventQueue audioQueue, Action<int> onEnemyKilled);
+    void Update(PlayerTank player, IDestructibleMap map, IBulletSystem bullets, IAudioEventQueue audioQueue, Action<EnemyTank>? onEnemyKilled = null);
     void Clear();
     bool TrySpawnEnemyDebug(EnemyType type, int spawnPointIndex = -1, bool isFlashing = false);
     void NukeAllEnemies(IBulletSystem bullets, IAudioEventQueue audioQueue, Action<int> onEnemyKilled);
+    void FreezeEnemies(int durationFrames = 600);
 }
 
 public class EnemySystem : IEnemySystem
@@ -177,7 +178,7 @@ public class EnemySystem : IEnemySystem
         IDestructibleMap map, 
         IBulletSystem bullets, 
         IAudioEventQueue audioQueue, 
-        Action<int> onEnemyKilled)
+        Action<EnemyTank>? onEnemyKilled = null)
     {
         // 1. Wave Spawner Tick
         TickSpawner();
@@ -203,7 +204,14 @@ public class EnemySystem : IEnemySystem
                 continue; // Cannot move or fire while in spawn star animation
             }
 
-            // B. Tread Animation
+            // B. Freeze Timer check (Timer Power-up)
+            if (e.FreezeTimer > 0)
+            {
+                e.FreezeTimer--;
+                continue; // Cannot move, animate, or shoot while frozen
+            }
+
+            // C. Tread Animation
             e.AnimCounter++;
             if (e.AnimCounter >= 4)
             {
@@ -211,7 +219,7 @@ public class EnemySystem : IEnemySystem
                 e.AnimFrame = (e.AnimFrame + 1) % 2;
             }
 
-            // C. AI Direction Decision & 8px Grid Snapping
+            // D. AI Direction Decision & 8px Grid Snapping
             e.MoveDecisionTimer++;
             if (e.TurnCooldown > 0) e.TurnCooldown--;
 
@@ -234,7 +242,7 @@ public class EnemySystem : IEnemySystem
                 }
             }
 
-            // D. Physics Step with Obstacle & Tank-vs-Tank Collision
+            // E. Physics Step with Obstacle & Tank-vs-Tank Collision
             var (dx, dy) = e.Direction.ToVector(e.Speed);
             float nextX = e.X + dx;
             float nextY = e.Y + dy;
@@ -265,7 +273,7 @@ public class EnemySystem : IEnemySystem
                 e.TurnCooldown = 15;
             }
 
-            // E. Random Enemy Firing (approx 1 in 35 chance per frame when active)
+            // F. Random Enemy Firing (approx 1 in 35 chance per frame when active)
             if (_rand.Next(0, 35) == 0)
             {
                 bullets.TryFireEnemyBullet(e, audioQueue);
@@ -379,6 +387,17 @@ public class EnemySystem : IEnemySystem
         }
         _enemies.Clear();
         audioQueue.Enqueue(AudioSoundEffect.Explosion);
+    }
+
+    public void FreezeEnemies(int durationFrames = 600)
+    {
+        for (int i = 0; i < _enemies.Count; i++)
+        {
+            if (_enemies[i].IsActive)
+            {
+                _enemies[i].FreezeTimer = durationFrames;
+            }
+        }
     }
 
     public void Clear()

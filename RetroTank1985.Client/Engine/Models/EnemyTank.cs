@@ -29,6 +29,7 @@ public class EnemyTank
     public float Speed { get; set; } = BasicSpeed;
 
     public bool IsActive { get; set; } = false;
+    public int FreezeTimer { get; set; } = 0;
     public bool IsSpawning { get; set; } = false;
     public int SpawnTimer { get; set; } = 30; // 30 frames star sparkle before emergence
 

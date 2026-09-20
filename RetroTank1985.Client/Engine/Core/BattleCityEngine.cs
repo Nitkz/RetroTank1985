@@ -11,6 +11,7 @@ public interface IBattleCityEngine
     IDestructibleMap Map { get; }
     IBulletSystem Bullets { get; }
     IEnemySystem Enemies { get; }
+    IPowerUpSystem PowerUps { get; }
     IAudioEventQueue Audio { get; }
     GameState State { get; }
     int CurrentStage { get; }
@@ -32,6 +33,7 @@ public interface IBattleCityEngine
     void SetPlayerStarPower(int starLevel);
     void TogglePlayerShield();
     void ToggleEagleSteel(bool fortified);
+    void SpawnPowerUpDebug(PowerUpType type);
 }
 
 public class BattleCityEngine : IBattleCityEngine
@@ -48,6 +50,8 @@ public class BattleCityEngine : IBattleCityEngine
     private readonly List<BulletRenderDto> _bulletDtoPool = new(16);
     private readonly List<EnemyRenderDto> _enemyDtoPool = new(8);
     private readonly List<ExplosionRenderDto> _explosionDtoPool = new(16);
+    private readonly List<PowerUpRenderDto> _powerUpDtoPool = new(4);
+    private readonly List<ScorePopupRenderDto> _scorePopupDtoPool = new(8);
 
     private int _playerRespawnTimer = 0;
 
@@ -56,6 +60,7 @@ public class BattleCityEngine : IBattleCityEngine
     public ITankPhysics Physics { get; }
     public IBulletSystem Bullets { get; }
     public IEnemySystem Enemies { get; }
+    public IPowerUpSystem PowerUps { get; }
     public IAudioEventQueue Audio { get; }
 
     public GameState State { get; private set; } = GameState.Playing;
@@ -68,12 +73,14 @@ public class BattleCityEngine : IBattleCityEngine
         ITankPhysics physics,
         IBulletSystem bullets,
         IEnemySystem enemies,
+        IPowerUpSystem powerUps,
         IAudioEventQueue audio)
     {
         Map = map;
         Physics = physics;
         Bullets = bullets;
         Enemies = enemies;
+        PowerUps = powerUps;
         Audio = audio;
         Player = new PlayerTank();
 
@@ -87,6 +94,14 @@ public class BattleCityEngine : IBattleCityEngine
         {
             _enemyDtoPool.Add(new EnemyRenderDto());
         }
+        for (int i = 0; i < 4; i++)
+        {
+            _powerUpDtoPool.Add(new PowerUpRenderDto());
+        }
+        for (int i = 0; i < 8; i++)
+        {
+            _scorePopupDtoPool.Add(new ScorePopupRenderDto());
+        }
     }
 
     public void InitializeStage(StageModel? stage, int stageNumber)
@@ -96,6 +111,7 @@ public class BattleCityEngine : IBattleCityEngine
         Bullets.Clear();
         Audio.Clear();
         Enemies.InitializeWave(stage);
+        PowerUps.Clear();
         
         _playerRespawnTimer = 0;
         Player.Lives = 3;
@@ -183,6 +199,11 @@ public class BattleCityEngine : IBattleCityEngine
         Map.FortifyEagleWithSteel(fortified);
     }
 
+    public void SpawnPowerUpDebug(PowerUpType type)
+    {
+        PowerUps.SpawnPowerUpDebug(type, audioQueue: Audio);
+    }
+
     public RenderFrameDto Tick(double timestampMs)
     {
         if (_lastTimestamp <= 0)
@@ -218,12 +239,32 @@ public class BattleCityEngine : IBattleCityEngine
                 Physics.UpdatePlayer(Player, _currentInput, Map, Enemies.ActiveEnemies, Audio);
 
                 // 2. Enemy AI & Movement
-                Enemies.Update(Player, Map, Bullets, Audio, pts => Score += pts);
+                Enemies.Update(Player, Map, Bullets, Audio, enemy => 
+                {
+                    Score += enemy.PointValue;
+                    if (enemy.IsFlashing)
+                    {
+                        PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
+                    }
+                });
 
                 // 3. Bullets & Explosions Update
-                Bullets.Update(Player, Enemies.ActiveEnemies, Map, Audio, pts => Score += pts);
+                Bullets.Update(Player, Enemies.ActiveEnemies, Map, Audio, enemy =>
+                {
+                    Score += enemy.PointValue;
+                    if (enemy.IsFlashing)
+                    {
+                        PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
+                    }
+                });
 
-                // 4. Player respawn countdown if player died but still has lives remaining
+                // 4. Power-Up System Update (Pickup collisions, effects, score popups)
+                PowerUps.Update(Player, Enemies, Map, Bullets, Audio, pts => Score += pts);
+
+                // 5. Destructible Map Shovel countdown update
+                Map.UpdateShovelTimer();
+
+                // 6. Player respawn countdown if player died but still has lives remaining
                 if (!Player.IsActive && Player.Lives > 0)
                 {
                     _playerRespawnTimer++;
@@ -234,11 +275,11 @@ public class BattleCityEngine : IBattleCityEngine
                     }
                 }
 
-                // 5. Check Game Over Conditions (Eagle destroyed OR out of lives & inactive)
+                // 7. Check Game Over Conditions (Eagle destroyed OR out of lives & inactive)
                 if ((Map.IsEagleDestroyed || (Player.Lives <= 0 && !Player.IsActive)) && State != GameState.GameOver)
                 {
                     State = GameState.GameOver;
-                    Audio.Enqueue(AudioSoundEffect.Explosion);
+                    Audio.Enqueue(AudioSoundEffect.EagleHit);
                 }
             }
 
@@ -297,6 +338,45 @@ public class BattleCityEngine : IBattleCityEngine
                 eDto.SpawnTimer = e.SpawnTimer;
                 eDto.AnimFrame = e.AnimFrame;
                 _cachedFrame.Enemies.Add(eDto);
+            }
+        }
+
+        // Populate Active Power-Ups using pool
+        _cachedFrame.PowerUps.Clear();
+        int powerUpIdx = 0;
+        foreach (var p in PowerUps.ActivePowerUps)
+        {
+            if (p.IsActive)
+            {
+                if (powerUpIdx >= _powerUpDtoPool.Count)
+                {
+                    _powerUpDtoPool.Add(new PowerUpRenderDto());
+                }
+                var pDto = _powerUpDtoPool[powerUpIdx++];
+                pDto.X = p.X;
+                pDto.Y = p.Y;
+                pDto.Type = (byte)p.Type;
+                pDto.Visible = p.IsVisible;
+                _cachedFrame.PowerUps.Add(pDto);
+            }
+        }
+
+        // Populate Floating Score Popups using pool
+        _cachedFrame.ScorePopups.Clear();
+        int scorePopupIdx = 0;
+        foreach (var sp in PowerUps.ActiveScorePopups)
+        {
+            if (sp.IsActive)
+            {
+                if (scorePopupIdx >= _scorePopupDtoPool.Count)
+                {
+                    _scorePopupDtoPool.Add(new ScorePopupRenderDto());
+                }
+                var spDto = _scorePopupDtoPool[scorePopupIdx++];
+                spDto.X = sp.X;
+                spDto.Y = sp.Y;
+                spDto.Score = sp.Score;
+                _cachedFrame.ScorePopups.Add(spDto);
             }
         }
 

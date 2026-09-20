@@ -32,6 +32,7 @@ builder.Services.AddTransient<RetroTank1985.Client.Engine.Core.IDestructibleMap,
 builder.Services.AddTransient<RetroTank1985.Client.Engine.Core.ITankPhysics, RetroTank1985.Client.Engine.Core.TankPhysics>();
 builder.Services.AddTransient<RetroTank1985.Client.Engine.Core.IBulletSystem, RetroTank1985.Client.Engine.Core.BulletSystem>();
 builder.Services.AddTransient<RetroTank1985.Client.Engine.Core.IEnemySystem, RetroTank1985.Client.Engine.Core.EnemySystem>();
+builder.Services.AddTransient<RetroTank1985.Client.Engine.Core.IPowerUpSystem, RetroTank1985.Client.Engine.Core.PowerUpSystem>();
 builder.Services.AddTransient<RetroTank1985.Client.Engine.Core.IAudioEventQueue, RetroTank1985.Client.Engine.Core.AudioEventQueue>();
 builder.Services.AddTransient<RetroTank1985.Client.Engine.Core.IBattleCityEngine, RetroTank1985.Client.Engine.Core.BattleCityEngine>();
 builder.Services.AddScoped<RetroTank1985.Client.Services.GameEngineService>();

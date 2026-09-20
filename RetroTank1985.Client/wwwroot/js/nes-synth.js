@@ -765,6 +765,7 @@ window.nesSynth = {
     playBonusAppear: function() { this.init(); sfxPowerUpAppear(); },
     playBonus: function() { this.init(); sfxPowerUpCollect(); },
     playLifeUp: function() { this.init(); sfxLifeUp(0); },
+    playLife: function() { this.init(); sfxLifeUp(0); },
     playEagleHit: function() { this.init(); sfxEagleHit(); },
     stopEagleAlarm: function() { this.init(); sfxStopEagleAlarm(); },
     playTallyTick: function() { this.init(); sfxTallyTick(); },

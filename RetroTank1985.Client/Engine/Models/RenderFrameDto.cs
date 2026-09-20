@@ -72,9 +72,40 @@ public class RenderFrameDto
 
     [JsonPropertyName("isGameOver")]
     public bool IsGameOver { get; set; }
+
+    [JsonPropertyName("powerUps")]
+    public List<PowerUpRenderDto> PowerUps { get; set; } = new();
+
+    [JsonPropertyName("scorePopups")]
+    public List<ScorePopupRenderDto> ScorePopups { get; set; } = new();
 }
 
+public class PowerUpRenderDto
+{
+    [JsonPropertyName("x")]
+    public float X { get; set; }
 
+    [JsonPropertyName("y")]
+    public float Y { get; set; }
+
+    [JsonPropertyName("type")]
+    public byte Type { get; set; }
+
+    [JsonPropertyName("visible")]
+    public bool Visible { get; set; }
+}
+
+public class ScorePopupRenderDto
+{
+    [JsonPropertyName("x")]
+    public float X { get; set; }
+
+    [JsonPropertyName("y")]
+    public float Y { get; set; }
+
+    [JsonPropertyName("score")]
+    public int Score { get; set; }
+}
 
 public class BulletRenderDto
 {
@@ -135,4 +166,5 @@ public class ExplosionRenderDto
     [JsonPropertyName("big")]
     public bool Big { get; set; }
 }
+
 

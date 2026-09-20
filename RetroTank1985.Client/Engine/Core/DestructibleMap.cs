@@ -10,6 +10,7 @@ public interface IDestructibleMap
 
     bool IsDirty { get; set; }
     bool IsEagleDestroyed { get; }
+    int ShovelTimer { get; }
 
     void LoadStage(List<List<int>>? stageGrid);
     bool CanTankMoveTo(float x, float y, float size = 16f);
@@ -17,7 +18,8 @@ public interface IDestructibleMap
     void SetSubTile(int row, int col, SubTileType type);
     bool HandleBulletHit(Bullet bullet, out AudioSoundEffect soundEffect, out bool hitEagle);
     byte[] GetSubTileBytes();
-    void FortifyEagleWithSteel(bool steel);
+    void FortifyEagleWithSteel(bool steel, int durationFrames = 0);
+    void UpdateShovelTimer();
 }
 
 public class DestructibleMap : IDestructibleMap
@@ -27,6 +29,7 @@ public class DestructibleMap : IDestructibleMap
 
     public bool IsDirty { get; set; } = true;
     public bool IsEagleDestroyed { get; private set; } = false;
+    public int ShovelTimer { get; private set; } = 0;
 
     public void LoadStage(List<List<int>>? stageGrid)
     {
@@ -124,14 +127,43 @@ public class DestructibleMap : IDestructibleMap
         (24, 14), (25, 14)
     };
 
-    public void FortifyEagleWithSteel(bool steel)
+    public void FortifyEagleWithSteel(bool steel, int durationFrames = 0)
     {
+        ShovelTimer = steel ? (durationFrames > 0 ? durationFrames : 1200) : 0; // Default 20s
         var wallType = steel ? SubTileType.Steel : SubTileType.Brick;
         foreach (var (r, c) in EagleWallCoords)
         {
             _grid[r, c] = wallType;
         }
         IsDirty = true;
+    }
+
+    public void UpdateShovelTimer()
+    {
+        if (ShovelTimer > 0)
+        {
+            ShovelTimer--;
+            // When shovel is near expiration (<180 frames / 3 seconds), blink between steel and brick every 10 frames
+            if (ShovelTimer < 180 && ShovelTimer > 0)
+            {
+                bool isSteelPhase = (ShovelTimer / 10) % 2 == 0;
+                var wallType = isSteelPhase ? SubTileType.Steel : SubTileType.Brick;
+                foreach (var (r, c) in EagleWallCoords)
+                {
+                    _grid[r, c] = wallType;
+                }
+                IsDirty = true;
+            }
+            else if (ShovelTimer == 0)
+            {
+                // Revert to brick
+                foreach (var (r, c) in EagleWallCoords)
+                {
+                    _grid[r, c] = SubTileType.Brick;
+                }
+                IsDirty = true;
+            }
+        }
     }
 
     public bool CanTankMoveTo(float x, float y, float size = 16f)

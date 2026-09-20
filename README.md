@@ -98,7 +98,18 @@ publish-wasm.bat
 - **20-Tank Enemy Wave & 3-Point Spawner**:
   - 4 archetypes (Basic, Fast, Power, and 4-HP Armor tank with 4-tier NES palette color shifts & metallic hit SFX).
   - Obstruction-safe spawner preventing tanks from spawning on top of occupied points.
-- **Dedicated Modular Debug & Sandbox Panel**: Live spawner lab, Star Power tier upgrades (0-3), Eagle fortification, and Nuke all.
+  - Red flashing carrier tanks dropping droppable power-ups upon defeat.
+- **Full Droppable Power-Up System (6 Classic Items)**:
+  - 🌟 **Star**: 3-tier weapon upgrades (fast projectile &rarr; dual concurrent shells &rarr; steel destruction).
+  - 🛡️ **Helmet**: 10-second forcefield barrier.
+  - ⏱️ **Timer**: 10-second universal enemy freeze.
+  - 💣 **Grenade**: Instant screen-wide enemy demolition with full point awards.
+  - 🔨 **Shovel**: 20-second Eagle base steel fortification with 3s pre-expiration warning blinking.
+  - 🚗 **1-UP Tank**: Extra player life award with authentic NES life chime.
+  - Floating `+500 PTS` score popup upon item pickup.
+- **Phoenix Eagle HQ Base**:
+  - Intact vs Destroyed sprite states (`0xC8..0xCB` &rarr; `0xCC..0xCF`), `EagleHit` SFX, and arcade Game Over overlay.
+- **Dedicated Modular Debug & Sandbox Panel**: Live spawner lab, Star Power tier upgrades (0-3), Eagle fortification, Nuke all, and instant 6-item Power-Up lab.
 - **Dual Controller Support**: Full keyboard (WASD / Arrows + Space/J) and on-screen Touch D-Pad with Fire button.
 - **Live Telemetry HUD**: Throttled 500ms status monitor reporting real-time FPS, coordinate position, direction, remaining wave enemies, and active field enemies.
 
