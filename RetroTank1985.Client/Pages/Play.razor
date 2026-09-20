@@ -3,15 +3,20 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<PageTitle>RetroTank 1985 | Stage Arena</PageTitle>
+<PageTitle>RetroTank 1985 | Dev Sandbox</PageTitle>
 
 <div class="mb-4 d-flex flex-column flex-md-row justify-space-between align-start align-md-center gap-4">
     <div>
-        <MudText Typo="Typo.h4" Class="pixel-text" Style="color: #f1c40f; text-shadow: 0 0 12px rgba(241, 196, 15, 0.4);">
-            STAGE ARENA (60 FPS)
-        </MudText>
-        <MudText Typo="Typo.body2" Style="color: #94a3b8;">
-            Authentic NES Battle City Physics &bull; Famicom Grid Alignment &bull; Desktop &amp; Touch Controller
+        <div class="d-flex align-center gap-2">
+            <MudText Typo="Typo.h4" Class="pixel-text" Style="color: #ef4444; text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);">
+                STAGE ARENA
+            </MudText>
+            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
+                DEV SANDBOX
+            </MudChip>
+        </div>
+        <MudText Typo="Typo.body2" Style="color: #94a3b8;" Class="mt-1">
+            60 FPS NES Engine &bull; P1 Physics Lab &bull; Famicom 8px Grid Alignment &bull; Telemetry HUD
         </MudText>
     </div>
 
