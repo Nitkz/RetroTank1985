@@ -581,7 +581,7 @@
         if (_currentStage == null) return;
         try
         {
-            await JS.InvokeVoidAsync("StageRenderer.renderStage", "stageCanvas", _currentStage.Grid, new
+            await JS.InvokeVoidAsync("StageInspector.renderStage", "stageCanvas", _currentStage.Grid, new
             {
                 showGrid = _showGrid,
                 showSpawns = _showSpawns,
@@ -599,7 +599,7 @@
     {
         try
         {
-            await JS.InvokeVoidAsync("StageRenderer.renderCHRSheet", "chrCanvas", _selectedPalIdx, 2);
+            await JS.InvokeVoidAsync("StageInspector.renderCHRSheet", "chrCanvas", _selectedPalIdx, 2);
         }
         catch (Exception ex)
         {
@@ -623,7 +623,7 @@
     {
         try
         {
-            await JS.InvokeVoidAsync("StageRenderer.renderTankPreview", $"tankCanvas_{tank.Id}", tank.EnemyType, tank.Dir, 0, 3);
+            await JS.InvokeVoidAsync("StageInspector.renderTankPreview", $"tankCanvas_{tank.Id}", tank.EnemyType, tank.Dir, 0, 3);
         }
         catch (Exception ex)
         {

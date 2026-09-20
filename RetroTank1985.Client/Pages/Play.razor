@@ -1,10 +1,8 @@
 @page "/play"
-@inject StageService StageService
-@inject IJSRuntime JS
-@implements IAsyncDisposable
 
-<PageTitle>RetroTank 1985 | Dev Sandbox</PageTitle>
+<PageTitle>RetroTank 1985 | Stage Arena</PageTitle>
 
+<!-- Header Section -->
 <div class="mb-4 d-flex flex-column flex-md-row justify-space-between align-start align-md-center gap-4">
     <div>
         <div class="d-flex align-center gap-2">
@@ -12,327 +10,36 @@
                 STAGE ARENA
             </MudText>
             <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
-                DEV SANDBOX
+                C# HYBRID ENGINE
             </MudChip>
         </div>
         <MudText Typo="Typo.body2" Style="color: #94a3b8;" Class="mt-1">
-            60 FPS NES Engine &bull; P1 Physics Lab &bull; Famicom 8px Grid Alignment &bull; Telemetry HUD
+            .NET 9 C# Game Brain &bull; 60 FPS Canvas Muscle &bull; Sub-Tile Destructible Terrain &bull; APU Synth
         </MudText>
     </div>
 
-    <!-- Controls Bar -->
-    <div class="d-flex align-center gap-2 flex-wrap">
-        <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" OnClick="PrevStage" Disabled="@(_selectedStage <= 1)">
-            &lt; PREV
-        </MudButton>
-
-        <MudSelect T="int" Value="@_selectedStage" ValueChanged="OnStageSelected" Dense="true" Margin="Margin.Dense" Style="min-width: 140px; font-family: var(--retro-font); font-size: 0.8rem;">
-            @for (int s = 1; s <= 35; s++)
-            {
-                var stageNum = s;
-                <MudSelectItem Value="@stageNum">STAGE @stageNum.ToString("D2")</MudSelectItem>
-            }
-        </MudSelect>
-
-        <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" OnClick="NextStage" Disabled="@(_selectedStage >= 35)">
-            NEXT &gt;
-        </MudButton>
-
-        <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" OnClick="ResetPlayer" StartIcon="@Icons.Material.Filled.Refresh">
-            SPAWN P1
-        </MudButton>
-
-        <MudButton Variant="Variant.Filled" Color="@(_isMuted ? Color.Default : Color.Success)" Size="Size.Small" OnClick="ToggleMute" StartIcon="@(_isMuted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)">
-            @(_isMuted ? "MUTED" : "SOUND ON")
-        </MudButton>
-    </div>
+    <!-- Top Action & Stage Control Bar -->
+    <GameControlBar SelectedStage="@_selectedStage"
+                    IsMuted="@_isMuted"
+                    StageChanged="OnStageSelected"
+                    OnReset="ResetPlayer"
+                    OnToggleMute="ToggleMute" />
 </div>
 
 <MudGrid Spacing="3">
-    <!-- Left: Main Game Screen Canvas -->
+    <!-- Left: Main Game Screen Canvas & Live Telemetry -->
     <MudItem xs="12" lg="7" Class="d-flex flex-column align-center justify-center">
         <div class="arcade-bezel">
             <canvas id="gameArenaCanvas" class="game-canvas" width="480" height="480"></canvas>
         </div>
 
-        <!-- Telemetry HUD & Status Strip -->
-        <div class="d-flex justify-space-between align-center mt-3 px-3 py-2 w-100" style="max-width: 480px; background: #161a23; border: 1px solid #2c3245; border-radius: 6px;">
-            <div class="d-flex align-center gap-2">
-                <span class="pixel-text" style="font-size: 0.75rem; color: #f1c40f;">FPS: @_telemetryFps</span>
-                <span style="color: #475569;">|</span>
-                <span class="pixel-text" style="font-size: 0.7rem; color: #38bdf8;">POS: (@_telemetryX, @_telemetryY)</span>
-            </div>
-            <div class="d-flex align-center gap-2">
-                <span class="pixel-text" style="font-size: 0.7rem; color: #a855f7;">DIR: @_telemetryDir</span>
-                <span style="color: #475569;">|</span>
-                @if (_telemetryShield)
-                {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.55rem; height: 18px;">
-                        SHIELD
-                    </MudChip>
-                }
-                else
-                {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.55rem; height: 18px;">
-                        ACTIVE
-                    </MudChip>
-                }
-            </div>
-        </div>
+        <TelemetryHud Telemetry="@_telemetry" />
     </MudItem>
 
-    <!-- Right: Controller & Mission Panel -->
+    <!-- Right: Mission Briefing & Virtual Controller -->
     <MudItem xs="12" lg="5">
-        <MudCard Elevation="4" Class="retro-card pa-4 mb-4">
-            <MudText Typo="Typo.h6" Class="pixel-text mb-3" Style="color: #f1c40f; font-size: 0.9rem;">
-                MISSION BRIEFING &bull; STAGE @_selectedStage.ToString("D2")
-            </MudText>
+        <MissionBriefingCard StageNumber="@_selectedStage" Stage="@_currentStage" />
 
-            @if (_currentStage != null)
-            {
-                <div class="d-flex justify-space-between align-center mb-3">
-                    <MudText Typo="Typo.body2" Style="color: #cbd5e1;">Enemy Battalion:</MudText>
-                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
-                        20 TANKS
-                    </MudChip>
-                </div>
-
-                <MudGrid Spacing="1" Class="mb-3">
-                    <MudItem xs="6" sm="3">
-                        <div class="pa-2 text-center" style="background: #0f172a; border-radius: 4px; border: 1px solid #1e293b;">
-                            <div class="pixel-text" style="font-size: 0.65rem; color: #94a3b8;">BASIC</div>
-                            <div class="pixel-text" style="font-size: 1rem; color: #f1c40f;">@_currentStage.EnemyCounts.Basic</div>
-                        </div>
-                    </MudItem>
-                    <MudItem xs="6" sm="3">
-                        <div class="pa-2 text-center" style="background: #0f172a; border-radius: 4px; border: 1px solid #1e293b;">
-                            <div class="pixel-text" style="font-size: 0.65rem; color: #94a3b8;">FAST</div>
-                            <div class="pixel-text" style="font-size: 1rem; color: #38bdf8;">@_currentStage.EnemyCounts.Fast</div>
-                        </div>
-                    </MudItem>
-                    <MudItem xs="6" sm="3">
-                        <div class="pa-2 text-center" style="background: #0f172a; border-radius: 4px; border: 1px solid #1e293b;">
-                            <div class="pixel-text" style="font-size: 0.65rem; color: #94a3b8;">POWER</div>
-                            <div class="pixel-text" style="font-size: 1rem; color: #fb923c;">@_currentStage.EnemyCounts.Power</div>
-                        </div>
-                    </MudItem>
-                    <MudItem xs="6" sm="3">
-                        <div class="pa-2 text-center" style="background: #0f172a; border-radius: 4px; border: 1px solid #1e293b;">
-                            <div class="pixel-text" style="font-size: 0.65rem; color: #94a3b8;">ARMOR</div>
-                            <div class="pixel-text" style="font-size: 1rem; color: #4ade80;">@_currentStage.EnemyCounts.Armor</div>
-                        </div>
-                    </MudItem>
-                </MudGrid>
-            }
-
-            <MudDivider Class="my-3" Style="border-color: #2c3245;" />
-
-            <!-- Keyboard Guide -->
-            <MudText Typo="Typo.subtitle2" Class="pixel-text mb-2" Style="color: #94a3b8; font-size: 0.75rem;">
-                KEYBOARD COMMANDS
-            </MudText>
-            <div class="d-flex flex-column gap-2" style="font-size: 0.85rem; color: #94a3b8;">
-                <div class="d-flex justify-space-between">
-                    <span>Move 4 Directions:</span>
-                    <span class="pixel-text" style="color: #f1c40f; font-size: 0.7rem;">W, A, S, D / ARROWS</span>
-                </div>
-                <div class="d-flex justify-space-between">
-                    <span>Fire Bullet:</span>
-                    <span class="pixel-text" style="color: #ef4444; font-size: 0.7rem;">SPACEBAR / J</span>
-                </div>
-                <div class="d-flex justify-space-between">
-                    <span>Pause / Resume:</span>
-                    <span class="pixel-text" style="color: #38bdf8; font-size: 0.7rem;">P / ESCAPE</span>
-                </div>
-            </div>
-        </MudCard>
-
-        <!-- Virtual Touch / Mobile Controller Panel -->
-        <MudCard Elevation="4" Class="retro-card pa-4">
-            <div class="d-flex justify-space-between align-center mb-3">
-                <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.9rem;">
-                    TOUCH / MOBILE D-PAD
-                </MudText>
-                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined" Class="pixel-text" Style="font-size: 0.55rem;">
-                    ON-SCREEN
-                </MudChip>
-            </div>
-
-            <div class="d-flex justify-space-around align-center py-2">
-                <!-- Virtual D-Pad -->
-                <div class="dpad-container">
-                    <div></div>
-                    <button class="dpad-btn" 
-                            @ontouchstart="@(() => HandleVirtualTouch("up", true))" 
-                            @ontouchend="@(() => HandleVirtualTouch("up", false))"
-                            @onmousedown="@(() => HandleVirtualTouch("up", true))" 
-                            @onmouseup="@(() => HandleVirtualTouch("up", false))">
-                        ▲
-                    </button>
-                    <div></div>
-
-                    <button class="dpad-btn" 
-                            @ontouchstart="@(() => HandleVirtualTouch("left", true))" 
-                            @ontouchend="@(() => HandleVirtualTouch("left", false))"
-                            @onmousedown="@(() => HandleVirtualTouch("left", true))" 
-                            @onmouseup="@(() => HandleVirtualTouch("left", false))">
-                        ◀
-                    </button>
-                    <div style="display:flex;align-items:center;justify-content:center;">
-                        <span style="width:12px;height:12px;background:#334155;border-radius:50%;"></span>
-                    </div>
-                    <button class="dpad-btn" 
-                            @ontouchstart="@(() => HandleVirtualTouch("right", true))" 
-                            @ontouchend="@(() => HandleVirtualTouch("right", false))"
-                            @onmousedown="@(() => HandleVirtualTouch("right", true))" 
-                            @onmouseup="@(() => HandleVirtualTouch("right", false))">
-                        ▶
-                    </button>
-
-                    <div></div>
-                    <button class="dpad-btn" 
-                            @ontouchstart="@(() => HandleVirtualTouch("down", true))" 
-                            @ontouchend="@(() => HandleVirtualTouch("down", false))"
-                            @onmousedown="@(() => HandleVirtualTouch("down", true))" 
-                            @onmouseup="@(() => HandleVirtualTouch("down", false))">
-                        ▼
-                    </button>
-                    <div></div>
-                </div>
-
-                <!-- Virtual Fire Button -->
-                <div class="d-flex flex-column align-center gap-2">
-                    <button class="fire-btn" 
-                            @ontouchstart="@(() => HandleVirtualTouch("fire", true))"
-                            @ontouchend="@(() => HandleVirtualTouch("fire", false))"
-                            @onmousedown="@(() => HandleVirtualTouch("fire", true))"
-                            @onmouseup="@(() => HandleVirtualTouch("fire", false))">
-                        FIRE
-                    </button>
-                    <MudButton Variant="Variant.Filled" Color="Color.Dark" Size="Size.Small" OnClick="TogglePause" Style="font-size:0.65rem;" Class="pixel-text">
-                        PAUSE
-                    </MudButton>
-                </div>
-            </div>
-        </MudCard>
+        <VirtualDPad />
     </MudItem>
 </MudGrid>
-
-@code {
-    private int _selectedStage = 1;
-    private StageModel? _currentStage;
-    private bool _isMuted = false;
-    private DotNetObjectReference<Play>? _dotNetRef;
-
-    // Telemetry
-    private int _telemetryFps = 60;
-    private int _telemetryX = 64;
-    private int _telemetryY = 192;
-    private string _telemetryDir = "UP";
-    private bool _telemetryShield = true;
-
-    protected override async Task OnInitializedAsync()
-    {
-        _currentStage = await StageService.GetStageAsync(_selectedStage);
-    }
-
-    private bool _engineStarted = false;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            _dotNetRef = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync("GameEngine.setTelemetryDotNetRef", _dotNetRef);
-        }
-
-        if (!_engineStarted)
-        {
-            if (_currentStage == null)
-            {
-                _currentStage = await StageService.GetStageAsync(_selectedStage);
-            }
-
-            if (_currentStage != null)
-            {
-                await Task.Delay(50); // Ensure Canvas DOM is fully rendered in browser
-                var success = await JS.InvokeAsync<bool>("GameEngine.init", "gameArenaCanvas", _currentStage.Grid, _selectedStage);
-                if (success)
-                {
-                    _engineStarted = true;
-                    await JS.InvokeVoidAsync("GameEngine.start");
-                }
-            }
-        }
-    }
-
-    [JSInvokable]
-    public void UpdateTelemetry(int fps, int x, int y, string dir, bool shield)
-    {
-        _telemetryFps = fps;
-        _telemetryX = x;
-        _telemetryY = y;
-        _telemetryDir = dir;
-        _telemetryShield = shield;
-        StateHasChanged();
-    }
-
-    private async Task OnStageSelected(int stageNum)
-    {
-        _selectedStage = stageNum;
-        _currentStage = await StageService.GetStageAsync(stageNum);
-        if (_currentStage != null)
-        {
-            await JS.InvokeVoidAsync("GameEngine.setStage", _currentStage.Grid, _selectedStage);
-        }
-    }
-
-    private async Task NextStage()
-    {
-        if (_selectedStage < 35)
-        {
-            await OnStageSelected(_selectedStage + 1);
-        }
-    }
-
-    private async Task PrevStage()
-    {
-        if (_selectedStage > 1)
-        {
-            await OnStageSelected(_selectedStage - 1);
-        }
-    }
-
-    private async Task ResetPlayer()
-    {
-        await JS.InvokeVoidAsync("GameEngine.resetPlayer");
-    }
-
-    private async Task ToggleMute()
-    {
-        _isMuted = await JS.InvokeAsync<bool>("nesSynth.toggleMute");
-    }
-
-    private async Task TogglePause()
-    {
-        await JS.InvokeVoidAsync("GameEngine.togglePause");
-    }
-
-    private async Task HandleVirtualTouch(string control, bool isPressed)
-    {
-        await JS.InvokeVoidAsync("GameEngine.setVirtualInput", control, isPressed);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("GameEngine.stop");
-            _dotNetRef?.Dispose();
-        }
-        catch (Exception)
-        {
-            // Ignored on teardown
-        }
-    }
-}

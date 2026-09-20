@@ -1,0 +1,28 @@
+<div class="d-flex justify-space-between align-center mt-3 px-3 py-2 w-100" 
+     style="max-width: 480px; background: #161a23; border: 1px solid #2c3245; border-radius: 6px;">
+    <div class="d-flex align-center gap-2">
+        <span class="pixel-text" style="font-size: 0.75rem; color: #f1c40f;">FPS: @Telemetry.Fps</span>
+        <span style="color: #475569;">|</span>
+        <span class="pixel-text" style="font-size: 0.7rem; color: #38bdf8;">POS: (@Telemetry.X, @Telemetry.Y)</span>
+    </div>
+    <div class="d-flex align-center gap-2">
+        <span class="pixel-text" style="font-size: 0.7rem; color: #a855f7;">DIR: @Telemetry.Direction</span>
+        <span style="color: #475569;">|</span>
+        @if (Telemetry.Shield)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.55rem; height: 18px;">
+                SHIELD
+            </MudChip>
+        }
+        else
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.55rem; height: 18px;">
+                ACTIVE
+            </MudChip>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public TelemetryData Telemetry { get; set; } = new();
+}
