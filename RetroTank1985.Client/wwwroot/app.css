@@ -1,4 +1,4 @@
-﻿/* Custom Retro Theme CSS for Battle City NES Remake */
+/* Custom Retro Theme CSS for Battle City NES Remake */
 :root {
     --retro-font: 'Press Start 2P', monospace;
     --ui-font: 'Rajdhani', sans-serif;
@@ -64,3 +64,83 @@ body.retro-body {
 .tag-pulse { background: rgba(231, 76, 60, 0.2); color: #ff7979; border: 1px solid #e74c3c; }
 .tag-noise { background: rgba(241, 196, 15, 0.2); color: #f9ca24; border: 1px solid #f1c40f; }
 .tag-tri { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
+
+/* Arcade Canvas Screen & Frame */
+.arcade-bezel {
+    background: #1e2430;
+    border: 4px solid #334155;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 0, 0, 0.6);
+    display: inline-block;
+}
+
+.game-canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-color: #000000;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(241, 196, 15, 0.15);
+    max-width: 100%;
+    height: auto;
+}
+
+/* Virtual D-Pad & Mobile Controller */
+.dpad-container {
+    display: grid;
+    grid-template-columns: repeat(3, 56px);
+    grid-template-rows: repeat(3, 56px);
+    gap: 6px;
+    touch-action: none;
+    user-select: none;
+}
+
+.dpad-btn {
+    background: #1e293b;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    color: #f1c40f;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    transition: all 0.1s ease;
+    box-shadow: 0 4px 0 #0f172a;
+}
+
+.dpad-btn:active, .dpad-btn.active {
+    background: #334155;
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #0f172a;
+    border-color: #f1c40f;
+}
+
+.fire-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #e74c3c 0%, #c0392b 100%);
+    border: 3px solid #f87171;
+    color: #ffffff;
+    font-family: var(--retro-font);
+    font-size: 0.9rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #7f1d1d, 0 0 15px rgba(231, 76, 60, 0.5);
+    touch-action: none;
+    user-select: none;
+    transition: all 0.1s ease;
+}
+
+.fire-btn:active, .fire-btn.active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #7f1d1d, 0 0 25px rgba(231, 76, 60, 0.8);
+    background: radial-gradient(circle, #ff6b6b 0%, #e74c3c 100%);
+}
+

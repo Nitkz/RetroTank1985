@@ -165,18 +165,18 @@ window.StageRenderer = (function () {
       return true;
     },
 
-    async renderStage(canvasId, grid, options = {}) {
+    async renderStage(canvasOrId, grid, options = {}) {
       await loadCHRImage();
-      const canvas = document.getElementById(canvasId);
+      const canvas = typeof canvasOrId === 'string' ? document.getElementById(canvasOrId) : canvasOrId;
       if (!canvas) {
-        console.warn(`[StageRenderer] canvas #${canvasId} not found in DOM`);
+        console.warn(`[StageRenderer] canvas not found in DOM`);
         return;
       }
       if (!grid || !grid.length) {
-        console.warn(`[StageRenderer] grid is empty or null for #${canvasId}`);
+        console.warn(`[StageRenderer] grid is empty or null`);
         return;
       }
-      console.log(`[StageRenderer] rendering stage onto #${canvasId}, grid rows:`, grid.length);
+      console.log(`[StageRenderer] rendering stage onto ${canvas.id || 'canvas'}, grid rows:`, grid.length);
 
       const {
         showGrid = false,
@@ -410,7 +410,7 @@ window.StageRenderer = (function () {
 
       // dir: 0=UP, 1=LEFT, 2=DOWN, 3=RIGHT
       const dirOffset = dir * 8;
-      const frameOffset = (animFrame % 2) * 2;
+      const frameOffset = (animFrame % 2) * 4;
       const T = base + dirOffset + frameOffset;
 
       const tiles = [T, T + 2, T + 1, T + 3];
@@ -429,6 +429,14 @@ window.StageRenderer = (function () {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       drawMetasprite(ctx, tiles, palIdx, 0, 0, pt1, scale);
+    },
+
+    drawMetasprite(ctx, tiles, palIdx, dx, dy, pt1 = false, scale = SCALE) {
+      drawMetasprite(ctx, tiles, palIdx, dx, dy, pt1, scale);
+    },
+
+    getCachedTile(tileAbs, palIdx, transparent = false, scale = SCALE) {
+      return getCachedCHRTile(tileAbs, palIdx, transparent, scale);
     }
   };
 })();
