@@ -10,16 +10,23 @@ public partial class Play : ComponentBase, IAsyncDisposable
 {
     [Inject] private StageService StageService { get; set; } = default!;
     [Inject] private GameEngineService EngineService { get; set; } = default!;
+    [Inject] private GameStorageService StorageService { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
     private int _selectedStage = 1;
     private StageModel? _currentStage;
     private bool _isMuted = false;
+    private bool _isTwoPlayer = false;
+    private int _highScore = 20000;
     private bool _engineStarted = false;
     private TelemetryData _telemetry = new();
 
     protected override async Task OnInitializedAsync()
     {
+        _highScore = await StorageService.GetHighScoreAsync();
+        var audioPrefs = await StorageService.GetAudioPreferencesAsync();
+        _isMuted = audioPrefs.IsMuted;
+
         _currentStage = await StageService.GetStageAsync(_selectedStage);
         EngineService.OnTelemetryUpdated += HandleTelemetry;
     }
@@ -40,6 +47,10 @@ public partial class Play : ComponentBase, IAsyncDisposable
                 if (success)
                 {
                     _engineStarted = true;
+                    if (_isMuted)
+                    {
+                        await JS.InvokeVoidAsync("nesSynth.setMute", true);
+                    }
                     await EngineService.StartAsync();
                 }
             }
@@ -49,6 +60,10 @@ public partial class Play : ComponentBase, IAsyncDisposable
     private void HandleTelemetry(TelemetryData telemetry)
     {
         _telemetry = telemetry;
+        if (telemetry.HighScore > _highScore)
+        {
+            _highScore = telemetry.HighScore;
+        }
         StateHasChanged();
     }
 
@@ -63,23 +78,32 @@ public partial class Play : ComponentBase, IAsyncDisposable
         }
     }
 
+    private void ToggleTwoPlayerMode()
+    {
+        _isTwoPlayer = !_isTwoPlayer;
+        EngineService.SetTwoPlayerMode(_isTwoPlayer);
+        StateHasChanged();
+    }
+
     private async Task ResetPlayer() => await EngineService.ResetPlayerAsync();
 
     private async Task RestartStage() => await EngineService.RestartCurrentStage();
 
-    private async Task ToggleMute() => _isMuted = await JS.InvokeAsync<bool>("nesSynth.toggleMute");
+    private async Task ToggleMute()
+    {
+        _isMuted = await JS.InvokeAsync<bool>("nesSynth.toggleMute");
+        await StorageService.SaveAudioPreferencesAsync(new AudioPreferences { IsMuted = _isMuted });
+    }
 
     private async Task TogglePause() => await EngineService.TogglePauseAsync();
 
     private async Task HandleVirtualTouch((string control, bool isPressed) args) =>
         await EngineService.SetVirtualInputAsync(args.control, args.isPressed);
 
-
     private void HandleDebugSpawn(Components.Play.GameDebugSandboxPanel.EnemyTypeSpawnArgs args)
     {
         EngineService.Engine.SpawnEnemyDebug(args.Type, -1, args.IsFlashing);
     }
-
 
     private void HandleDebugNuke()
     {
@@ -93,12 +117,20 @@ public partial class Play : ComponentBase, IAsyncDisposable
 
     private void HandleDebugStarPower(int starLevel)
     {
-        EngineService.Engine.SetPlayerStarPower(starLevel);
+        EngineService.Engine.SetPlayerStarPower(starLevel, 1);
+        if (_isTwoPlayer)
+        {
+            EngineService.Engine.SetPlayerStarPower(starLevel, 2);
+        }
     }
 
     private void HandleDebugShieldToggle()
     {
-        EngineService.Engine.TogglePlayerShield();
+        EngineService.Engine.TogglePlayerShield(1);
+        if (_isTwoPlayer)
+        {
+            EngineService.Engine.TogglePlayerShield(2);
+        }
     }
 
     private void HandleDebugFortifyEagle(bool fortified)
@@ -132,4 +164,3 @@ public partial class Play : ComponentBase, IAsyncDisposable
         await EngineService.DisposeAsync();
     }
 }
-

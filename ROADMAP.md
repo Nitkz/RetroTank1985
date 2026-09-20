@@ -14,8 +14,9 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 | **Phase 4** | Enemy AI & Wave Spawning System | ✅ **Completed** | 2026-09-20 |
 | **Phase 5** | Phoenix Eagle Base & Droppable Power-Up System | ✅ **Completed** | 2026-09-20 |
 | **Phase 6** | Stage Transitions, Score Tally & Game Over Flow | ✅ **Completed** | 2026-09-20 |
-| **Phase 7** | Two-Player Co-Op & High Score Persistence | ⏳ **Planned** | Future |
+| **Phase 7** | Two-Player Co-Op & High Score Persistence | ✅ **Completed** | 2026-09-20 |
 | **Phase 8** | 👑 Epic Boss Battles & Special Munition Crates | 💡 **New / Planned** | Future Expansion |
+| **Phase 9** | 🛠️ Stage Editor & Custom Campaign Builder | ⏳ **Planned** | Future Expansion |
 
 ---
 
@@ -122,10 +123,19 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 
 ---
 
-### ⏳ Phase 7: Two-Player Co-Op & High Score Persistence
-- [ ] **Player 2 Green Tank Support**: Local 2-player mode with split keyboard / dual controller support.
-- [ ] **Local Storage Persistence**: Best stage progression, high scores, and audio preference saving.
-- [ ] **Stage Editor**: Custom map creator and export tool.
+### ✅ Phase 7: Two-Player Co-Op & High Score Persistence (Done)
+- [x] **Player 2 Green Tank Support**:
+  - Local 2-Player Co-Op mode with split keyboard (`WASD + Space/J` for P1, `Arrow Keys + Enter/K/L/Numpad0` for P2) & touch controls.
+  - Authentic NES SP1 Green Palette (`#2ecc71` / `#4cd020`) tank rendering with independent Star Power tiers and shields.
+  - Authentic 2-Player Side HUD with both `IP` and `IIP` life meters and mini tank icons.
+  - Authentic 2-Player Stage Tally Screen with dual-column kill breakdowns (`I-PLAYER` vs `II-PLAYER`), winner victory banner / draw result, and reading delay.
+  - Friendly fire physics: Teammate bullet cancellation with spark clink without reducing lives.
+  - Mutual player-vs-player and enemy separation physics with anti-lock movement.
+  - Independent respawn cooldowns and cooperative game over mechanics (game over only when base is destroyed or both players are eliminated).
+- [x] **Local Storage Persistence**:
+  - Browser `localStorage` persistence service (`GameStorageService.cs`).
+  - High Score tracking (starts at 20,000, updates and saves in real-time when exceeded).
+  - Maximum stage progression and audio preferences (mute state / volume) auto-saved across sessions.
 
 ---
 
@@ -148,5 +158,17 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
     - 🎯 **Armor Piercing AP Shells**: Inflicts double damage on Boss armor plating.
 
 ---
+
+### ⏳ Phase 9: 🛠️ Stage Editor & Custom Campaign Builder (Planned)
+- [ ] **Interactive Visual Tile Painter**:
+  - 13×13 tile / 26×26 sub-tile drag-and-drop grid editor for Brick, Steel, Water, Trees, Ice, and Eagle HQ.
+- [ ] **Wave & Enemy Spawner Configurator**:
+  - Custom 20-tank queue composition designer (configure quantities of Basic, Fast, Power, and Armor tanks + Flashing tank assignment).
+- [ ] **Campaign Slots & LocalStorage Management**:
+  - Multi-slot save/load system for user-created custom maps.
+- [ ] **JSON Import / Export Pipeline**:
+  - One-click export to official JSON stage format and import from clipboard/file.
+- [ ] **Instant Test-Play Arena**:
+  - Test-drive custom maps directly in the arena without leaving the editor.
 
 *Last Updated: 2026-09-20 • RetroTank 1985 Core Team*

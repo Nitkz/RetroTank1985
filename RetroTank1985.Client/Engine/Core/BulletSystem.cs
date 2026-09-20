@@ -4,7 +4,6 @@ using RetroTank1985.Client.Models;
 
 namespace RetroTank1985.Client.Engine.Core;
 
-
 public interface IBulletSystem
 {
     IReadOnlyList<Bullet> ActiveBullets { get; }
@@ -12,11 +11,15 @@ public interface IBulletSystem
 
     bool TryFirePlayerBullet(PlayerTank player, IAudioEventQueue audioQueue);
     bool TryFireEnemyBullet(EnemyTank enemy, IAudioEventQueue audioQueue);
-    void Update(PlayerTank player, IReadOnlyList<EnemyTank> enemies, IDestructibleMap map, IAudioEventQueue audioQueue, Action<EnemyTank> onEnemyKilled);
+    void Update(
+        IReadOnlyList<PlayerTank> players,
+        IReadOnlyList<EnemyTank> enemies,
+        IDestructibleMap map,
+        IAudioEventQueue audioQueue,
+        Action<EnemyTank, int> onEnemyKilled);
     void Clear();
     void SpawnExplosion(float x, float y, bool isBig = false);
 }
-
 
 public class BulletSystem : IBulletSystem
 {
@@ -77,7 +80,7 @@ public class BulletSystem : IBulletSystem
         int activePlayerBullets = 0;
         for (int i = 0; i < _bullets.Count; i++)
         {
-            if (_bullets[i].IsPlayerBullet && _bullets[i].IsActive)
+            if (_bullets[i].IsPlayerBullet && _bullets[i].OwnerPlayer == player.PlayerIndex && _bullets[i].IsActive)
                 activePlayerBullets++;
         }
 
@@ -106,6 +109,7 @@ public class BulletSystem : IBulletSystem
         }
 
         bullet.Id = _nextBulletId++;
+        bullet.OwnerPlayer = player.PlayerIndex;
         bullet.X = bx;
         bullet.Y = by;
         bullet.Direction = player.Direction;
@@ -161,12 +165,12 @@ public class BulletSystem : IBulletSystem
 
         bullet.Id = _nextBulletId++;
         bullet.OwnerId = enemy.Id;
+        bullet.OwnerPlayer = 0;
         bullet.X = bx;
         bullet.Y = by;
         bullet.Direction = enemy.Direction;
         bullet.Speed = enemy.Type == EnemyType.Power ? Bullet.FastSpeed : Bullet.NormalSpeed;
         bullet.IsPlayerBullet = false;
-
         bullet.CanBreakSteel = false;
         bullet.IsActive = true;
 
@@ -179,11 +183,11 @@ public class BulletSystem : IBulletSystem
     }
 
     public void Update(
-        PlayerTank player, 
+        IReadOnlyList<PlayerTank> players, 
         IReadOnlyList<EnemyTank> enemies, 
         IDestructibleMap map, 
         IAudioEventQueue audioQueue, 
-        Action<EnemyTank> onEnemyKilled)
+        Action<EnemyTank, int> onEnemyKilled)
     {
         // 1. Update Bullets Movement & Terrain Collision
         for (int i = _bullets.Count - 1; i >= 0; i--)
@@ -226,6 +230,7 @@ public class BulletSystem : IBulletSystem
             // 2. Player Bullet vs Enemy Tanks Collision (10x10 px hitbox)
             if (b.IsPlayerBullet)
             {
+                bool hitTarget = false;
                 for (int eIdx = 0; eIdx < enemies.Count; eIdx++)
                 {
                     var enemy = enemies[eIdx];
@@ -241,7 +246,7 @@ public class BulletSystem : IBulletSystem
                             enemy.IsActive = false;
                             SpawnExplosion(enemy.X, enemy.Y, true);
                             audioQueue.Enqueue(AudioSoundEffect.Explosion);
-                            onEnemyKilled(enemy);
+                            onEnemyKilled(enemy, b.OwnerPlayer);
                         }
                         else
                         {
@@ -250,32 +255,60 @@ public class BulletSystem : IBulletSystem
                         }
 
                         _bullets.RemoveAt(i);
+                        hitTarget = true;
                         break;
                     }
                 }
-            }
-            // 3. Enemy Bullet vs Player Tank Collision
-            else if (!b.IsPlayerBullet && player.IsActive)
-            {
-                if (MathF.Abs(b.X - player.X) < 14f && MathF.Abs(b.Y - player.Y) < 14f)
-                {
-                    b.IsActive = false;
-                    _bullets.RemoveAt(i);
+                if (hitTarget) continue;
 
-                    if (player.ShieldActive)
+                // Check friendly fire with teammate (cancels bullet with spark / hitSteel sound)
+                for (int pIdx = 0; pIdx < players.Count; pIdx++)
+                {
+                    var otherP = players[pIdx];
+                    if (otherP.IsActive && otherP.PlayerIndex != b.OwnerPlayer)
                     {
-                        SpawnExplosion(b.X, b.Y, false);
-                        audioQueue.Enqueue(AudioSoundEffect.HitSteel);
+                        if (MathF.Abs(b.X - otherP.X) < 14f && MathF.Abs(b.Y - otherP.Y) < 14f)
+                        {
+                            b.IsActive = false;
+                            SpawnExplosion(b.X, b.Y, false);
+                            audioQueue.Enqueue(AudioSoundEffect.HitSteel);
+                            _bullets.RemoveAt(i);
+                            hitTarget = true;
+                            break;
+                        }
                     }
-                    else
-                    {
-                        player.IsActive = false;
-                        player.Lives--;
-                        SpawnExplosion(player.X, player.Y, true);
-                        audioQueue.Enqueue(AudioSoundEffect.Explosion);
-                    }
-                    continue;
                 }
+                if (hitTarget) continue;
+            }
+            // 3. Enemy Bullet vs Players Collision
+            else if (!b.IsPlayerBullet)
+            {
+                bool hitPlayer = false;
+                for (int pIdx = 0; pIdx < players.Count; pIdx++)
+                {
+                    var player = players[pIdx];
+                    if (player.IsActive && MathF.Abs(b.X - player.X) < 14f && MathF.Abs(b.Y - player.Y) < 14f)
+                    {
+                        b.IsActive = false;
+                        _bullets.RemoveAt(i);
+
+                        if (player.ShieldActive)
+                        {
+                            SpawnExplosion(b.X, b.Y, false);
+                            audioQueue.Enqueue(AudioSoundEffect.HitSteel);
+                        }
+                        else
+                        {
+                            player.IsActive = false;
+                            player.Lives--;
+                            SpawnExplosion(player.X, player.Y, true);
+                            audioQueue.Enqueue(AudioSoundEffect.Explosion);
+                        }
+                        hitPlayer = true;
+                        break;
+                    }
+                }
+                if (hitPlayer) continue;
             }
         }
 
@@ -298,8 +331,7 @@ public class BulletSystem : IBulletSystem
             }
         }
 
-
-        // 3. Update Explosions
+        // 5. Update Explosions
         for (int i = _explosions.Count - 1; i >= 0; i--)
         {
             var ex = _explosions[i];
@@ -345,3 +377,4 @@ public class BulletSystem : IBulletSystem
         _explosions.Clear();
     }
 }
+

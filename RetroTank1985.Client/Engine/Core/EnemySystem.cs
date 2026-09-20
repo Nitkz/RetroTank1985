@@ -10,13 +10,15 @@ public interface IEnemySystem
     int EnemiesRemaining { get; }
     int ActiveEnemyCount { get; }
     int[] KillsByType { get; }
+    int[] KillsByTypeP1 { get; }
+    int[] KillsByTypeP2 { get; }
     int TotalKills { get; }
     bool IsWaveCleared { get; }
 
     void InitializeWave(StageModel? stage);
-    void Update(PlayerTank player, IDestructibleMap map, IBulletSystem bullets, IAudioEventQueue audioQueue, Action<EnemyTank>? onEnemyKilled = null);
+    void Update(IReadOnlyList<PlayerTank> players, IDestructibleMap map, IBulletSystem bullets, IAudioEventQueue audioQueue, Action<EnemyTank, int>? onEnemyKilled = null);
     void Clear();
-    void RecordKill(EnemyType type);
+    void RecordKill(EnemyType type, int playerIndex = 1);
     bool TrySpawnEnemyDebug(EnemyType type, int spawnPointIndex = -1, bool isFlashing = false);
     void NukeAllEnemies(IBulletSystem bullets, IAudioEventQueue audioQueue, Action<int> onEnemyKilled);
     void SimulateClearAllEnemies(IBulletSystem bullets, IAudioEventQueue audioQueue, Action<int> onEnemyKilled);
@@ -41,7 +43,9 @@ public class EnemySystem : IEnemySystem
     private readonly EnemyTank[] _enemyPool = new EnemyTank[MaxConcurrentEnemies];
     private readonly List<EnemyType> _waveQueue = new(TotalWaveEnemies);
     private readonly HashSet<int> _flashingIndices = new() { 3, 10, 17 }; // Standard NES 4th, 11th, 18th enemies flash
-    private readonly int[] _killsByType = new int[4]; // 0: Basic, 1: Fast, 2: Power, 3: Armor
+    private readonly int[] _killsByTypeP1 = new int[4]; // 0: Basic, 1: Fast, 2: Power, 3: Armor
+    private readonly int[] _killsByTypeP2 = new int[4];
+    private readonly int[] _killsByTypeCombined = new int[4];
 
     private int _spawnPointRotator = 0;
     private int _spawnDelayTimer = 0;
@@ -52,8 +56,17 @@ public class EnemySystem : IEnemySystem
     public IReadOnlyList<EnemyTank> ActiveEnemies => _enemies;
     public int EnemiesRemaining => Math.Max(0, TotalWaveEnemies - _spawnedCount) + ActiveEnemyCount;
     public int ActiveEnemyCount => _enemies.Count(e => e.IsActive);
-    public int[] KillsByType => _killsByType;
-    public int TotalKills => _killsByType[0] + _killsByType[1] + _killsByType[2] + _killsByType[3];
+    public int[] KillsByType
+    {
+        get
+        {
+            for (int i = 0; i < 4; i++) _killsByTypeCombined[i] = _killsByTypeP1[i] + _killsByTypeP2[i];
+            return _killsByTypeCombined;
+        }
+    }
+    public int[] KillsByTypeP1 => _killsByTypeP1;
+    public int[] KillsByTypeP2 => _killsByTypeP2;
+    public int TotalKills => KillsByType[0] + KillsByType[1] + KillsByType[2] + KillsByType[3];
     public bool IsWaveCleared => _spawnedCount >= TotalWaveEnemies && ActiveEnemyCount == 0;
 
     public EnemySystem()
@@ -67,7 +80,9 @@ public class EnemySystem : IEnemySystem
     public void InitializeWave(StageModel? stage)
     {
         Clear();
-        Array.Clear(_killsByType, 0, _killsByType.Length);
+        Array.Clear(_killsByTypeP1, 0, _killsByTypeP1.Length);
+        Array.Clear(_killsByTypeP2, 0, _killsByTypeP2.Length);
+        Array.Clear(_killsByTypeCombined, 0, _killsByTypeCombined.Length);
         _waveQueue.Clear();
         _spawnedCount = 0;
         _spawnDelayTimer = 60; // Initial delay before 1st enemy spawns
@@ -184,11 +199,11 @@ public class EnemySystem : IEnemySystem
     }
 
     public void Update(
-        PlayerTank player, 
+        IReadOnlyList<PlayerTank> players, 
         IDestructibleMap map, 
         IBulletSystem bullets, 
         IAudioEventQueue audioQueue, 
-        Action<EnemyTank>? onEnemyKilled = null)
+        Action<EnemyTank, int>? onEnemyKilled = null)
     {
         // 1. Wave Spawner Tick
         TickSpawner();
@@ -241,10 +256,10 @@ public class EnemySystem : IEnemySystem
                 e.MoveDecisionTimer = 0;
                 e.TurnCooldown = 20;
 
-                // 40% chance to hunt eagle base / player, 60% random direction
+                // 45% chance to hunt eagle base / nearest player, 55% random direction
                 if (_rand.NextDouble() < 0.45)
                 {
-                    e.Direction = ChooseDirectionTowardTarget(e, player, map);
+                    e.Direction = ChooseDirectionTowardTarget(e, players, map);
                 }
                 else
                 {
@@ -258,7 +273,7 @@ public class EnemySystem : IEnemySystem
             float nextY = e.Y + dy;
 
             bool canMove = map.CanTankMoveTo(nextX, nextY, EnemyTank.TankSize) 
-                           && !CollidesWithPlayer(e, nextX, nextY, player) 
+                           && !CollidesWithAnyPlayer(e, nextX, nextY, players) 
                            && !CollidesWithOtherEnemy(e, nextX, nextY, _enemies);
 
             if (canMove)
@@ -279,7 +294,7 @@ public class EnemySystem : IEnemySystem
                 }
 
                 // Pick alternative direction that is open (avoid getting permanently stuck)
-                e.Direction = PickOpenDirection(e, map, player, _enemies);
+                e.Direction = PickOpenDirection(e, map, players, _enemies);
                 e.TurnCooldown = 15;
             }
 
@@ -293,19 +308,27 @@ public class EnemySystem : IEnemySystem
 
     private const float TankCollisionThreshold = 14.0f; // 14px threshold allows turning in 16px alleys
 
-    private static bool CollidesWithPlayer(EnemyTank e, float nextX, float nextY, PlayerTank player)
+    private static bool CollidesWithAnyPlayer(EnemyTank e, float nextX, float nextY, IReadOnlyList<PlayerTank> players)
     {
-        if (!player.IsActive) return false;
-        
-        // If already overlapping/stuck, allow moving away (if distance is increasing)
-        float currentDist = MathF.Max(MathF.Abs(e.X - player.X), MathF.Abs(e.Y - player.Y));
-        float nextDist = MathF.Max(MathF.Abs(nextX - player.X), MathF.Abs(nextY - player.Y));
-        if (currentDist < TankCollisionThreshold && nextDist > currentDist)
+        for (int pIdx = 0; pIdx < players.Count; pIdx++)
         {
-            return false; // Moving away, allow it
-        }
+            var player = players[pIdx];
+            if (!player.IsActive) continue;
 
-        return MathF.Abs(nextX - player.X) < TankCollisionThreshold && MathF.Abs(nextY - player.Y) < TankCollisionThreshold;
+            // If already overlapping/stuck, allow moving away (if distance is increasing)
+            float currentDist = MathF.Max(MathF.Abs(e.X - player.X), MathF.Abs(e.Y - player.Y));
+            float nextDist = MathF.Max(MathF.Abs(nextX - player.X), MathF.Abs(nextY - player.Y));
+            if (currentDist < TankCollisionThreshold && nextDist > currentDist)
+            {
+                continue; // Moving away, allow it
+            }
+
+            if (MathF.Abs(nextX - player.X) < TankCollisionThreshold && MathF.Abs(nextY - player.Y) < TankCollisionThreshold)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static bool CollidesWithOtherEnemy(EnemyTank e, float nextX, float nextY, List<EnemyTank> enemies)
@@ -330,7 +353,7 @@ public class EnemySystem : IEnemySystem
         return false;
     }
 
-    private Direction PickOpenDirection(EnemyTank e, IDestructibleMap map, PlayerTank player, List<EnemyTank> enemies)
+    private Direction PickOpenDirection(EnemyTank e, IDestructibleMap map, IReadOnlyList<PlayerTank> players, List<EnemyTank> enemies)
     {
         // Try all 4 directions in randomized order to find an open path
         var dirs = new Direction[] { Direction.Down, Direction.Left, Direction.Right, Direction.Up };
@@ -347,7 +370,7 @@ public class EnemySystem : IEnemySystem
             float tx = e.X + dx;
             float ty = e.Y + dy;
             if (map.CanTankMoveTo(tx, ty, EnemyTank.TankSize) 
-                && !CollidesWithPlayer(e, tx, ty, player) 
+                && !CollidesWithAnyPlayer(e, tx, ty, players) 
                 && !CollidesWithOtherEnemy(e, tx, ty, enemies))
             {
                 return dir;
@@ -358,16 +381,33 @@ public class EnemySystem : IEnemySystem
         return e.Direction.Opposite();
     }
 
-    private Direction ChooseDirectionTowardTarget(EnemyTank enemy, PlayerTank player, IDestructibleMap map)
+    private Direction ChooseDirectionTowardTarget(EnemyTank enemy, IReadOnlyList<PlayerTank> players, IDestructibleMap map)
     {
-        // Target Eagle Base (row 24, col 12 => X: 96-104, Y: 192) with highest priority, then player
+        // Target Eagle Base (row 24, col 12 => X: 96-104, Y: 192) with highest priority, then nearest player
         float targetX = 96f;
         float targetY = 192f;
 
-        if (_rand.NextDouble() < 0.5 && player.IsActive)
+        // Find closest active player
+        PlayerTank? closestPlayer = null;
+        float minPlayerDist = float.MaxValue;
+        for (int i = 0; i < players.Count; i++)
         {
-            targetX = player.X;
-            targetY = player.Y;
+            var p = players[i];
+            if (p.IsActive)
+            {
+                float dist = MathF.Abs(p.X - enemy.X) + MathF.Abs(p.Y - enemy.Y);
+                if (dist < minPlayerDist)
+                {
+                    minPlayerDist = dist;
+                    closestPlayer = p;
+                }
+            }
+        }
+
+        if (_rand.NextDouble() < 0.5 && closestPlayer != null)
+        {
+            targetX = closestPlayer.X;
+            targetY = closestPlayer.Y;
         }
 
         float diffX = targetX - enemy.X;
@@ -383,12 +423,19 @@ public class EnemySystem : IEnemySystem
         }
     }
 
-    public void RecordKill(EnemyType type)
+    public void RecordKill(EnemyType type, int playerIndex = 1)
     {
         int idx = (int)type;
-        if (idx >= 0 && idx < _killsByType.Length)
+        if (idx >= 0 && idx < 4)
         {
-            _killsByType[idx]++;
+            if (playerIndex == 2)
+            {
+                _killsByTypeP2[idx]++;
+            }
+            else
+            {
+                _killsByTypeP1[idx]++;
+            }
         }
     }
 
@@ -400,7 +447,7 @@ public class EnemySystem : IEnemySystem
             if (e.IsActive)
             {
                 e.IsActive = false;
-                RecordKill(e.Type);
+                RecordKill(e.Type, 1);
                 bullets.SpawnExplosion(e.X, e.Y, true);
                 onEnemyKilled(e.PointValue);
             }
@@ -418,7 +465,7 @@ public class EnemySystem : IEnemySystem
         while (_spawnedCount < TotalWaveEnemies && _spawnedCount < _waveQueue.Count)
         {
             var type = _waveQueue[_spawnedCount];
-            RecordKill(type);
+            RecordKill(type, 1);
             int pts = type switch
             {
                 EnemyType.Basic => 100,
@@ -453,3 +500,4 @@ public class EnemySystem : IEnemySystem
         _enemies.Clear();
     }
 }
+

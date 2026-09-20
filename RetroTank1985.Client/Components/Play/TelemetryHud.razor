@@ -1,13 +1,16 @@
-<div class="d-flex justify-space-between align-center px-3 py-2 w-100" 
+<div class="d-flex justify-space-between align-center px-3 py-2 w-100 flex-wrap gap-2" 
      style="background: #161a23; border: 1px solid #2c3245; border-radius: 6px; box-sizing: border-box;">
-    <div class="d-flex align-center gap-2">
+    <div class="d-flex align-center gap-2 flex-wrap">
         <span class="pixel-text" style="font-size: 0.75rem; color: #f1c40f;">FPS: @Telemetry.Fps</span>
         <span style="color: #475569;">|</span>
-        <span class="pixel-text" style="font-size: 0.7rem; color: #38bdf8;">POS: (@Telemetry.X, @Telemetry.Y)</span>
+        <span class="pixel-text" style="font-size: 0.7rem; color: #f1c40f;">1P: (@Telemetry.X, @Telemetry.Y) L:@Telemetry.Lives</span>
+        @if (Telemetry.IsTwoPlayer)
+        {
+            <span style="color: #475569;">|</span>
+            <span class="pixel-text" style="font-size: 0.7rem; color: #2ecc71;">2P: (@Telemetry.P2X, @Telemetry.P2Y) L:@Telemetry.P2Lives</span>
+        }
     </div>
-    <div class="d-flex align-center gap-2">
-        <span class="pixel-text" style="font-size: 0.7rem; color: #a855f7;">DIR: @Telemetry.Direction</span>
-        <span style="color: #475569;">|</span>
+    <div class="d-flex align-center gap-2 flex-wrap">
         <span class="pixel-text" style="font-size: 0.7rem; color: #ef4444;">ENEMIES: @Telemetry.EnemiesLeft (ACT: @Telemetry.EnemiesActive)</span>
         <span style="color: #475569;">|</span>
         @if (Telemetry.Shield)
@@ -24,7 +27,6 @@
         }
     </div>
 </div>
-
 
 @code {
     [Parameter] public TelemetryData Telemetry { get; set; } = new();

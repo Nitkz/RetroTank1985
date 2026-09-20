@@ -1,6 +1,7 @@
 /**
  * game-bridge.js — Hybrid Bridge: C# Game Brain + JS Fast Canvas & Audio Muscle
- * Handles input capture, 60 FPS requestAnimationFrame loop, and delegating rendering & audio.
+ * Handles input capture (split 2-player keyboard & touch), 60 FPS requestAnimationFrame loop,
+ * and delegating rendering & audio.
  */
 
 window.GameBridge = (function () {
@@ -12,16 +13,26 @@ window.GameBridge = (function () {
 
   // Input states
   const keys = {
+    // Player 1 (WASD + Space/J)
     up: false,
     down: false,
     left: false,
     right: false,
     fire: false,
-    pause: false
+
+    // Player 2 (Arrows + Enter/K/L/Numpad0)
+    p2Up: false,
+    p2Down: false,
+    p2Left: false,
+    p2Right: false,
+    p2Fire: false,
+
+    // System
+    pause: false,
+    pausePulse: false
   };
 
   // FPS calculation
-  let lastLoopTime = 0;
   let frameCount = 0;
   let lastFpsCalc = 0;
   let currentFps = 60;
@@ -32,26 +43,45 @@ window.GameBridge = (function () {
       e.preventDefault();
     }
     switch (e.code) {
+      // Player 1 Movement & Fire
       case 'KeyW':
-      case 'ArrowUp':
         keys.up = true;
         break;
       case 'KeyS':
-      case 'ArrowDown':
         keys.down = true;
         break;
       case 'KeyA':
-      case 'ArrowLeft':
         keys.left = true;
         break;
       case 'KeyD':
-      case 'ArrowRight':
         keys.right = true;
         break;
       case 'Space':
       case 'KeyJ':
         keys.fire = true;
         break;
+
+      // Player 2 Movement & Fire
+      case 'ArrowUp':
+        keys.p2Up = true;
+        break;
+      case 'ArrowDown':
+        keys.p2Down = true;
+        break;
+      case 'ArrowLeft':
+        keys.p2Left = true;
+        break;
+      case 'ArrowRight':
+        keys.p2Right = true;
+        break;
+      case 'Enter':
+      case 'Numpad0':
+      case 'KeyK':
+      case 'KeyL':
+        keys.p2Fire = true;
+        break;
+
+      // Global
       case 'KeyP':
       case 'Escape':
         keys.pause = true;
@@ -64,29 +94,47 @@ window.GameBridge = (function () {
     }
   }
 
-
   function onKeyUp(e) {
     switch (e.code) {
+      // Player 1
       case 'KeyW':
-      case 'ArrowUp':
         keys.up = false;
         break;
       case 'KeyS':
-      case 'ArrowDown':
         keys.down = false;
         break;
       case 'KeyA':
-      case 'ArrowLeft':
         keys.left = false;
         break;
       case 'KeyD':
-      case 'ArrowRight':
         keys.right = false;
         break;
       case 'Space':
       case 'KeyJ':
         keys.fire = false;
         break;
+
+      // Player 2
+      case 'ArrowUp':
+        keys.p2Up = false;
+        break;
+      case 'ArrowDown':
+        keys.p2Down = false;
+        break;
+      case 'ArrowLeft':
+        keys.p2Left = false;
+        break;
+      case 'ArrowRight':
+        keys.p2Right = false;
+        break;
+      case 'Enter':
+      case 'Numpad0':
+      case 'KeyK':
+      case 'KeyL':
+        keys.p2Fire = false;
+        break;
+
+      // Global
       case 'KeyP':
       case 'Escape':
         keys.pause = false;
@@ -95,7 +143,6 @@ window.GameBridge = (function () {
   }
 
   // Audio Dispatching to nesSynth
-  // 1=Shot, 2=HitBrick, 3=HitSteel, 4=Explosion, 5=EagleHit, 6=Pause, 7=IntroBgm, 8=EngineStart, 9=EngineStop, 10=Bonus, 11=Life
   function dispatchAudio(audioQueue) {
     if (!audioQueue || !window.nesSynth) return;
 
@@ -183,6 +230,11 @@ window.GameBridge = (function () {
           keys.left,
           keys.right,
           keys.fire,
+          keys.p2Up,
+          keys.p2Down,
+          keys.p2Left,
+          keys.p2Right,
+          keys.p2Fire,
           keys.pause,
           currentFps
         );
@@ -242,7 +294,6 @@ window.GameBridge = (function () {
     start() {
       if (isRunning) return;
       isRunning = true;
-      lastLoopTime = performance.now();
       lastFpsCalc = performance.now();
       frameCount = 0;
       animFrameId = requestAnimationFrame(loop);
@@ -267,7 +318,7 @@ window.GameBridge = (function () {
     },
 
     resetPlayer() {
-      // Nothing needed on JS side, handled in C#
+      // Handled in C#
     },
 
     togglePause() {
@@ -281,6 +332,13 @@ window.GameBridge = (function () {
       if (control === 'left') keys.left = isPressed;
       if (control === 'right') keys.right = isPressed;
       if (control === 'fire') keys.fire = isPressed;
+
+      if (control === 'p2Up') keys.p2Up = isPressed;
+      if (control === 'p2Down') keys.p2Down = isPressed;
+      if (control === 'p2Left') keys.p2Left = isPressed;
+      if (control === 'p2Right') keys.p2Right = isPressed;
+      if (control === 'p2Fire') keys.p2Fire = isPressed;
+
       if (control === 'pause') {
         if (isPressed) {
           keys.pause = true;

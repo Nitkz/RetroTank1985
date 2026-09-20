@@ -43,20 +43,35 @@
     <MudDivider Class="my-3" Style="border-color: #2c3245;" />
 
     <MudText Typo="Typo.subtitle2" Class="pixel-text mb-2" Style="color: #94a3b8; font-size: 0.75rem;">
-        KEYBOARD COMMANDS
+        KEYBOARD &amp; CONTROLS
     </MudText>
-    <div class="d-flex flex-column gap-2" style="font-size: 0.85rem; color: #94a3b8;">
-        <div class="d-flex justify-space-between">
-            <span>Move 4 Directions:</span>
-            <span class="pixel-text" style="color: #f1c40f; font-size: 0.7rem;">W, A, S, D / ARROWS</span>
+    <div class="d-flex flex-column gap-2" style="font-size: 0.82rem; color: #94a3b8;">
+        <!-- Player 1 (Yellow Tank) -->
+        <div class="pa-2" style="background: rgba(241, 196, 15, 0.06); border-left: 3px solid #f1c40f; border-radius: 4px;">
+            <div class="d-flex justify-space-between align-center mb-1">
+                <span class="pixel-text" style="color: #f1c40f; font-size: 0.65rem; font-weight: bold;">PLAYER 1 (YELLOW)</span>
+            </div>
+            <div class="d-flex justify-space-between" style="font-size: 0.75rem;">
+                <span>Move: <strong class="pixel-text" style="color: #f1c40f; font-size: 0.65rem;">W, A, S, D</strong></span>
+                <span>Fire: <strong class="pixel-text" style="color: #ef4444; font-size: 0.65rem;">SPACEBAR / J</strong></span>
+            </div>
         </div>
-        <div class="d-flex justify-space-between">
-            <span>Fire Bullet:</span>
-            <span class="pixel-text" style="color: #ef4444; font-size: 0.7rem;">SPACEBAR / J</span>
+
+        <!-- Player 2 (Green Tank) -->
+        <div class="pa-2" style="background: rgba(46, 204, 113, 0.06); border-left: 3px solid #2ecc71; border-radius: 4px;">
+            <div class="d-flex justify-space-between align-center mb-1">
+                <span class="pixel-text" style="color: #2ecc71; font-size: 0.65rem; font-weight: bold;">PLAYER 2 (GREEN CO-OP)</span>
+            </div>
+            <div class="d-flex justify-space-between" style="font-size: 0.75rem;">
+                <span>Move: <strong class="pixel-text" style="color: #2ecc71; font-size: 0.65rem;">ARROWS</strong></span>
+                <span>Fire: <strong class="pixel-text" style="color: #ef4444; font-size: 0.65rem;">ENTER / NUM 0 / K</strong></span>
+            </div>
         </div>
-        <div class="d-flex justify-space-between">
-            <span>Pause / Resume:</span>
-            <span class="pixel-text" style="color: #38bdf8; font-size: 0.7rem;">P / ESCAPE</span>
+
+        <!-- System Controls -->
+        <div class="d-flex justify-space-between pt-1" style="font-size: 0.75rem; border-top: 1px solid #1e293b;">
+            <span>Pause: <strong class="pixel-text" style="color: #38bdf8; font-size: 0.65rem;">P / ESC</strong></span>
+            <span>Restart: <strong class="pixel-text" style="color: #fb923c; font-size: 0.65rem;">R</strong></span>
         </div>
     </div>
 </MudCard>

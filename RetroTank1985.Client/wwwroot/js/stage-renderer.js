@@ -1,6 +1,7 @@
 /**
  * stage-renderer.js — Lean Fast In-Game 60 FPS Canvas Blitter
  * Consumes C# RenderFrameDto snapshot and blits via NesCHR with 0 heap garbage.
+ * Fully supports 1-Player and 2-Player Co-Op (SP1 Green Tank), Dual HUD & 2P Score Tally!
  */
 
 window.StageRenderer = (function () {
@@ -67,7 +68,6 @@ window.StageRenderer = (function () {
         ctx.fillStyle = '#000000';
         ctx.fillRect(ex, ey, s8, s8);
         ctx.fillStyle = '#ffffff';
-        // 8x8 px mini tank pixel graphic scaled 2x
         ctx.fillRect(ex + 6, ey + 2, 4, 4); // Turret/barrel
         ctx.fillRect(ex + 4, ey + 6, 8, 6); // Tank body
         ctx.fillRect(ex + 2, ey + 4, 2, 10); // Left tread
@@ -82,31 +82,54 @@ window.StageRenderer = (function () {
       }
     }
 
-    // 2. Player 1 Lives Info
-    const p1Y = hudY + 10 * (s8 + 2) + 14;
+    // 2. Player 1 Lives Info (IP)
+    const p1Y = hudY + 10 * (s8 + 2) + 12;
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 10px "Press Start 2P", monospace';
+    ctx.font = 'bold 9px "Press Start 2P", monospace';
     ctx.textAlign = 'left';
     ctx.fillText('IP', hudX, p1Y);
 
-    // Player Mini Tank Icon
     const pTankX = hudX;
-    const pTankY = p1Y + 4;
+    const pTankY = p1Y + 5;
     ctx.fillStyle = '#000000';
     ctx.fillRect(pTankX, pTankY, s8, s8);
     ctx.fillStyle = '#f1c40f'; // Yellow player mini tank
-    ctx.fillRect(pTankX + 6, pTankY + 2, 4, 4); // Turret
-    ctx.fillRect(pTankX + 4, pTankY + 6, 8, 6); // Body
-    ctx.fillRect(pTankX + 2, pTankY + 4, 2, 10); // Left tread
-    ctx.fillRect(pTankX + 12, pTankY + 4, 2, 10); // Right tread
+    ctx.fillRect(pTankX + 6, pTankY + 2, 4, 4);
+    ctx.fillRect(pTankX + 4, pTankY + 6, 8, 6);
+    ctx.fillRect(pTankX + 2, pTankY + 4, 2, 10);
+    ctx.fillRect(pTankX + 12, pTankY + 4, 2, 10);
 
-    // Player Lives Count
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 11px "Press Start 2P", monospace';
-    ctx.fillText(`${Math.max(0, frameData.lives ?? 0)}`, hudX + s8 + 4, pTankY + 12);
+    ctx.font = 'bold 10px "Press Start 2P", monospace';
+    ctx.fillText(`${Math.max(0, frameData.lives ?? 0)}`, hudX + s8 + 4, pTankY + 13);
 
-    // 3. Stage Flag Icon & Stage Number
-    const flagY = pTankY + s8 + 18;
+    // 3. Player 2 Lives Info (IIP) if in 2-Player Co-Op mode
+    let nextY = pTankY + s8 + 14;
+    if (frameData.isTwoPlayer) {
+      const p2Y = nextY;
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 9px "Press Start 2P", monospace';
+      ctx.fillText('IIP', hudX, p2Y);
+
+      const p2TankX = hudX;
+      const p2TankY = p2Y + 5;
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(p2TankX, p2TankY, s8, s8);
+      ctx.fillStyle = '#2ecc71'; // Green player 2 mini tank
+      ctx.fillRect(p2TankX + 6, p2TankY + 2, 4, 4);
+      ctx.fillRect(p2TankX + 4, p2TankY + 6, 8, 6);
+      ctx.fillRect(p2TankX + 2, p2TankY + 4, 2, 10);
+      ctx.fillRect(p2TankX + 12, p2TankY + 4, 2, 10);
+
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 10px "Press Start 2P", monospace';
+      ctx.fillText(`${Math.max(0, frameData.p2Lives ?? 0)}`, hudX + s8 + 4, p2TankY + 13);
+
+      nextY = p2TankY + s8 + 14;
+    }
+
+    // 4. Stage Flag Icon & Stage Number
+    const flagY = nextY;
     const fx = hudX;
     const fy = flagY;
     ctx.fillStyle = '#000000';
@@ -118,22 +141,18 @@ window.StageRenderer = (function () {
     ctx.lineTo(fx + 4, fy + 10);
     ctx.fill();
 
-    // Stage Number
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 11px "Press Start 2P", monospace';
+    ctx.font = 'bold 10px "Press Start 2P", monospace';
     ctx.fillText(`${frameData.stageNumber ?? 1}`, hudX + s8 + 4, flagY + 14);
   }
 
   function drawStageCurtain(ctx, frameData) {
     const progress = frameData.curtainProgress ?? 0;
-    // Shutter wipe: grey curtains close or open vertically
     const totalHeight = PLAYFIELD;
     const currentClose = Math.round((1.0 - progress) * (totalHeight / 2));
 
     ctx.fillStyle = '#636363';
-    // Top curtain
     ctx.fillRect(BORDER, BORDER, PLAYFIELD, currentClose);
-    // Bottom curtain
     ctx.fillRect(BORDER, BORDER + PLAYFIELD - currentClose, PLAYFIELD, currentClose);
 
     if (progress < 0.95) {
@@ -153,7 +172,6 @@ window.StageRenderer = (function () {
   }
 
   function drawScoreTallyScreen(ctx, frameData) {
-    // Fill entire playfield with NES Black
     ctx.fillStyle = '#000000';
     ctx.fillRect(BORDER, BORDER, PLAYFIELD, PLAYFIELD);
 
@@ -163,72 +181,191 @@ window.StageRenderer = (function () {
     ctx.fillStyle = '#ef4444';
     ctx.fillText('HI-SCORE', BORDER + 30, BORDER + 30);
     ctx.fillStyle = '#f59e0b';
-    ctx.fillText('20000', BORDER + 150, BORDER + 30);
+    ctx.fillText(`${frameData.highScore || 20000}`, BORDER + 150, BORDER + 30);
 
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.fillText(`STAGE ${String(frameData.stageNumber || 1).padStart(2, '0')}`, BORDER + PLAYFIELD / 2, BORDER + 55);
 
-    // Player 1 Header
-    ctx.fillStyle = '#ef4444';
-    ctx.textAlign = 'left';
-    ctx.fillText('I-PLAYER', BORDER + 30, BORDER + 80);
-    ctx.fillStyle = '#f59e0b';
-    ctx.fillText(`${frameData.score || 0}`, BORDER + 30, BORDER + 98);
+    const is2P = frameData.isTwoPlayer;
 
-    // Tank Rows Breakdown (Basic, Fast, Power, Armor)
+    // Tank Rows Definition (Basic, Fast, Power, Armor)
     const tankRows = [
-      { type: 0, pts: 100, count: frameData.tallyCountBasic ?? 0, kills: frameData.killsBasic ?? 0, baseTile: 0x80, pal: 6 },
-      { type: 1, pts: 200, count: frameData.tallyCountFast ?? 0, kills: frameData.killsFast ?? 0, baseTile: 0xA0, pal: 6 },
-      { type: 2, pts: 300, count: frameData.tallyCountPower ?? 0, kills: frameData.killsPower ?? 0, baseTile: 0xC0, pal: 6 },
-      { type: 3, pts: 400, count: frameData.tallyCountArmor ?? 0, kills: frameData.killsArmor ?? 0, baseTile: 0xE0, pal: 5 }
+      { 
+        type: 0, 
+        pts: 100, 
+        countP1: frameData.tallyCountBasic ?? 0, 
+        countP2: frameData.tallyCountBasicP2 ?? 0, 
+        baseTile: 0x80, 
+        pal: 6 
+      },
+      { 
+        type: 1, 
+        pts: 200, 
+        countP1: frameData.tallyCountFast ?? 0, 
+        countP2: frameData.tallyCountFastP2 ?? 0, 
+        baseTile: 0xA0, 
+        pal: 6 
+      },
+      { 
+        type: 2, 
+        pts: 300, 
+        countP1: frameData.tallyCountPower ?? 0, 
+        countP2: frameData.tallyCountPowerP2 ?? 0, 
+        baseTile: 0xC0, 
+        pal: 6 
+      },
+      { 
+        type: 3, 
+        pts: 400, 
+        countP1: frameData.tallyCountArmor ?? 0, 
+        countP2: frameData.tallyCountArmorP2 ?? 0, 
+        baseTile: 0xE0, 
+        pal: 5 
+      }
     ];
 
     let startY = BORDER + 125;
     const rowGap = 34;
 
-    for (let i = 0; i < 4; i++) {
-      const row = tankRows[i];
-      const ry = startY + i * rowGap;
+    if (!is2P) {
+      // 1-Player Tally Layout
+      ctx.fillStyle = '#ef4444';
+      ctx.textAlign = 'left';
+      ctx.fillText('I-PLAYER', BORDER + 30, BORDER + 80);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillText(`${frameData.score || 0}`, BORDER + 30, BORDER + 98);
 
-      // PTS calculation
-      const rowPts = row.count * row.pts;
+      for (let i = 0; i < 4; i++) {
+        const row = tankRows[i];
+        const ry = startY + i * rowGap;
+
+        const rowPts = row.countP1 * row.pts;
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${rowPts}`, BORDER + 90, ry + 12);
+        ctx.fillText('PTS', BORDER + 130, ry + 12);
+        ctx.fillText(`${row.countP1}`, BORDER + 180, ry + 12);
+        ctx.fillText('◀', BORDER + 200, ry + 12);
+
+        window.NesCHR.drawTankMetasprite(ctx, row.baseTile, row.pal, BORDER + 215, ry, true, SCALE);
+      }
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(BORDER + 130, startY + 4 * rowGap - 5);
+      ctx.lineTo(BORDER + 270, startY + 4 * rowGap - 5);
+      ctx.stroke();
+
+      const totalCountP1 = (frameData.tallyCountBasic || 0) + (frameData.tallyCountFast || 0) + (frameData.tallyCountPower || 0) + (frameData.tallyCountArmor || 0);
       ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'left';
+      ctx.fillText('TOTAL', BORDER + 70, startY + 4 * rowGap + 18);
       ctx.textAlign = 'right';
-      ctx.fillText(`${rowPts}`, BORDER + 90, ry + 12);
-      ctx.fillText('PTS', BORDER + 130, ry + 12);
+      ctx.fillText(`${totalCountP1}`, BORDER + 180, startY + 4 * rowGap + 18);
+    } else {
+      // Authentic 2-Player Dual Column Tally Layout!
+      // I-PLAYER (Left)
+      ctx.fillStyle = '#ef4444';
+      ctx.textAlign = 'left';
+      ctx.fillText('I-PLAYER', BORDER + 20, BORDER + 80);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillText(`${frameData.score || 0}`, BORDER + 20, BORDER + 98);
 
-      // Arrow indicator & Count
-      ctx.fillText(`${row.count}`, BORDER + 180, ry + 12);
-      ctx.fillText('◀', BORDER + 200, ry + 12);
+      // II-PLAYER (Right)
+      ctx.fillStyle = '#2ecc71';
+      ctx.textAlign = 'right';
+      ctx.fillText('II-PLAYER', BORDER + PLAYFIELD - 20, BORDER + 80);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillText(`${frameData.p2Score || 0}`, BORDER + PLAYFIELD - 20, BORDER + 98);
 
-      // Tank Sprite Metasprite Icon
-      window.NesCHR.drawTankMetasprite(ctx, row.baseTile, row.pal, BORDER + 215, ry, true, SCALE);
+      for (let i = 0; i < 4; i++) {
+        const row = tankRows[i];
+        const ry = startY + i * rowGap;
+
+        // P1 Stats (Left)
+        const rowPtsP1 = row.countP1 * row.pts;
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${rowPtsP1}`, BORDER + 75, ry + 12);
+        ctx.fillText('PTS', BORDER + 110, ry + 12);
+        ctx.fillText(`${row.countP1}`, BORDER + 145, ry + 12);
+        ctx.fillText('◀', BORDER + 165, ry + 12);
+
+        // Center Tank Metasprite Icon
+        const centerTankX = BORDER + PLAYFIELD / 2 - 16;
+        window.NesCHR.drawTankMetasprite(ctx, row.baseTile, row.pal, centerTankX, ry, true, SCALE);
+
+        // P2 Stats (Right)
+        const rowPtsP2 = row.countP2 * row.pts;
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'left';
+        ctx.fillText('▶', BORDER + 235, ry + 12);
+        ctx.fillText(`${row.countP2}`, BORDER + 255, ry + 12);
+        ctx.textAlign = 'right';
+        ctx.fillText(`${rowPtsP2}`, BORDER + 345, ry + 12);
+        ctx.fillText('PTS', BORDER + 380, ry + 12);
+      }
+
+      // Divider Lines for both sides
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(BORDER + 40, startY + 4 * rowGap - 5);
+      ctx.lineTo(BORDER + 175, startY + 4 * rowGap - 5);
+      ctx.moveTo(BORDER + 240, startY + 4 * rowGap - 5);
+      ctx.lineTo(BORDER + 375, startY + 4 * rowGap - 5);
+      ctx.stroke();
+
+      // Total Summaries
+      const totalP1 = (frameData.tallyCountBasic || 0) + (frameData.tallyCountFast || 0) + (frameData.tallyCountPower || 0) + (frameData.tallyCountArmor || 0);
+      const totalP2 = (frameData.tallyCountBasicP2 || 0) + (frameData.tallyCountFastP2 || 0) + (frameData.tallyCountPowerP2 || 0) + (frameData.tallyCountArmorP2 || 0);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'left';
+      ctx.fillText('TOTAL', BORDER + 40, startY + 4 * rowGap + 18);
+      ctx.textAlign = 'right';
+      ctx.fillText(`${totalP1}`, BORDER + 145, startY + 4 * rowGap + 18);
+
+      ctx.textAlign = 'left';
+      ctx.fillText('TOTAL', BORDER + 255, startY + 4 * rowGap + 18);
+      ctx.textAlign = 'right';
+      ctx.fillText(`${totalP2}`, BORDER + 360, startY + 4 * rowGap + 18);
     }
 
-    // Divider Line
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(BORDER + 130, startY + 4 * rowGap - 5);
-    ctx.lineTo(BORDER + 270, startY + 4 * rowGap - 5);
-    ctx.stroke();
-
-    // Total Summary
-    const totalCount = (frameData.tallyCountBasic || 0) + (frameData.tallyCountFast || 0) + (frameData.tallyCountPower || 0) + (frameData.tallyCountArmor || 0);
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'left';
-    ctx.fillText('TOTAL', BORDER + 70, startY + 4 * rowGap + 18);
-    ctx.textAlign = 'right';
-    ctx.fillText(`${totalCount}`, BORDER + 180, startY + 4 * rowGap + 18);
-
+    // Step 5+: Announce Winner & Show Advance Prompt
     if (frameData.tallyStep >= 5) {
+      const bannerY = BORDER + startY + 4 * rowGap + 42;
+
+      ctx.font = 'bold 11px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+
+      if (is2P) {
+        const p1Score = frameData.score || 0;
+        const p2Score = frameData.p2Score || 0;
+
+        if (p1Score > p2Score) {
+          ctx.fillStyle = '#f1c40f'; // Yellow
+          ctx.fillText('👑 I-PLAYER WINS! 👑', BORDER + PLAYFIELD / 2, bannerY);
+        } else if (p2Score > p1Score) {
+          ctx.fillStyle = '#2ecc71'; // Green
+          ctx.fillText('👑 II-PLAYER WINS! 👑', BORDER + PLAYFIELD / 2, bannerY);
+        } else {
+          ctx.fillStyle = '#38bdf8'; // Cyan
+          ctx.fillText('🤝 CO-OP DRAW / VICTORY! 🤝', BORDER + PLAYFIELD / 2, bannerY);
+        }
+      } else {
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillText('⭐ STAGE CLEARED! ⭐', BORDER + PLAYFIELD / 2, bannerY);
+      }
+
+      // Blinking prompt to skip or let auto-delay advance
       const blink = Math.floor(performance.now() / 400) % 2 === 0;
       if (blink) {
         ctx.fillStyle = '#38bdf8';
         ctx.font = 'bold 9px "Press Start 2P", monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('PRESS FIRE / SPACE TO CONTINUE', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD - 15);
+        ctx.fillText('PRESS FIRE / SPACE TO ADVANCE', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD - 12);
       }
     }
     ctx.textAlign = 'left';
@@ -290,7 +427,6 @@ window.StageRenderer = (function () {
 
       // 4. Enemy Tanks & Spawning Stars
       if (frameData.enemies && frameData.enemies.length > 0) {
-        const SPAWN_STARS = [0xAD, 0xA9, 0xA5, 0xA1];
         const eLen = frameData.enemies.length;
         const nowFrame = Math.floor(performance.now() / 130);
 
@@ -300,14 +436,11 @@ window.StageRenderer = (function () {
           const ey = BORDER + Math.round(e.y) * SCALE;
 
           if (e.isSpawning) {
-            // Authentic 15-step triangle wave spawning star (ROM $E0BF):
-            // Giant ($AC) -> Large ($A8) -> Medium ($A4) -> Small ($A0) -> Medium ($A4) -> Large ($A8) -> Giant ($AC)
             const SPAWN_SEQ = [0xAC, 0xAC, 0xA8, 0xA8, 0xA4, 0xA4, 0xA0, 0xA0, 0xA0, 0xA4, 0xA4, 0xA8, 0xA8, 0xAC, 0xAC];
             const seqIdx = Math.min(14, Math.floor((30 - e.spawnTimer) / 2));
             const starBase = SPAWN_SEQ[seqIdx] || 0xAC;
             window.NesCHR.drawMetasprite(ctx, [starBase, starBase + 2, starBase + 1, starBase + 3], 7, ex, ey, false, SCALE);
           } else {
-            // Determine Palette & CHR base for Archetype
             let base = 0x80;
             let pal = 6; // Default Grey
 
@@ -316,14 +449,12 @@ window.StageRenderer = (function () {
             else if (e.type === 2) { base = 0xC0; pal = 6; }
             else if (e.type === 3) {
               base = 0xE0;
-              // Armor Tank color shifts based on HP: 4:Green (5), 3:Yellow (4), 2:Red/Orange (7), 1:Grey (6)
               if (e.hp >= 4) pal = 5;
               else if (e.hp === 3) pal = 4;
               else if (e.hp === 2) pal = 7;
               else pal = 6;
             }
 
-            // Red Flashing Tank: alternate between base palette and SP3 (7) every few frames
             if (e.isFlashing && (nowFrame % 2 === 0)) {
               pal = 7;
             }
@@ -334,7 +465,7 @@ window.StageRenderer = (function () {
         }
       }
 
-      // 5. Player Tank (Upgrades visual sprite based on StarPower 0=0x00, 1=0x20, 2=0x40, 3=0x60)
+      // 5. Player 1 Tank (SP0 Yellow palette 4)
       if (frameData.pActive) {
         const px = BORDER + Math.round(frameData.pX) * SCALE;
         const py = BORDER + Math.round(frameData.pY) * SCALE;
@@ -349,7 +480,22 @@ window.StageRenderer = (function () {
         }
       }
 
-      // 6. Droppable Power-Up Items (0:Helmet=0x80, 1:Timer=0x84, 2:Shovel=0x88, 3:Star=0x8C, 4:Grenade=0x90, 5:TankLife=0x94)
+      // 5b. Player 2 Tank (SP1 Green palette 5)
+      if (frameData.isTwoPlayer && frameData.p2Active) {
+        const p2x = BORDER + Math.round(frameData.p2X) * SCALE;
+        const p2y = BORDER + Math.round(frameData.p2Y) * SCALE;
+        const starTier2 = Math.min(3, Math.max(0, frameData.p2StarPower || 0));
+        const tierBase2 = starTier2 * 0x20;
+        const T2 = tierBase2 + frameData.p2Dir * 8 + (frameData.p2Anim % 2) * 4;
+        window.NesCHR.drawTankMetasprite(ctx, T2, 5, p2x, p2y, true, SCALE);
+
+        if (frameData.p2Shield) {
+          const sBase2 = frameData.p2ShieldFrame === 0 ? 0x28 : 0x2C;
+          window.NesCHR.drawTankMetasprite(ctx, sBase2, 6, p2x, p2y, false, SCALE);
+        }
+      }
+
+      // 6. Droppable Power-Up Items
       if (frameData.powerUps && frameData.powerUps.length > 0) {
         const pLen = frameData.powerUps.length;
         const powerUpBaseTiles = [0x80, 0x84, 0x88, 0x8C, 0x90, 0x94];
@@ -362,12 +508,11 @@ window.StageRenderer = (function () {
           const py = BORDER + Math.round(p.y) * SCALE;
           const baseTile = powerUpBaseTiles[Math.min(p.type, 5)] || 0x8C;
 
-          // Power-up metasprites are arranged as [TL, TR, BL, BR] = [t, t+2, t+1, t+3]
           window.NesCHR.drawMetasprite(ctx, [baseTile, baseTile + 2, baseTile + 1, baseTile + 3], 6, px, py, false, SCALE);
         }
       }
 
-      // 7. Floating Score Popups (e.g. +500 PTS 0x3A..0x3D)
+      // 7. Floating Score Popups
       if (frameData.scorePopups && frameData.scorePopups.length > 0) {
         const spLen = frameData.scorePopups.length;
         for (let i = 0; i < spLen; i++) {
@@ -375,12 +520,11 @@ window.StageRenderer = (function () {
           const spX = BORDER + Math.round(sp.x) * SCALE;
           const spY = BORDER + Math.round(sp.y) * SCALE;
 
-          // Metasprite 0x3A..0x3D for 500 PTS
           window.NesCHR.drawMetasprite(ctx, [0x3A, 0x3C, 0x3B, 0x3D], 6, spX, spY, false, SCALE);
         }
       }
 
-      // 8. Explosions (Small Bullet Impact = 3 frames 16x16, Big Tank/Eagle Explosion = 5 phases up to 32x32)
+      // 8. Explosions
       if (frameData.explosions && frameData.explosions.length > 0) {
         const exLen = frameData.explosions.length;
         for (let i = 0; i < exLen; i++) {
@@ -389,12 +533,6 @@ window.StageRenderer = (function () {
           const exY = BORDER + Math.round(ex.y) * SCALE;
 
           if (ex.big) {
-            // Authentic Big Tank/Eagle Explosion (5 phases from PT0 with SP3 / palIdx 7):
-            // Phase 0 (Small 16x16): [0xF0, 0xF2, 0xF1, 0xF3]
-            // Phase 1 (Medium 16x16): [0xF4, 0xF6, 0xF5, 0xF7]
-            // Phase 2 (Large 16x16): [0xF8, 0xFA, 0xF9, 0xFB]
-            // Phase 3 (Giant 32x32 mushroom wave): 16 tiles Base 0xD0
-            // Phase 4 (Giant 32x32 smoke plume): 16 tiles Base 0xE0
             if (ex.frame === 0) {
               window.NesCHR.drawMetasprite(ctx, [0xF0, 0xF2, 0xF1, 0xF3], 7, exX, exY, false, SCALE);
             } else if (ex.frame === 1) {
@@ -407,7 +545,6 @@ window.StageRenderer = (function () {
               window.NesCHR.drawExpandSprite(ctx, 0xE0, 7, exX - 8 * SCALE, exY - 8 * SCALE, SCALE);
             }
           } else {
-            // Small Bullet Impact Explosion (3 frames 16x16 centered at impact point)
             const cx = exX - 8 * SCALE;
             const cy = exY - 8 * SCALE;
             if (ex.frame === 0) {
@@ -430,7 +567,7 @@ window.StageRenderer = (function () {
         }
       }
 
-      // 10. Flow Overlays (Stage Curtain, Score Tally, Pause, Game Over)
+      // 10. Flow Overlays
       if (frameData.gameState === 1) { // StageCurtain
         drawStageCurtain(ctx, frameData);
       } else if (frameData.gameState === 4) { // StageTally
@@ -462,7 +599,6 @@ window.StageRenderer = (function () {
           ctx.fillText('OUT OF LIVES', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD / 2 + 5);
         }
 
-        // Blinking Press R or Click Restart prompt
         const blink = Math.floor(performance.now() / 400) % 2 === 0;
         if (blink) {
           ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 10px "Press Start 2P", monospace';
@@ -473,4 +609,3 @@ window.StageRenderer = (function () {
     }
   };
 })();
-

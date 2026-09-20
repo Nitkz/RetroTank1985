@@ -31,6 +31,43 @@ public class RenderFrameDto
     [JsonPropertyName("pStarPower")]
     public int PlayerStarPower { get; set; }
 
+    // Player 2 Properties (Green Tank)
+    [JsonPropertyName("isTwoPlayer")]
+    public bool IsTwoPlayer { get; set; }
+
+    [JsonPropertyName("p2X")]
+    public float Player2X { get; set; }
+
+    [JsonPropertyName("p2Y")]
+    public float Player2Y { get; set; }
+
+    [JsonPropertyName("p2Dir")]
+    public byte Player2Dir { get; set; }
+
+    [JsonPropertyName("p2Anim")]
+    public int Player2AnimFrame { get; set; }
+
+    [JsonPropertyName("p2Shield")]
+    public bool Player2Shield { get; set; }
+
+    [JsonPropertyName("p2ShieldFrame")]
+    public int Player2ShieldFrame { get; set; }
+
+    [JsonPropertyName("p2Active")]
+    public bool Player2Active { get; set; }
+
+    [JsonPropertyName("p2StarPower")]
+    public int Player2StarPower { get; set; }
+
+    [JsonPropertyName("p2Lives")]
+    public int Player2Lives { get; set; }
+
+    [JsonPropertyName("p2Score")]
+    public int Player2Score { get; set; }
+
+    [JsonPropertyName("highScore")]
+    public int HighScore { get; set; }
+
     [JsonPropertyName("bullets")]
     public List<BulletRenderDto> Bullets { get; set; } = new();
 
@@ -82,6 +119,7 @@ public class RenderFrameDto
     [JsonPropertyName("curtainProgress")]
     public float CurtainProgress { get; set; }
 
+    // P1 Kills
     [JsonPropertyName("killsBasic")]
     public int KillsBasic { get; set; }
 
@@ -94,9 +132,23 @@ public class RenderFrameDto
     [JsonPropertyName("killsArmor")]
     public int KillsArmor { get; set; }
 
+    // P2 Kills
+    [JsonPropertyName("killsBasicP2")]
+    public int KillsBasicP2 { get; set; }
+
+    [JsonPropertyName("killsFastP2")]
+    public int KillsFastP2 { get; set; }
+
+    [JsonPropertyName("killsPowerP2")]
+    public int KillsPowerP2 { get; set; }
+
+    [JsonPropertyName("killsArmorP2")]
+    public int KillsArmorP2 { get; set; }
+
     [JsonPropertyName("tallyStep")]
     public int TallyStep { get; set; }
 
+    // P1 Tally
     [JsonPropertyName("tallyCountBasic")]
     public int TallyCountBasic { get; set; }
 
@@ -108,6 +160,19 @@ public class RenderFrameDto
 
     [JsonPropertyName("tallyCountArmor")]
     public int TallyCountArmor { get; set; }
+
+    // P2 Tally
+    [JsonPropertyName("tallyCountBasicP2")]
+    public int TallyCountBasicP2 { get; set; }
+
+    [JsonPropertyName("tallyCountFastP2")]
+    public int TallyCountFastP2 { get; set; }
+
+    [JsonPropertyName("tallyCountPowerP2")]
+    public int TallyCountPowerP2 { get; set; }
+
+    [JsonPropertyName("tallyCountArmorP2")]
+    public int TallyCountArmorP2 { get; set; }
 
     [JsonPropertyName("powerUps")]
     public List<PowerUpRenderDto> PowerUps { get; set; } = new();

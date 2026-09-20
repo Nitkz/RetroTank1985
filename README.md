@@ -117,6 +117,17 @@ publish-wasm.bat
   - Classic NES grey shutter curtain wipe with Stage banner.
   - End-of-stage tank tally counting destroyed Basic, Fast, Power, and Armor tanks with authentic audio chimes.
   - Right-side NES HUD tracking 20 remaining enemy tank icons, player lives, and stage flag number.
+- **Two-Player Co-Op & LocalStorage Persistence (Phase 7)**:
+  - 🎮 **Local 2-Player Co-Op Mode**:
+    - Split keyboard input: Player 1 (`WASD + Space/J`) & Player 2 (`Arrow Keys + Enter/K/L/Numpad0`) + Mobile touch controller.
+    - Authentic Player 2 Green Tank rendering with NES SP1 Palette (`#2ecc71` / `#4cd020`).
+    - Mutual player/enemy separation physics with anti-lock unsticking.
+    - Friendly fire clink/cancellation physics without reducing teammate lives.
+    - Dual Side HUD tracking independent `IP` and `IIP` life meters and active mini tank icons.
+    - 2-Player End-of-Stage Tally screen with dual-column kill breakdowns, dynamic winner victory banner (`👑 I-PLAYER WINS!`, `👑 II-PLAYER WINS!`, `🤝 CO-OP DRAW!`), and reading delay (~5s).
+  - 💾 **Browser LocalStorage Persistence (`GameStorageService.cs`)**:
+    - Real-time High Score tracking (starts at 20,000 pts, auto-saves when beaten).
+    - Session-to-session persistence of highest unlocked stage and audio preferences (volume & mute states).
 - **Dedicated Modular Debug & Sandbox Panel**: Live spawner lab, Star Power tier upgrades (0-3), Eagle fortification, Nuke all, and instant 6-item Power-Up lab.
 - **Dual Controller Support**: Full keyboard (WASD / Arrows + Space/J) and on-screen Touch D-Pad with Fire button.
 - **Live Telemetry HUD**: Throttled 500ms status monitor reporting real-time FPS, coordinate position, direction, remaining wave enemies, and active field enemies.
@@ -143,11 +154,18 @@ Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behav
 - **Power-ups & Specials Gallery (`PowerUpsSpecialsTab`)**: Interactive 16×16 metasprite catalog for 6 classic droppable items (Helmet, Timer, Shovel, Star, Grenade, 1-UP) with instant bonus SFX testing, along with Phoenix HQ intact/destroyed and Force Shield badges.
 
 ### 5. Upcoming: 👑 Epic Boss Battles & Tactical Munitions (Phase 8)
-- **Mega Boss Tank Encounters**: Giant multi-tile armored Boss Mechs with multi-phase HP bars.
-- **Minion Swarm Deployment**: Boss actively summons support tank drones.
-- **Dual Arm Artillery**: Simultaneous twin-cannon firing with spread/cross-fire projectile mechanics.
-- **Multi-Tile Jump Maneuver**: Boss leaps airborne across brick, steel, and water obstacles.
-- **Tactical Weapon Crates**: Crates dropping Laser Rails, AOE Plasma Bombs, and Heavy AP Shells.
+- **Mega Boss Tank Encounters (บอสใหญ่ท้ายฉาก)**: Giant multi-tile armored Boss Mechs with multi-phase HP bars.
+- **Minion Swarm Deployment (Boss ปล่อยลูกน้อง)**: Boss actively summons support tank drones.
+- **Dual Arm Artillery (ยิงกระสุนจากแขนสองข้าง)**: Simultaneous twin-cannon firing with spread/cross-fire projectile mechanics.
+- **Multi-Tile Jump Maneuver (กระโดดข้ามสิ่งกีดขวางได้หลายช่อง)**: Boss leaps airborne across brick, steel, and water obstacles.
+- **Tactical Weapon Crates (หีบกระสุนแรงพิเศษ)**: Crates dropping Laser Rails, AOE Plasma Bombs, and Heavy AP Shells.
+
+### 6. Upcoming: 🛠️ Stage Editor & Custom Campaign Builder (Phase 9)
+- **Interactive Visual Tile Painter**: 13×13 tile / 26×26 sub-tile drag-and-drop grid editor for Brick, Steel, Water, Trees, Ice, and Eagle HQ.
+- **Wave & Spawner Configurator**: Custom 20-tank queue composition designer (configure Basic, Fast, Power, Armor + Flashing carriers).
+- **Campaign Slots & LocalStorage**: Multi-slot save/load system for user-created custom maps.
+- **JSON Import / Export Pipeline**: One-click export to official JSON stage format and import from clipboard/file.
+- **Instant Test-Play Arena**: Test-drive custom maps directly in the arena without leaving the editor.
 
 ---
 
@@ -157,7 +175,7 @@ Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behav
 RetroTank1985/
 ├── publish-wasm.bat             # Automated Release script (Cloudflare Pages + Zip)
 ├── RetroTank1985.slnx           # Modern .NET Solution File
-├── ROADMAP.md                   # Detailed development roadmap (Phases 1 - 8)
+├── ROADMAP.md                   # Detailed development roadmap (Phases 1 - 9)
 ├── README.md                    # Project documentation
 │
 ├── RetroTank1985/               # Server host project (Blazor Web App for local dev)
@@ -199,6 +217,7 @@ RetroTank1985/
 │   │   └── StageInspector.razor.cs # Stage & CHR Inspector Code-Behind
 │   ├── Services/
 │   │   ├── GameEngineService.cs # Blazor JS Interop & Session lifecycle service
+│   │   ├── GameStorageService.cs# LocalStorage persistence service (HI-Score, Max Stage, Audio)
 │   │   └── StageService.cs      # Stage JSON loader with in-memory caching
 │   ├── wwwroot/
 │   │   ├── app.css              # Pixel font and CRT styling

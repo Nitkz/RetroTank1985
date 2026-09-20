@@ -4,10 +4,12 @@ using RetroTank1985.Client.Models;
 
 namespace RetroTank1985.Client.Engine.Core;
 
-
 public interface IBattleCityEngine
 {
     PlayerTank Player { get; }
+    PlayerTank Player2 { get; }
+    bool IsTwoPlayerMode { get; set; }
+    int HighScore { get; set; }
     IDestructibleMap Map { get; }
     IBulletSystem Bullets { get; }
     IEnemySystem Enemies { get; }
@@ -20,6 +22,7 @@ public interface IBattleCityEngine
 
     void InitializeStage(StageModel? stage, int stageNumber);
     void ResetPlayer();
+    void SetTwoPlayerMode(bool enable);
     void TogglePause();
     void SetPause(bool paused);
     void SetInput(InputState input);
@@ -31,8 +34,8 @@ public interface IBattleCityEngine
     void NukeAllEnemies();
     void SimulateClearStage();
     void ClearEnemies();
-    void SetPlayerStarPower(int starLevel);
-    void TogglePlayerShield();
+    void SetPlayerStarPower(int starLevel, int playerIndex = 1);
+    void TogglePlayerShield(int playerIndex = 1);
     void ToggleEagleSteel(bool fortified);
     void SpawnPowerUpDebug(PowerUpType type);
     void TriggerStageCurtainDebug();
@@ -47,7 +50,8 @@ public class BattleCityEngine : IBattleCityEngine
     private double _accumulator = 0;
 
     private InputState _currentInput;
-    private bool _previousFire = false;
+    private bool _previousP1Fire = false;
+    private bool _previousP2Fire = false;
     private bool _previousPause = false;
 
     private readonly RenderFrameDto _cachedFrame = new();
@@ -57,18 +61,27 @@ public class BattleCityEngine : IBattleCityEngine
     private readonly List<PowerUpRenderDto> _powerUpDtoPool = new(4);
     private readonly List<ScorePopupRenderDto> _scorePopupDtoPool = new(8);
 
-    private int _playerRespawnTimer = 0;
+    private readonly List<PlayerTank> _playersList = new(2);
+
+    private int _player1RespawnTimer = 0;
+    private int _player2RespawnTimer = 0;
 
     // Stage Curtain & Tally State Variables
     private int _curtainTimer = 0;
     private const int CurtainDurationFrames = 75; // ~1.25s shutter wipe
 
     private int _tallyTimer = 0;
-    private int _tallyStep = 0; // 0: init/delay, 1: counting Basic, 2: counting Fast, 3: counting Power, 4: counting Armor, 5: total & delay, 6: done
-    private int _tallyCountBasic = 0;
-    private int _tallyCountFast = 0;
-    private int _tallyCountPower = 0;
-    private int _tallyCountArmor = 0;
+    private int _tallyStep = 0; // 0: init, 1: Basic, 2: Fast, 3: Power, 4: Armor, 5: summary, 6: done
+    private int _tallyCountBasicP1 = 0;
+    private int _tallyCountFastP1 = 0;
+    private int _tallyCountPowerP1 = 0;
+    private int _tallyCountArmorP1 = 0;
+
+    private int _tallyCountBasicP2 = 0;
+    private int _tallyCountFastP2 = 0;
+    private int _tallyCountPowerP2 = 0;
+    private int _tallyCountArmorP2 = 0;
+
     private int _tallyPostDelay = 0;
     private int _waveClearDelayTimer = 0;
     private int _gameOverDelayTimer = 0;
@@ -76,6 +89,10 @@ public class BattleCityEngine : IBattleCityEngine
     private bool _nextStagePending = false;
 
     public PlayerTank Player { get; }
+    public PlayerTank Player2 { get; }
+    public bool IsTwoPlayerMode { get; set; } = false;
+    public int HighScore { get; set; } = 20000;
+
     public IDestructibleMap Map { get; }
     public ITankPhysics Physics { get; }
     public IBulletSystem Bullets { get; }
@@ -85,7 +102,7 @@ public class BattleCityEngine : IBattleCityEngine
 
     public GameState State { get; private set; } = GameState.StageCurtain;
     public int CurrentStage { get; private set; } = 1;
-    public int Score { get; private set; } = 0;
+    public int Score => Player.Score + (IsTwoPlayerMode ? Player2.Score : 0);
     public bool IsPaused => State == GameState.Paused;
 
     public BattleCityEngine(
@@ -102,7 +119,9 @@ public class BattleCityEngine : IBattleCityEngine
         Enemies = enemies;
         PowerUps = powerUps;
         Audio = audio;
-        Player = new PlayerTank();
+
+        Player = new PlayerTank { PlayerIndex = 1 };
+        Player2 = new PlayerTank { PlayerIndex = 2 };
 
         // Pre-allocate pool objects for zero heap allocations
         for (int i = 0; i < 16; i++)
@@ -124,6 +143,17 @@ public class BattleCityEngine : IBattleCityEngine
         }
     }
 
+    public void SetTwoPlayerMode(bool enable)
+    {
+        IsTwoPlayerMode = enable;
+        Player2.IsActive = enable;
+        if (enable && Player2.Lives <= 0)
+        {
+            Player2.Lives = 3;
+            Player2.Reset(8 * 16f, 12 * 16f);
+        }
+    }
+
     public void InitializeStage(StageModel? stage, int stageNumber)
     {
         CurrentStage = stageNumber;
@@ -133,10 +163,17 @@ public class BattleCityEngine : IBattleCityEngine
         Enemies.InitializeWave(stage);
         PowerUps.Clear();
         
-        _playerRespawnTimer = 0;
+        _player1RespawnTimer = 0;
+        _player2RespawnTimer = 0;
+
         Player.Lives = 3;
         Player.StarPower = 0;
-        ResetPlayer();
+        Player.Reset(4 * 16f, 12 * 16f);
+
+        Player2.Lives = 3;
+        Player2.StarPower = 0;
+        Player2.Reset(8 * 16f, 12 * 16f);
+        Player2.IsActive = IsTwoPlayerMode;
 
         _curtainTimer = CurtainDurationFrames;
         State = GameState.StageCurtain;
@@ -156,10 +193,21 @@ public class BattleCityEngine : IBattleCityEngine
         {
             Player.Lives = 3;
         }
-        _playerRespawnTimer = 0;
+        _player1RespawnTimer = 0;
         _gameOverDelayTimer = 0;
         _gameOverSoundTriggered = false;
         Player.Reset(4 * 16f, 12 * 16f);
+
+        if (IsTwoPlayerMode)
+        {
+            if (Player2.Lives <= 0)
+            {
+                Player2.Lives = 3;
+            }
+            _player2RespawnTimer = 0;
+            Player2.Reset(8 * 16f, 12 * 16f);
+        }
+
         Bullets.Clear();
     }
 
@@ -202,12 +250,12 @@ public class BattleCityEngine : IBattleCityEngine
 
     public void NukeAllEnemies()
     {
-        Enemies.NukeAllEnemies(Bullets, Audio, pts => Score += pts);
+        Enemies.NukeAllEnemies(Bullets, Audio, pts => Player.Score += pts);
     }
 
     public void SimulateClearStage()
     {
-        Enemies.SimulateClearAllEnemies(Bullets, Audio, pts => Score += pts);
+        Enemies.SimulateClearAllEnemies(Bullets, Audio, pts => Player.Score += pts);
     }
 
     public void ClearEnemies()
@@ -215,15 +263,23 @@ public class BattleCityEngine : IBattleCityEngine
         Enemies.Clear();
     }
 
-    public void SetPlayerStarPower(int starLevel)
+    public void SetPlayerStarPower(int starLevel, int playerIndex = 1)
     {
-        Player.StarPower = Math.Clamp(starLevel, 0, 3);
+        if (playerIndex == 2)
+        {
+            Player2.StarPower = Math.Clamp(starLevel, 0, 3);
+        }
+        else
+        {
+            Player.StarPower = Math.Clamp(starLevel, 0, 3);
+        }
     }
 
-    public void TogglePlayerShield()
+    public void TogglePlayerShield(int playerIndex = 1)
     {
-        Player.ShieldActive = !Player.ShieldActive;
-        if (Player.ShieldActive) Player.ShieldTimer = 600; // 10s
+        var target = playerIndex == 2 ? Player2 : Player;
+        target.ShieldActive = !target.ShieldActive;
+        if (target.ShieldActive) target.ShieldTimer = 600; // 10s
     }
 
     public void ToggleEagleSteel(bool fortified)
@@ -267,10 +323,14 @@ public class BattleCityEngine : IBattleCityEngine
         State = GameState.StageTally;
         _tallyTimer = 0;
         _tallyStep = 0;
-        _tallyCountBasic = 0;
-        _tallyCountFast = 0;
-        _tallyCountPower = 0;
-        _tallyCountArmor = 0;
+        _tallyCountBasicP1 = 0;
+        _tallyCountFastP1 = 0;
+        _tallyCountPowerP1 = 0;
+        _tallyCountArmorP1 = 0;
+        _tallyCountBasicP2 = 0;
+        _tallyCountFastP2 = 0;
+        _tallyCountPowerP2 = 0;
+        _tallyCountArmorP2 = 0;
         _tallyPostDelay = 0;
         _nextStagePending = false;
 
@@ -281,7 +341,7 @@ public class BattleCityEngine : IBattleCityEngine
     {
         _tallyTimer++;
 
-        // Step 0: Initial delay (60 frames)
+        // Step 0: Initial delay (45 frames)
         if (_tallyStep == 0)
         {
             if (_tallyTimer >= 45)
@@ -292,16 +352,21 @@ public class BattleCityEngine : IBattleCityEngine
             return;
         }
 
-        // Step 1: Count Basic Tanks (Every 10 frames increment by 1)
+        // Step 1: Count Basic Tanks
         if (_tallyStep == 1)
         {
-            int target = Enemies.KillsByType[(int)EnemyType.Basic];
-            if (_tallyCountBasic < target)
+            int targetP1 = Enemies.KillsByTypeP1[(int)EnemyType.Basic];
+            int targetP2 = Enemies.KillsByTypeP2[(int)EnemyType.Basic];
+            bool doneP1 = _tallyCountBasicP1 >= targetP1;
+            bool doneP2 = !IsTwoPlayerMode || _tallyCountBasicP2 >= targetP2;
+
+            if (!doneP1 || !doneP2)
             {
                 if (_tallyTimer >= 8)
                 {
                     _tallyTimer = 0;
-                    _tallyCountBasic++;
+                    if (!doneP1) _tallyCountBasicP1++;
+                    if (!doneP2) _tallyCountBasicP2++;
                     Audio.Enqueue(AudioSoundEffect.TallyTick);
                 }
             }
@@ -319,13 +384,18 @@ public class BattleCityEngine : IBattleCityEngine
         // Step 2: Count Fast Tanks
         if (_tallyStep == 2)
         {
-            int target = Enemies.KillsByType[(int)EnemyType.Fast];
-            if (_tallyCountFast < target)
+            int targetP1 = Enemies.KillsByTypeP1[(int)EnemyType.Fast];
+            int targetP2 = Enemies.KillsByTypeP2[(int)EnemyType.Fast];
+            bool doneP1 = _tallyCountFastP1 >= targetP1;
+            bool doneP2 = !IsTwoPlayerMode || _tallyCountFastP2 >= targetP2;
+
+            if (!doneP1 || !doneP2)
             {
                 if (_tallyTimer >= 8)
                 {
                     _tallyTimer = 0;
-                    _tallyCountFast++;
+                    if (!doneP1) _tallyCountFastP1++;
+                    if (!doneP2) _tallyCountFastP2++;
                     Audio.Enqueue(AudioSoundEffect.TallyTick);
                 }
             }
@@ -343,13 +413,18 @@ public class BattleCityEngine : IBattleCityEngine
         // Step 3: Count Power Tanks
         if (_tallyStep == 3)
         {
-            int target = Enemies.KillsByType[(int)EnemyType.Power];
-            if (_tallyCountPower < target)
+            int targetP1 = Enemies.KillsByTypeP1[(int)EnemyType.Power];
+            int targetP2 = Enemies.KillsByTypeP2[(int)EnemyType.Power];
+            bool doneP1 = _tallyCountPowerP1 >= targetP1;
+            bool doneP2 = !IsTwoPlayerMode || _tallyCountPowerP2 >= targetP2;
+
+            if (!doneP1 || !doneP2)
             {
                 if (_tallyTimer >= 8)
                 {
                     _tallyTimer = 0;
-                    _tallyCountPower++;
+                    if (!doneP1) _tallyCountPowerP1++;
+                    if (!doneP2) _tallyCountPowerP2++;
                     Audio.Enqueue(AudioSoundEffect.TallyTick);
                 }
             }
@@ -367,13 +442,18 @@ public class BattleCityEngine : IBattleCityEngine
         // Step 4: Count Armor Tanks
         if (_tallyStep == 4)
         {
-            int target = Enemies.KillsByType[(int)EnemyType.Armor];
-            if (_tallyCountArmor < target)
+            int targetP1 = Enemies.KillsByTypeP1[(int)EnemyType.Armor];
+            int targetP2 = Enemies.KillsByTypeP2[(int)EnemyType.Armor];
+            bool doneP1 = _tallyCountArmorP1 >= targetP1;
+            bool doneP2 = !IsTwoPlayerMode || _tallyCountArmorP2 >= targetP2;
+
+            if (!doneP1 || !doneP2)
             {
                 if (_tallyTimer >= 8)
                 {
                     _tallyTimer = 0;
-                    _tallyCountArmor++;
+                    if (!doneP1) _tallyCountArmorP1++;
+                    if (!doneP2) _tallyCountArmorP2++;
                     Audio.Enqueue(AudioSoundEffect.TallyTick);
                 }
             }
@@ -389,12 +469,12 @@ public class BattleCityEngine : IBattleCityEngine
             return;
         }
 
-        // Step 5: Total Summary & Finish Delay
+        // Step 5: Total Summary, Winner & Finish Delay
         if (_tallyStep == 5)
         {
             _tallyPostDelay++;
-            // Press Space/Fire to skip post delay or auto-advance after 3.5s (~210 frames)
-            if (_tallyPostDelay >= 210 || (_currentInput.Fire && _tallyPostDelay >= 45))
+            // Give players ~5.0 seconds (~300 frames) to read results, or press Fire after ~1.5s (90 frames) to advance
+            if (_tallyPostDelay >= 300 || ((_currentInput.Fire || _currentInput.P2Fire) && _tallyPostDelay >= 90))
             {
                 _tallyStep = 6;
                 _nextStagePending = true;
@@ -422,11 +502,24 @@ public class BattleCityEngine : IBattleCityEngine
         }
         _previousPause = _currentInput.Pause;
 
-        if (_currentInput.Fire && !_previousFire && State == GameState.Playing)
+        // Player 1 Fire trigger
+        if (_currentInput.Fire && !_previousP1Fire && State == GameState.Playing)
         {
             Bullets.TryFirePlayerBullet(Player, Audio);
         }
-        _previousFire = _currentInput.Fire;
+        _previousP1Fire = _currentInput.Fire;
+
+        // Player 2 Fire trigger
+        if (IsTwoPlayerMode && _currentInput.P2Fire && !_previousP2Fire && State == GameState.Playing)
+        {
+            Bullets.TryFirePlayerBullet(Player2, Audio);
+        }
+        _previousP2Fire = _currentInput.P2Fire;
+
+        // Build active players list for this tick
+        _playersList.Clear();
+        if (Player.IsActive || Player.Lives > 0) _playersList.Add(Player);
+        if (IsTwoPlayerMode && (Player2.IsActive || Player2.Lives > 0)) _playersList.Add(Player2);
 
         // Fixed timestep 60Hz physics and game logic simulation
         while (_accumulator >= MsPerFrame)
@@ -448,14 +541,45 @@ public class BattleCityEngine : IBattleCityEngine
             }
             else if (State == GameState.Playing)
             {
-                // 1. Tank Physics (Movement & Collision)
-                Physics.UpdatePlayer(Player, _currentInput, Map, Enemies.ActiveEnemies, Audio);
+                // 1. Tank Physics (P1 and P2 Movement & Collision)
+                Physics.UpdatePlayer(
+                    Player,
+                    _currentInput.Up,
+                    _currentInput.Down,
+                    _currentInput.Left,
+                    _currentInput.Right,
+                    Map,
+                    Enemies.ActiveEnemies,
+                    IsTwoPlayerMode ? Player2 : null,
+                    Audio);
+
+                if (IsTwoPlayerMode)
+                {
+                    Physics.UpdatePlayer(
+                        Player2,
+                        _currentInput.P2Up,
+                        _currentInput.P2Down,
+                        _currentInput.P2Left,
+                        _currentInput.P2Right,
+                        Map,
+                        Enemies.ActiveEnemies,
+                        Player,
+                        Audio);
+                }
 
                 // 2. Enemy AI & Movement
-                Enemies.Update(Player, Map, Bullets, Audio, enemy => 
+                Enemies.Update(_playersList, Map, Bullets, Audio, (enemy, ownerPlayer) => 
                 {
-                    Score += enemy.PointValue;
-                    Enemies.RecordKill(enemy.Type);
+                    if (ownerPlayer == 2)
+                    {
+                        Player2.Score += enemy.PointValue;
+                    }
+                    else
+                    {
+                        Player.Score += enemy.PointValue;
+                    }
+
+                    Enemies.RecordKill(enemy.Type, ownerPlayer);
                     if (enemy.IsFlashing)
                     {
                         PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
@@ -463,39 +587,60 @@ public class BattleCityEngine : IBattleCityEngine
                 });
 
                 // 3. Bullets & Explosions Update
-                Bullets.Update(Player, Enemies.ActiveEnemies, Map, Audio, enemy =>
+                Bullets.Update(_playersList, Enemies.ActiveEnemies, Map, Audio, (enemy, ownerPlayer) =>
                 {
-                    Score += enemy.PointValue;
-                    Enemies.RecordKill(enemy.Type);
+                    if (ownerPlayer == 2)
+                    {
+                        Player2.Score += enemy.PointValue;
+                    }
+                    else
+                    {
+                        Player.Score += enemy.PointValue;
+                    }
+
+                    Enemies.RecordKill(enemy.Type, ownerPlayer);
                     if (enemy.IsFlashing)
                     {
                         PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
                     }
                 });
 
-                // 4. Power-Up System Update (Pickup collisions, effects, score popups)
-                PowerUps.Update(Player, Enemies, Map, Bullets, Audio, pts => Score += pts);
+                // 4. Power-Up System Update
+                PowerUps.Update(_playersList, Enemies, Map, Bullets, Audio, (pts, playerIdx) =>
+                {
+                    if (playerIdx == 2) Player2.Score += pts;
+                    else Player.Score += pts;
+                });
 
                 // 5. Destructible Map Shovel countdown update
                 Map.UpdateShovelTimer();
 
-                // 6. Player respawn countdown if player died but still has lives remaining
+                // 6. Player 1 Respawn Countdown
                 if (!Player.IsActive && Player.Lives > 0)
                 {
-                    _playerRespawnTimer++;
-                    if (_playerRespawnTimer >= 60) // 1 second delay
+                    _player1RespawnTimer++;
+                    if (_player1RespawnTimer >= 60) // 1 second delay
                     {
-                        _playerRespawnTimer = 0;
+                        _player1RespawnTimer = 0;
                         Player.Reset(4 * 16f, 12 * 16f);
                     }
                 }
 
-                // 7. Check Stage Cleared Condition (All 20 enemies spawned & destroyed)
+                // Player 2 Respawn Countdown
+                if (IsTwoPlayerMode && !Player2.IsActive && Player2.Lives > 0)
+                {
+                    _player2RespawnTimer++;
+                    if (_player2RespawnTimer >= 60)
+                    {
+                        _player2RespawnTimer = 0;
+                        Player2.Reset(8 * 16f, 12 * 16f);
+                    }
+                }
+
+                // 7. Check Stage Cleared Condition
                 if (Enemies.IsWaveCleared)
                 {
                     _waveClearDelayTimer++;
-                    // Authentic NES Delay: Allow last explosion animation (~30 frames) to finish 
-                    // and give player ~1.5 seconds (90 frames) of cleared arena before transitioning
                     if (_waveClearDelayTimer >= 90)
                     {
                         _waveClearDelayTimer = 0;
@@ -507,8 +652,11 @@ public class BattleCityEngine : IBattleCityEngine
                     _waveClearDelayTimer = 0;
                 }
 
-                // 8. Check Game Over Conditions (Eagle destroyed OR out of lives & inactive)
-                bool isGameOverCondition = Map.IsEagleDestroyed || (Player.Lives <= 0 && !Player.IsActive);
+                // 8. Check Game Over Conditions
+                bool p1Dead = Player.Lives <= 0 && !Player.IsActive;
+                bool p2Dead = !IsTwoPlayerMode || (Player2.Lives <= 0 && !Player2.IsActive);
+                bool isGameOverCondition = Map.IsEagleDestroyed || (p1Dead && p2Dead);
+
                 if (isGameOverCondition)
                 {
                     if (!_gameOverSoundTriggered)
@@ -522,9 +670,6 @@ public class BattleCityEngine : IBattleCityEngine
                     }
 
                     _gameOverDelayTimer++;
-                    // Authentic NES Delay (~120 frames / 2.0 seconds):
-                    // Allows explosion animation to finish, phoenix destroyed state to show,
-                    // before freezing gameplay or showing Game Over screen
                     if (_gameOverDelayTimer >= 120 && State != GameState.GameOver)
                     {
                         State = GameState.GameOver;
@@ -539,6 +684,11 @@ public class BattleCityEngine : IBattleCityEngine
             _accumulator -= MsPerFrame;
         }
 
+        // Live High Score Update
+        if (Score > HighScore)
+        {
+            HighScore = Score;
+        }
 
         // Snapshot DTO Population (Zero-Allocation 60 FPS)
         _cachedFrame.PlayerX = Player.X;
@@ -549,10 +699,25 @@ public class BattleCityEngine : IBattleCityEngine
         _cachedFrame.PlayerShieldFrame = Player.ShieldFrame;
         _cachedFrame.PlayerActive = Player.IsActive;
         _cachedFrame.PlayerStarPower = Player.StarPower;
+        _cachedFrame.Lives = Player.Lives;
+        _cachedFrame.Score = Player.Score;
+
+        // Player 2 Properties
+        _cachedFrame.IsTwoPlayer = IsTwoPlayerMode;
+        _cachedFrame.Player2X = Player2.X;
+        _cachedFrame.Player2Y = Player2.Y;
+        _cachedFrame.Player2Dir = (byte)Player2.Direction;
+        _cachedFrame.Player2AnimFrame = Player2.AnimFrame;
+        _cachedFrame.Player2Shield = Player2.ShieldActive;
+        _cachedFrame.Player2ShieldFrame = Player2.ShieldFrame;
+        _cachedFrame.Player2Active = IsTwoPlayerMode && Player2.IsActive;
+        _cachedFrame.Player2StarPower = Player2.StarPower;
+        _cachedFrame.Player2Lives = Player2.Lives;
+        _cachedFrame.Player2Score = Player2.Score;
+
+        _cachedFrame.HighScore = HighScore;
         _cachedFrame.EagleDestroyed = Map.IsEagleDestroyed;
         _cachedFrame.IsPaused = IsPaused;
-        _cachedFrame.Score = Score;
-        _cachedFrame.Lives = Player.Lives;
         _cachedFrame.MapDirty = Map.IsDirty;
         _cachedFrame.EnemiesRemaining = Enemies.EnemiesRemaining;
         _cachedFrame.EnemiesActive = Enemies.ActiveEnemyCount;
@@ -562,15 +727,26 @@ public class BattleCityEngine : IBattleCityEngine
         _cachedFrame.CurtainProgress = Math.Clamp(1.0f - ((float)_curtainTimer / CurtainDurationFrames), 0f, 1f);
 
         // Kills & Tally info
-        _cachedFrame.KillsBasic = Enemies.KillsByType[(int)EnemyType.Basic];
-        _cachedFrame.KillsFast = Enemies.KillsByType[(int)EnemyType.Fast];
-        _cachedFrame.KillsPower = Enemies.KillsByType[(int)EnemyType.Power];
-        _cachedFrame.KillsArmor = Enemies.KillsByType[(int)EnemyType.Armor];
+        _cachedFrame.KillsBasic = Enemies.KillsByTypeP1[(int)EnemyType.Basic];
+        _cachedFrame.KillsFast = Enemies.KillsByTypeP1[(int)EnemyType.Fast];
+        _cachedFrame.KillsPower = Enemies.KillsByTypeP1[(int)EnemyType.Power];
+        _cachedFrame.KillsArmor = Enemies.KillsByTypeP1[(int)EnemyType.Armor];
+
+        _cachedFrame.KillsBasicP2 = Enemies.KillsByTypeP2[(int)EnemyType.Basic];
+        _cachedFrame.KillsFastP2 = Enemies.KillsByTypeP2[(int)EnemyType.Fast];
+        _cachedFrame.KillsPowerP2 = Enemies.KillsByTypeP2[(int)EnemyType.Power];
+        _cachedFrame.KillsArmorP2 = Enemies.KillsByTypeP2[(int)EnemyType.Armor];
+
         _cachedFrame.TallyStep = _tallyStep;
-        _cachedFrame.TallyCountBasic = _tallyCountBasic;
-        _cachedFrame.TallyCountFast = _tallyCountFast;
-        _cachedFrame.TallyCountPower = _tallyCountPower;
-        _cachedFrame.TallyCountArmor = _tallyCountArmor;
+        _cachedFrame.TallyCountBasic = _tallyCountBasicP1;
+        _cachedFrame.TallyCountFast = _tallyCountFastP1;
+        _cachedFrame.TallyCountPower = _tallyCountPowerP1;
+        _cachedFrame.TallyCountArmor = _tallyCountArmorP1;
+
+        _cachedFrame.TallyCountBasicP2 = _tallyCountBasicP2;
+        _cachedFrame.TallyCountFastP2 = _tallyCountFastP2;
+        _cachedFrame.TallyCountPowerP2 = _tallyCountPowerP2;
+        _cachedFrame.TallyCountArmorP2 = _tallyCountArmorP2;
 
         if (Map.IsDirty)
         {
@@ -700,11 +876,18 @@ public class BattleCityEngine : IBattleCityEngine
         _cachedTelemetry.Direction = Player.Direction.ToString().ToUpperInvariant();
         _cachedTelemetry.Shield = Player.ShieldActive;
         _cachedTelemetry.Lives = Player.Lives;
-        _cachedTelemetry.Score = Score;
+        _cachedTelemetry.Score = Player.Score;
+
+        _cachedTelemetry.IsTwoPlayer = IsTwoPlayerMode;
+        _cachedTelemetry.P2X = (int)MathF.Round(Player2.X);
+        _cachedTelemetry.P2Y = (int)MathF.Round(Player2.Y);
+        _cachedTelemetry.P2Lives = Player2.Lives;
+        _cachedTelemetry.P2Score = Player2.Score;
+        _cachedTelemetry.HighScore = HighScore;
+
         _cachedTelemetry.EnemiesLeft = Enemies.EnemiesRemaining;
         _cachedTelemetry.EnemiesActive = Enemies.ActiveEnemyCount;
         _cachedTelemetry.IsGameOver = State == GameState.GameOver;
         return _cachedTelemetry;
     }
 }
-

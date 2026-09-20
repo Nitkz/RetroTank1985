@@ -11,12 +11,12 @@ public interface IPowerUpSystem
     void DropRandomPowerUp(float x, float y, IAudioEventQueue audioQueue);
     void SpawnPowerUpDebug(PowerUpType type, float? x = null, float? y = null, IAudioEventQueue? audioQueue = null);
     void Update(
-        PlayerTank player,
+        IReadOnlyList<PlayerTank> players,
         IEnemySystem enemies,
         IDestructibleMap map,
         IBulletSystem bullets,
         IAudioEventQueue audioQueue,
-        Action<int> onAddScore);
+        Action<int, int> onAddScore);
     void Clear();
 }
 
@@ -123,12 +123,12 @@ public class PowerUpSystem : IPowerUpSystem
     }
 
     public void Update(
-        PlayerTank player,
+        IReadOnlyList<PlayerTank> players,
         IEnemySystem enemies,
         IDestructibleMap map,
         IBulletSystem bullets,
         IAudioEventQueue audioQueue,
-        Action<int> onAddScore)
+        Action<int, int> onAddScore)
     {
         // 1. Update Active Power-Ups & Check Player Pickup Collision
         for (int i = _powerUps.Count - 1; i >= 0; i--)
@@ -159,18 +159,26 @@ public class PowerUpSystem : IPowerUpSystem
                 continue;
             }
 
-            // Pickup Collision with Player Tank (AABB 16x16 intersection: threshold < 16f)
-            if (player.IsActive && MathF.Abs(p.X - player.X) < 16f && MathF.Abs(p.Y - player.Y) < 16f)
+            // Pickup Collision with any Active Player Tank (AABB 16x16 intersection: threshold < 16f)
+            bool collected = false;
+            for (int pIdx = 0; pIdx < players.Count; pIdx++)
             {
-                ApplyPowerUpEffect(p.Type, player, enemies, map, bullets, audioQueue, onAddScore);
+                var player = players[pIdx];
+                if (player.IsActive && MathF.Abs(p.X - player.X) < 16f && MathF.Abs(p.Y - player.Y) < 16f)
+                {
+                    ApplyPowerUpEffect(p.Type, player, enemies, map, bullets, audioQueue, pts => onAddScore(pts, player.PlayerIndex));
 
-                // Spawn floating +500 PTS popup
-                SpawnScorePopup(p.X, p.Y, 500);
-                onAddScore(500);
+                    // Spawn floating +500 PTS popup
+                    SpawnScorePopup(p.X, p.Y, 500);
+                    onAddScore(500, player.PlayerIndex);
 
-                p.IsActive = false;
-                _powerUps.RemoveAt(i);
+                    p.IsActive = false;
+                    _powerUps.RemoveAt(i);
+                    collected = true;
+                    break;
+                }
             }
+            if (collected) continue;
         }
 
         // 2. Update Floating Score Popups

@@ -27,6 +27,7 @@ if (OperatingSystem.IsBrowser())
 builder.Services.AddMudServices();
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddScoped<RetroTank1985.Client.Services.StageService>();
+builder.Services.AddScoped<RetroTank1985.Client.Services.GameStorageService>();
 
 builder.Services.AddTransient<RetroTank1985.Client.Engine.Core.IDestructibleMap, RetroTank1985.Client.Engine.Core.DestructibleMap>();
 builder.Services.AddTransient<RetroTank1985.Client.Engine.Core.ITankPhysics, RetroTank1985.Client.Engine.Core.TankPhysics>();

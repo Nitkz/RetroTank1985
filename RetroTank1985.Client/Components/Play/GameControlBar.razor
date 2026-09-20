@@ -52,8 +52,28 @@
         </MudButton>
     </div>
 
-    <!-- Quick Audio & Toolbox Toggle -->
-    <div class="d-flex align-center gap-2">
+    <!-- Mode Selector, High Score & Audio -->
+    <div class="d-flex align-center gap-2 flex-wrap">
+        <!-- High Score Badge -->
+        <div class="d-flex align-center px-2 py-1" style="background: rgba(0,0,0,0.4); border-radius: 4px; border: 1px solid #f59e0b;">
+            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Color="Color.Warning" Size="Size.Small" Class="mr-1" />
+            <span class="pixel-text" style="color: #f59e0b; font-size: 0.65rem;">HI: @HighScore</span>
+        </div>
+
+        <!-- 1P / 2P Mode Toggle -->
+        <MudTooltip Text="@(IsTwoPlayer ? "2 Players (P1: WASD+Space, P2: Arrows+Enter)" : "1 Player Mode (WASD / Arrows)")">
+            <MudButton Variant="Variant.Filled" 
+                       Color="@(IsTwoPlayer ? Color.Secondary : Color.Primary)" 
+                       Size="Size.Small" 
+                       OnClick="OnToggleTwoPlayerClicked" 
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem;"
+                       StartIcon="@(IsTwoPlayer ? Icons.Material.Filled.People : Icons.Material.Filled.Person)">
+                @(IsTwoPlayer ? "2P CO-OP" : "1P SOLO")
+            </MudButton>
+        </MudTooltip>
+
+        <!-- Quick Audio Mute Toggle -->
         <MudButton Variant="Variant.Filled" 
                    Color="@(IsMuted ? Color.Default : Color.Success)" 
                    Size="Size.Small" 
@@ -69,10 +89,13 @@
 @code {
     [Parameter] public int SelectedStage { get; set; } = 1;
     [Parameter] public bool IsMuted { get; set; }
+    [Parameter] public bool IsTwoPlayer { get; set; } = false;
+    [Parameter] public int HighScore { get; set; } = 20000;
     [Parameter] public EventCallback<int> StageChanged { get; set; }
     [Parameter] public EventCallback OnReset { get; set; }
     [Parameter] public EventCallback OnRestartStage { get; set; }
     [Parameter] public EventCallback OnToggleMute { get; set; }
+    [Parameter] public EventCallback OnToggleTwoPlayer { get; set; }
 
     private async Task OnStageSelected(int stageNum) => await StageChanged.InvokeAsync(stageNum);
     private async Task OnPrevClicked() => await StageChanged.InvokeAsync(SelectedStage - 1);
@@ -80,7 +103,5 @@
     private async Task OnResetClicked() => await OnReset.InvokeAsync();
     private async Task OnRestartStageClicked() => await OnRestartStage.InvokeAsync();
     private async Task OnMuteToggled() => await OnToggleMute.InvokeAsync();
+    private async Task OnToggleTwoPlayerClicked() => await OnToggleTwoPlayer.InvokeAsync();
 }
-
-
-

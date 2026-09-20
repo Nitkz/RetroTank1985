@@ -1,8 +1,16 @@
 <MudCard Elevation="4" Class="retro-card pa-4">
     <div class="d-flex justify-space-between align-center mb-3">
-        <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.9rem;">
-            TOUCH / MOBILE D-PAD
-        </MudText>
+        <div class="d-flex align-center gap-2">
+            <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.9rem;">
+                TOUCH D-PAD
+            </MudText>
+            <button class="mud-button-root mud-button mud-button-filled pixel-text"
+                    onclick="window.__toggleDPadPlayer && window.__toggleDPadPlayer()"
+                    id="dpadPlayerToggleBtn"
+                    style="font-size: 0.6rem; padding: 2px 8px; background: #f1c40f; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                P1 (YELLOW)
+            </button>
+        </div>
         <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined" Class="pixel-text" Style="font-size: 0.55rem;">
             0ms DIRECT
         </MudChip>
@@ -13,46 +21,46 @@
         <div class="dpad-container">
             <div></div>
             <button class="dpad-btn" 
-                    ontouchstart="window.GameBridge && window.GameBridge.setVirtualInput('up', true); event.preventDefault();" 
-                    ontouchend="window.GameBridge && window.GameBridge.setVirtualInput('up', false); event.preventDefault();"
-                    ontouchcancel="window.GameBridge && window.GameBridge.setVirtualInput('up', false);"
-                    onmousedown="window.GameBridge && window.GameBridge.setVirtualInput('up', true);" 
-                    onmouseup="window.GameBridge && window.GameBridge.setVirtualInput('up', false);"
-                    onmouseleave="window.GameBridge && window.GameBridge.setVirtualInput('up', false);">
+                    ontouchstart="window.__sendDPad('up', true); event.preventDefault();" 
+                    ontouchend="window.__sendDPad('up', false); event.preventDefault();"
+                    ontouchcancel="window.__sendDPad('up', false);"
+                    onmousedown="window.__sendDPad('up', true);" 
+                    onmouseup="window.__sendDPad('up', false);"
+                    onmouseleave="window.__sendDPad('up', false);">
                 ▲
             </button>
             <div></div>
 
             <button class="dpad-btn" 
-                    ontouchstart="window.GameBridge && window.GameBridge.setVirtualInput('left', true); event.preventDefault();" 
-                    ontouchend="window.GameBridge && window.GameBridge.setVirtualInput('left', false); event.preventDefault();"
-                    ontouchcancel="window.GameBridge && window.GameBridge.setVirtualInput('left', false);"
-                    onmousedown="window.GameBridge && window.GameBridge.setVirtualInput('left', true);" 
-                    onmouseup="window.GameBridge && window.GameBridge.setVirtualInput('left', false);"
-                    onmouseleave="window.GameBridge && window.GameBridge.setVirtualInput('left', false);">
+                    ontouchstart="window.__sendDPad('left', true); event.preventDefault();" 
+                    ontouchend="window.__sendDPad('left', false); event.preventDefault();"
+                    ontouchcancel="window.__sendDPad('left', false);"
+                    onmousedown="window.__sendDPad('left', true);" 
+                    onmouseup="window.__sendDPad('left', false);"
+                    onmouseleave="window.__sendDPad('left', false);">
                 ◀
             </button>
             <div style="display:flex;align-items:center;justify-content:center;">
                 <span style="width:12px;height:12px;background:#334155;border-radius:50%;"></span>
             </div>
             <button class="dpad-btn" 
-                    ontouchstart="window.GameBridge && window.GameBridge.setVirtualInput('right', true); event.preventDefault();" 
-                    ontouchend="window.GameBridge && window.GameBridge.setVirtualInput('right', false); event.preventDefault();"
-                    ontouchcancel="window.GameBridge && window.GameBridge.setVirtualInput('right', false);"
-                    onmousedown="window.GameBridge && window.GameBridge.setVirtualInput('right', true);" 
-                    onmouseup="window.GameBridge && window.GameBridge.setVirtualInput('right', false);"
-                    onmouseleave="window.GameBridge && window.GameBridge.setVirtualInput('right', false);">
+                    ontouchstart="window.__sendDPad('right', true); event.preventDefault();" 
+                    ontouchend="window.__sendDPad('right', false); event.preventDefault();"
+                    ontouchcancel="window.__sendDPad('right', false);"
+                    onmousedown="window.__sendDPad('right', true);" 
+                    onmouseup="window.__sendDPad('right', false);"
+                    onmouseleave="window.__sendDPad('right', false);">
                 ▶
             </button>
 
             <div></div>
             <button class="dpad-btn" 
-                    ontouchstart="window.GameBridge && window.GameBridge.setVirtualInput('down', true); event.preventDefault();" 
-                    ontouchend="window.GameBridge && window.GameBridge.setVirtualInput('down', false); event.preventDefault();"
-                    ontouchcancel="window.GameBridge && window.GameBridge.setVirtualInput('down', false);"
-                    onmousedown="window.GameBridge && window.GameBridge.setVirtualInput('down', true);" 
-                    onmouseup="window.GameBridge && window.GameBridge.setVirtualInput('down', false);"
-                    onmouseleave="window.GameBridge && window.GameBridge.setVirtualInput('down', false);">
+                    ontouchstart="window.__sendDPad('down', true); event.preventDefault();" 
+                    ontouchend="window.__sendDPad('down', false); event.preventDefault();"
+                    ontouchcancel="window.__sendDPad('down', false);"
+                    onmousedown="window.__sendDPad('down', true);" 
+                    onmouseup="window.__sendDPad('down', false);"
+                    onmouseleave="window.__sendDPad('down', false);">
                 ▼
             </button>
             <div></div>
@@ -61,12 +69,12 @@
         <!-- Virtual Fire Button -->
         <div class="d-flex flex-column align-center gap-2">
             <button class="fire-btn" 
-                    ontouchstart="window.GameBridge && window.GameBridge.setVirtualInput('fire', true); event.preventDefault();"
-                    ontouchend="window.GameBridge && window.GameBridge.setVirtualInput('fire', false); event.preventDefault();"
-                    ontouchcancel="window.GameBridge && window.GameBridge.setVirtualInput('fire', false);"
-                    onmousedown="window.GameBridge && window.GameBridge.setVirtualInput('fire', true);"
-                    onmouseup="window.GameBridge && window.GameBridge.setVirtualInput('fire', false);"
-                    onmouseleave="window.GameBridge && window.GameBridge.setVirtualInput('fire', false);">
+                    ontouchstart="window.__sendDPad('fire', true); event.preventDefault();"
+                    ontouchend="window.__sendDPad('fire', false); event.preventDefault();"
+                    ontouchcancel="window.__sendDPad('fire', false);"
+                    onmousedown="window.__sendDPad('fire', true);"
+                    onmouseup="window.__sendDPad('fire', false);"
+                    onmouseleave="window.__sendDPad('fire', false);">
                 FIRE
             </button>
             <button class="mud-button-root mud-button mud-button-filled mud-button-filled-dark mud-button-size-small pixel-text" 
@@ -78,6 +86,36 @@
     </div>
 </MudCard>
 
+<script>
+  window.__currentDPadPlayer = 1;
+  window.__toggleDPadPlayer = function () {
+    window.__currentDPadPlayer = window.__currentDPadPlayer === 1 ? 2 : 1;
+    const btn = document.getElementById('dpadPlayerToggleBtn');
+    if (btn) {
+      if (window.__currentDPadPlayer === 2) {
+        btn.textContent = 'P2 (GREEN)';
+        btn.style.background = '#2ecc71';
+        btn.style.color = '#000';
+      } else {
+        btn.textContent = 'P1 (YELLOW)';
+        btn.style.background = '#f1c40f';
+        btn.style.color = '#000';
+      }
+    }
+  };
+
+  window.__sendDPad = function (action, isPressed) {
+    if (!window.GameBridge) return;
+    if (action === 'pause') {
+      window.GameBridge.setVirtualInput('pause', isPressed);
+      return;
+    }
+    const prefix = window.__currentDPadPlayer === 2 ? 'p2' : '';
+    const ctrl = prefix ? (prefix + action.charAt(0).toUpperCase() + action.slice(1)) : action;
+    window.GameBridge.setVirtualInput(ctrl, isPressed);
+  };
+</script>
+
 @code {
-    // Zero C# roundtrips: All touch & mouse inputs are routed directly to GameBridge at 0ms latency!
+    // Direct zero-allocation JS routing
 }

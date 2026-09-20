@@ -8,6 +8,7 @@ public class GameEngineService : IAsyncDisposable
 {
     private readonly IBattleCityEngine _engine;
     private readonly StageService _stageService;
+    private readonly GameStorageService _storageService;
     private readonly IJSRuntime _js;
     private DotNetObjectReference<GameEngineService>? _dotNetRef;
     private bool _isInitialized = false;
@@ -19,16 +20,22 @@ public class GameEngineService : IAsyncDisposable
     public GameEngineService(
         IBattleCityEngine engine,
         StageService stageService,
+        GameStorageService storageService,
         IJSRuntime js)
     {
         _engine = engine;
         _stageService = stageService;
+        _storageService = storageService;
         _js = js;
     }
 
     public async Task<bool> InitializeAsync(string canvasId, int stageNumber = 1)
     {
         _dotNetRef ??= DotNetObjectReference.Create(this);
+
+        // Load persisted high score
+        int savedHighScore = await _storageService.GetHighScoreAsync();
+        _engine.HighScore = Math.Max(savedHighScore, _engine.HighScore);
 
         var stage = await _stageService.GetStageAsync(stageNumber);
         if (stage == null) return false;
@@ -62,6 +69,11 @@ public class GameEngineService : IAsyncDisposable
         await _js.InvokeVoidAsync("GameBridge.stop");
     }
 
+    public void SetTwoPlayerMode(bool enable)
+    {
+        _engine.SetTwoPlayerMode(enable);
+    }
+
     public async Task SetStageAsync(int stageNumber)
     {
         var stage = await _stageService.GetStageAsync(stageNumber);
@@ -70,8 +82,9 @@ public class GameEngineService : IAsyncDisposable
         _engine.InitializeStage(stage, stageNumber);
         await _js.InvokeVoidAsync("GameBridge.setStage", stage.Grid, stageNumber);
         OnStageChanged?.Invoke(stageNumber);
-    }
 
+        _ = _storageService.SaveMaxStageAsync(stageNumber);
+    }
 
     public async Task ResetPlayerAsync()
     {
@@ -91,17 +104,17 @@ public class GameEngineService : IAsyncDisposable
         await _js.InvokeVoidAsync("GameBridge.togglePause");
     }
 
-
     public async Task SetVirtualInputAsync(string control, bool isPressed)
     {
         await _js.InvokeVoidAsync("GameBridge.setVirtualInput", control, isPressed);
     }
 
     private double _lastTelemetryTime = 0;
+    private int _lastSavedHighScore = 20000;
 
     /// <summary>
     /// Invoked every frame from JS requestAnimationFrame loop.
-    /// Executes C# Game Brain physics, collisions, and state update.
+    /// Executes C# Game Brain physics, collisions, and state update with split P1 / P2 inputs.
     /// Returns the RenderFrameDto for JS Fast Canvas blitting.
     /// </summary>
     [JSInvokable]
@@ -112,6 +125,11 @@ public class GameEngineService : IAsyncDisposable
         bool left,
         bool right,
         bool fire,
+        bool p2Up,
+        bool p2Down,
+        bool p2Left,
+        bool p2Right,
+        bool p2Fire,
         bool pause,
         int fps)
     {
@@ -122,11 +140,23 @@ public class GameEngineService : IAsyncDisposable
             Left = left,
             Right = right,
             Fire = fire,
+            P2Up = p2Up,
+            P2Down = p2Down,
+            P2Left = p2Left,
+            P2Right = p2Right,
+            P2Fire = p2Fire,
             Pause = pause
         });
 
         var frame = _engine.Tick(timestamp);
         frame.Fps = fps;
+
+        // Auto-save High Score when broken
+        if (_engine.HighScore > _lastSavedHighScore)
+        {
+            _lastSavedHighScore = _engine.HighScore;
+            _ = _storageService.SaveHighScoreAsync(_lastSavedHighScore);
+        }
 
         // Check if Score Tally finished and requested auto-advancement to next stage
         if (_engine.CheckNextStageReady(out int nextStageNum))
@@ -138,7 +168,6 @@ public class GameEngineService : IAsyncDisposable
         }
 
         // Throttle Blazor UI telemetry updates to ~2 times per second (500ms)
-        // to avoid saturating Blazor Virtual DOM render cycles at 60 FPS
         if (timestamp - _lastTelemetryTime >= 500 || _lastTelemetryTime == 0)
         {
             _lastTelemetryTime = timestamp;

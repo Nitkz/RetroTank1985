@@ -5,38 +5,60 @@ namespace RetroTank1985.Client.Engine.Core;
 
 public interface ITankPhysics
 {
-    void UpdatePlayer(PlayerTank player, InputState input, IDestructibleMap map, IReadOnlyList<EnemyTank> enemies, IAudioEventQueue audioQueue);
+    void UpdatePlayer(
+        PlayerTank player,
+        bool up,
+        bool down,
+        bool left,
+        bool right,
+        IDestructibleMap map,
+        IReadOnlyList<EnemyTank> enemies,
+        PlayerTank? otherPlayer,
+        IAudioEventQueue audioQueue);
 }
 
 public class TankPhysics : ITankPhysics
 {
     private const float SnappingThreshold = 6.0f;
-    private const float TankCollisionSize = 15.0f; // 15px bounding box to prevent overlap
-    private int _iceSlideTicks = 0;
+    private const float TankCollisionThreshold = 14.0f; // 14px threshold allows turning in 16px alleys
+
+    private int _iceSlideTicksP1 = 0;
+    private int _iceSlideTicksP2 = 0;
     private bool _engineSoundActive = false;
 
-    public void UpdatePlayer(PlayerTank player, InputState input, IDestructibleMap map, IReadOnlyList<EnemyTank> enemies, IAudioEventQueue audioQueue)
+    public void UpdatePlayer(
+        PlayerTank player,
+        bool up,
+        bool down,
+        bool left,
+        bool right,
+        IDestructibleMap map,
+        IReadOnlyList<EnemyTank> enemies,
+        PlayerTank? otherPlayer,
+        IAudioEventQueue audioQueue)
     {
         if (!player.IsActive) return;
 
         Direction? requestedDir = null;
-        if (input.Up) requestedDir = Direction.Up;
-        else if (input.Down) requestedDir = Direction.Down;
-        else if (input.Left) requestedDir = Direction.Left;
-        else if (input.Right) requestedDir = Direction.Right;
+        if (up) requestedDir = Direction.Up;
+        else if (down) requestedDir = Direction.Down;
+        else if (left) requestedDir = Direction.Left;
+        else if (right) requestedDir = Direction.Right;
 
         bool onIce = map.IsOnIce(player.X, player.Y, PlayerTank.TankSize);
 
+        ref int iceSlideTicks = ref (player.PlayerIndex == 2 ? ref _iceSlideTicksP2 : ref _iceSlideTicksP1);
+
         if (requestedDir.HasValue)
         {
-            _iceSlideTicks = onIce ? 14 : 0; // On ice, buffer ~14 ticks (~16px / 1 full tile) of slide momentum upon release
+            iceSlideTicks = onIce ? 14 : 0; // On ice, buffer ~14 ticks of slide momentum upon release
         }
-        else if (_iceSlideTicks > 0)
+        else if (iceSlideTicks > 0)
         {
-            _iceSlideTicks--;
+            iceSlideTicks--;
         }
 
-        bool isSliding = !requestedDir.HasValue && _iceSlideTicks > 0 && onIce;
+        bool isSliding = !requestedDir.HasValue && iceSlideTicks > 0 && onIce;
         bool shouldMove = requestedDir.HasValue || isSliding;
 
         if (shouldMove)
@@ -48,7 +70,7 @@ public class TankPhysics : ITankPhysics
             {
                 player.Direction = newDir;
 
-                // On normal ground snap threshold is 6px, on ice it's reduced to 2px (harder to align corridors)
+                // On normal ground snap threshold is 6px, on ice it's reduced to 2px
                 float currentThreshold = onIce ? 2.0f : SnappingThreshold;
 
                 if (newDir.IsVertical())
@@ -76,7 +98,9 @@ public class TankPhysics : ITankPhysics
             float nextX = player.X + dx;
             float nextY = player.Y + dy;
 
-            bool canMove = map.CanTankMoveTo(nextX, nextY, PlayerTank.TankSize) && !CollidesWithAnyEnemy(player, nextX, nextY, enemies);
+            bool canMove = map.CanTankMoveTo(nextX, nextY, PlayerTank.TankSize) 
+                           && !CollidesWithAnyEnemy(player, nextX, nextY, enemies)
+                           && !CollidesWithOtherPlayer(player, nextX, nextY, otherPlayer);
 
             if (canMove)
             {
@@ -91,7 +115,10 @@ public class TankPhysics : ITankPhysics
                 if (player.Direction.IsVertical())
                 {
                     float snappedX = MathF.Round(player.X / 8f) * 8f;
-                    if (MathF.Abs(player.X - snappedX) > 0.01f && map.CanTankMoveTo(snappedX, nextY, PlayerTank.TankSize) && !CollidesWithAnyEnemy(player, snappedX, nextY, enemies))
+                    if (MathF.Abs(player.X - snappedX) > 0.01f 
+                        && map.CanTankMoveTo(snappedX, nextY, PlayerTank.TankSize) 
+                        && !CollidesWithAnyEnemy(player, snappedX, nextY, enemies)
+                        && !CollidesWithOtherPlayer(player, snappedX, nextY, otherPlayer))
                     {
                         player.X = snappedX;
                         player.Y = nextY;
@@ -102,7 +129,10 @@ public class TankPhysics : ITankPhysics
                 else // Horizontal
                 {
                     float snappedY = MathF.Round(player.Y / 8f) * 8f;
-                    if (MathF.Abs(player.Y - snappedY) > 0.01f && map.CanTankMoveTo(nextX, snappedY, PlayerTank.TankSize) && !CollidesWithAnyEnemy(player, nextX, snappedY, enemies))
+                    if (MathF.Abs(player.Y - snappedY) > 0.01f 
+                        && map.CanTankMoveTo(nextX, snappedY, PlayerTank.TankSize) 
+                        && !CollidesWithAnyEnemy(player, nextX, snappedY, enemies)
+                        && !CollidesWithOtherPlayer(player, nextX, snappedY, otherPlayer))
                     {
                         player.X = nextX;
                         player.Y = snappedY;
@@ -127,7 +157,7 @@ public class TankPhysics : ITankPhysics
                     player.AnimFrame = (player.AnimFrame + 1) % 2;
                 }
 
-                // Audio Engine Sound Hum
+                // Audio Engine Sound Hum (Player 1 or Player 2 moving)
                 if (!_engineSoundActive)
                 {
                     audioQueue.Enqueue(AudioSoundEffect.EngineStart);
@@ -162,8 +192,6 @@ public class TankPhysics : ITankPhysics
         }
     }
 
-    private const float TankCollisionThreshold = 14.0f;
-
     private static bool CollidesWithAnyEnemy(PlayerTank player, float nextX, float nextY, IReadOnlyList<EnemyTank> enemies)
     {
         for (int i = 0; i < enemies.Count; i++)
@@ -187,4 +215,19 @@ public class TankPhysics : ITankPhysics
         }
         return false;
     }
+
+    private static bool CollidesWithOtherPlayer(PlayerTank player, float nextX, float nextY, PlayerTank? otherPlayer)
+    {
+        if (otherPlayer == null || !otherPlayer.IsActive) return false;
+
+        float currentDist = MathF.Max(MathF.Abs(player.X - otherPlayer.X), MathF.Abs(player.Y - otherPlayer.Y));
+        float nextDist = MathF.Max(MathF.Abs(nextX - otherPlayer.X), MathF.Abs(nextY - otherPlayer.Y));
+        if (currentDist < TankCollisionThreshold && nextDist > currentDist)
+        {
+            return false; // Moving away, allowed
+        }
+
+        return MathF.Abs(nextX - otherPlayer.X) < TankCollisionThreshold && MathF.Abs(nextY - otherPlayer.Y) < TankCollisionThreshold;
+    }
 }
+

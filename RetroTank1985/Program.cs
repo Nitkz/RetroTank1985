@@ -10,6 +10,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddMudServices();
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5085/") });
 builder.Services.AddScoped<RetroTank1985.Client.Services.StageService>();
+builder.Services.AddScoped<RetroTank1985.Client.Services.GameStorageService>();
 
 // Battle City C# Game Engine Services (Hybrid Architecture)
 builder.Services.AddTransient<RetroTank1985.Client.Engine.Core.IDestructibleMap, RetroTank1985.Client.Engine.Core.DestructibleMap>();
