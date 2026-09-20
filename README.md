@@ -8,12 +8,18 @@
 
 ## 🎯 Overview
 
-**RetroTank 1985** is a modern, modular remake of the legendary 1985 NES arcade game *Battle City*, built using **.NET 9 Blazor WebAssembly (WASM)** and styled with **MudBlazor** and custom retro aesthetics.
+**RetroTank 1985** is a modern, modular remake of the legendary 1985 NES arcade game *Battle City*, built using **.NET 9 Blazor WebAssembly (WASM)**, **C# Hybrid Game Engine Architecture**, and styled with **MudBlazor** and custom retro aesthetics.
 
 The project demonstrates:
+- **Hybrid Architecture (C# Game Brain + JS Fast Canvas/Audio Muscle)**:
+  - **100% C# Game Core**: Game state machine, 60Hz fixed timestep accumulator, Famicom 8px grid snapping physics, 26×26 sub-tile destructible terrain, bullet collision simulation, and audio event queuing.
+  - **Zero-Allocation 60 FPS Loop**: Pre-allocated entity object pools (`Bullet[16]`, `Explosion[16]`), DTO snapshot recycling (`RenderFrameDto`), double-buffered audio event queue, and cached HUD telemetry preventing Mono WASM GC stutters.
+  - **Modular High-Speed JS Muscle**: Lightweight 60 FPS HTML5 Canvas 2D Metasprite blitting (`stage-renderer.js`, `nes-chr.js`, `game-bridge.js`) and Web Audio API 2A03 APU Synthesizer (`nes-synth.js`).
+- **Single Source of Truth Bundler (`game-bundle.js`)**: ES6 module loader unifying scripts across both **ASP.NET Core Server Dev** (`App.razor`) and **Cloudflare Pages Standalone WASM** (`index.html`).
 - **Dual-Mode Execution**: Runs as a full-stack **ASP.NET Core Blazor Web App** during local development, and deploys as a pure **Standalone WebAssembly SPA** for static cloud hosting (e.g. Cloudflare Pages, GitHub Pages).
 - **NES APU Audio Synthesis**: Emulation of Ricoh 2A03 hardware (Pulse 1, Pulse 2, Triangle, and Noise channels) in Web Audio API without relying on pre-recorded audio files.
 - **ROM-Accurate Assets**: Native extraction of 8-bit NES CHR tiles, palettes (`$D44A`), and authentic game sprites (including player tanks, enemies, eagle base, and powerups).
+- **Modular Razor Components**: Clean separation of concerns with sub-components (`GameControlBar`, `TelemetryHud`, `MissionBriefingCard`, `VirtualDPad`) and code-behind architecture.
 - **Automated Deployment**: One-click build script generating optimized WASM bundles, Cloudflare Pages headers (`_headers`, `_redirects`), and zip release packages.
 
 ---
@@ -21,6 +27,7 @@ The project demonstrates:
 ## 🛠 Tech Stack
 
 - **Framework**: .NET 9.0 (Blazor WebAssembly with AOT / Linking support)
+- **Architecture**: C# Domain Game Engine + Canvas 2D Interop
 - **UI Library**: [MudBlazor](https://mudblazor.com/) (v9.x)
 - **Audio Engine**: Custom NES 6502 APU Sound Driver Synthesizer in Web Audio API
 - **Asset Pipeline**: Python-assisted CHR-ROM extraction & 2bpp tile rendering
@@ -48,7 +55,7 @@ cd RetroTank1985
 dotnet watch
 ```
 
-Open your browser at the local URL (e.g., `https://localhost:7xxx` or `http://localhost:5xxx`).
+Open your browser at the local URL (e.g., `http://localhost:5093`).
 
 ---
 
@@ -78,7 +85,18 @@ publish-wasm.bat
 - Central access point for all reverse-engineered game modules.
 - Responsive arcade cabinet aesthetic with authentic 1985 color grading.
 
-### 2. NES Sound & BGM Synthesizer (`/sound-bgm`)
+### 2. Stage Arena (`/play`) — C# Hybrid Game Engine
+- **60 FPS Fixed Timestep**: Deterministic physics simulation decoupled from display refresh rates.
+- **Zero-Allocation 60 FPS Pipeline**:
+  - Reused `RenderFrameDto` snapshot instance and pre-allocated Bullet/Explosion pools.
+  - Double-buffered audio queue (`AudioEventQueue`) eliminating GC allocations.
+  - Offscreen Canvas sub-tile terrain buffering with pre-filtered foreground tree list (`treeSubTiles`).
+- **Famicom 8px Grid Snapping**: Authentic turning mechanics allowing smooth navigation into 1-tile corridors.
+- **26×26 Sub-Tile Destructible Terrain**: Multi-subtile leading-edge bounding box detection carving 16px slices on direct hits and 8px slices on half-hits.
+- **Dual Controller Support**: Full keyboard (WASD / Arrows + Space/J) and on-screen Touch D-Pad with Fire button.
+- **Live Telemetry HUD**: Throttled 500ms status monitor reporting real-time FPS, coordinate position, direction, and force shield.
+
+### 3. NES Sound & BGM Synthesizer (`/sound-bgm`)
 Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behavior:
 
 | Effect / Music | NES APU Channel | Technique |
@@ -92,18 +110,19 @@ Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behav
 | **Stage Start BGM** | Pulse 1 + Triangle | 2-track lead and bass transcription calibrated from ROM `$ED36` |
 | **Game Over BGM** | Pulse 1 | Chromatic step-down game over sequence |
 
-### 3. Stage, CHR & Item Inspector (`/stage-inspector`)
+### 4. Stage, CHR & Item Inspector (`/stage-inspector`)
 - **35 Stages Map Viewer**: Decoded from ROM `$F07A` and saved into modular JSON files (`data/stages/stage_01.json` ... `stage_35.json`).
 - **Authentic Eagle Fortification**: Strict ROM `EAGLE_WALL` 8px sub-tile Π-wall geometry.
 - **Enemy Intelligence Recon**: 20-tank spawn breakdown per stage across 4 tiers (Basic, Fast, Power, Armor) based on ROM `$E4EC` & `$E578`.
 - **CHR Tile & Sprite Catalog**: Real-time rendering of all 512 8×8 tiles (`chr_all.png`) with palette switching (BG0–BG3, SP0–SP3) and 4-way metasprite tank previews.
 - **Power-ups & Specials Gallery**: Interactive preview of all 6 classic droppable items (Helmet, Timer, Shovel, Star, Grenade, 1-UP) + Phoenix HQ status (Intact/Destroyed) and Force Shield with instant SFX testing.
 
-### 4. Upcoming Modules (Phase 2-5)
-- **Phase 2: 60 FPS Game Loop & Tank Controller (`/play`)**: Tank physics, WASM tick loop, and mobile touch D-Pad.
-- **Phase 3: Collision & Destruction**: 4×4 sub-tile brick damage and steel ricochets.
-- **Phase 4: Enemy AI & Spawning**: AI targeting, flashing tanks, and power-up drops.
-- **Phase 5: Game Polish & Construction Mode**: Custom stage builder and score tally screen.
+### 5. Upcoming: 👑 Epic Boss Battles & Tactical Munitions (Phase 8)
+- **Mega Boss Tank Encounters**: Giant multi-tile armored Boss Mechs with multi-phase HP bars.
+- **Minion Swarm Deployment**: Boss actively summons support tank drones.
+- **Dual Arm Artillery**: Simultaneous twin-cannon firing with spread/cross-fire projectile mechanics.
+- **Multi-Tile Jump Maneuver**: Boss leaps airborne across brick, steel, and water obstacles.
+- **Tactical Weapon Crates**: Crates dropping Laser Rails, AOE Plasma Bombs, and Heavy AP Shells.
 
 ---
 
@@ -113,6 +132,8 @@ Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behav
 RetroTank1985/
 ├── publish-wasm.bat             # Automated Release script (Cloudflare Pages + Zip)
 ├── RetroTank1985.slnx           # Modern .NET Solution File
+├── ROADMAP.md                   # Detailed development roadmap (Phases 1 - 8)
+├── README.md                    # Project documentation
 │
 ├── RetroTank1985/               # Server host project (Blazor Web App for local dev)
 │   ├── Components/
@@ -121,15 +142,27 @@ RetroTank1985/
 │   └── Program.cs               # Host configuration & MapStaticAssets
 │
 ├── RetroTank1985.Client/        # Pure WebAssembly Client (Runs locally & in Cloudflare)
+│   ├── Components/Play/         # Modular Play Arena Sub-Components
+│   │   ├── GameControlBar.razor # Top stage picker & action buttons
+│   │   ├── TelemetryHud.razor   # Real-time HUD status strip
+│   │   ├── MissionBriefingCard.razor # Enemy battalion breakdown & key guide
+│   │   └── VirtualDPad.razor    # Mobile on-screen touch controller
+│   ├── Engine/                  # C# Game Core Layer (Brain)
+│   │   ├── Core/                # Physics, DestructibleMap, Bullets, AudioQueue, Engine
+│   │   ├── Enums/               # Direction, SubTileType, GameEnums
+│   │   └── Models/              # PlayerTank, GameEntities, RenderFrameDto, InputState
 │   ├── Layout/
 │   │   └── MainLayout.razor     # Retro arcade layout & MudBlazor theme
 │   ├── Models/
 │   │   └── StageModel.cs        # Stage, Tile, and Enemy data models
 │   ├── Pages/
 │   │   ├── Home.razor           # Navigation Hub
+│   │   ├── Play.razor           # Stage Arena Razor Template
+│   │   ├── Play.razor.cs        # Stage Arena Code-Behind
 │   │   ├── SoundBgm.razor       # Sound & BGM test bench
 │   │   └── StageInspector.razor # 35-stage map & CHR tile inspector
 │   ├── Services/
+│   │   ├── GameEngineService.cs # Blazor JS Interop & Session lifecycle service
 │   │   └── StageService.cs      # Stage JSON loader with in-memory caching
 │   ├── wwwroot/
 │   │   ├── app.css              # Pixel font and CRT styling
@@ -138,9 +171,12 @@ RetroTank1985/
 │   │   ├── data/stages/         # 35 individual stage JSONs + manifest.json
 │   │   ├── index.html           # Standalone entry point for Cloudflare Pages
 │   │   └── js/
-│   │       ├── interop.js       # Runtime environment detector
+│   │       ├── game-bundle.js   # Single Source of Truth JS module bundler
+│   │       ├── nes-chr.js       # Core NES CHR tile & palette decoding engine
 │   │       ├── nes-synth.js     # NES APU sound synthesizer engine
-│   │       └── stage-renderer.js# Stage canvas & CHR sprite rendering engine
+│   │       ├── stage-renderer.js# Fast 60 FPS In-Game Canvas 2D Blitter
+│   │       ├── stage-inspector.js# DevTools for /stage-inspector page
+│   │       └── game-bridge.js   # Fast JS RAF ticker, input listener & audio dispatcher
 │   ├── Program.cs               # Dynamic client bootstrapper
 │   └── RetroTank1985.Client.csproj
 │

@@ -9,12 +9,13 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 | Phase | Description | Status | Target Completion |
 | :--- | :--- | :---: | :---: |
 | **Phase 1** | Reverse Engineering & Asset Pipeline (Audio, Stages, CHR) | ✅ **Completed** | 2026-09-20 |
-| **Phase 2** | 60 FPS NES Game Loop & Player Tank Controller | ✅ **Completed** | 2026-09-20 |
-| **Phase 3** | Destructible Terrain & Bullet-World Collisions | 🟡 **In Progress** | Next |
-| **Phase 4** | Enemy AI & Wave Spawning System | ⏳ **Planned** | Upcoming |
+| **Phase 2** | C# 60 FPS NES Game Loop & Player Tank Controller | ✅ **Completed** | 2026-09-20 |
+| **Phase 3** | Destructible Terrain & Bullet-World Collisions | ✅ **Completed** | 2026-09-20 |
+| **Phase 4** | Enemy AI & Wave Spawning System | 🟡 **In Progress** | Next |
 | **Phase 5** | Phoenix Eagle Base & Droppable Power-Up System | ⏳ **Planned** | Upcoming |
 | **Phase 6** | Stage Transitions, Score Tally & Game Over Flow | ⏳ **Planned** | Upcoming |
 | **Phase 7** | Two-Player Co-Op & High Score Persistence | ⏳ **Planned** | Future |
+| **Phase 8** | 👑 Epic Boss Battles & Special Munition Crates | 💡 **New / Planned** | Future Expansion |
 
 ---
 
@@ -29,36 +30,40 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 
 ---
 
-### ✅ Phase 2: 60 FPS Game Loop & Player Tank Controller (Done)
-- [x] **Stage Arena Canvas (`/play`)**: Authentic 208×208 NES Playfield scaled 2x (416px) with authentic arcade bezel border.
-- [x] **Fixed 60Hz Timestep Game Loop (`game-engine.js`)**: Physics accumulator loop ensuring consistent 60 FPS NES speed across high-refresh displays (120Hz/144Hz).
-- [x] **P1 Tank Controller**:
+### ✅ Phase 2: C# 60 FPS Hybrid Game Engine & Tank Controller (Done)
+- [x] **Hybrid Architecture (C# Game Brain + JS Fast Canvas/Audio Muscle)**:
+  - 100% of game state, physics, collisions, and sound dispatching running in .NET 9 C#.
+  - Clean separation: `Engine/Core/`, `Engine/Models/`, `Engine/Enums/`, `Services/GameEngineService.cs`.
+- [x] **Stage Arena Canvas (`/play`)**: Authentic 208×208 NES Playfield scaled 2x (416px) with arcade bezel border.
+- [x] **Fixed 60Hz Timestep Game Loop (`BattleCityEngine.cs`)**: Physics accumulator loop ensuring consistent 60 FPS NES speed across high-refresh displays (120Hz/144Hz).
+- [x] **P1 Tank Physics & Controller (`TankPhysics.cs`)**:
   - 4-directional movement (UP, LEFT, DOWN, RIGHT) at authentic ~75 px/sec speed.
   - Famicom 8px grid snapping on turns for smooth navigation through narrow tile corridors.
   - 2-frame authentic tread animation with CHR tile offset matching.
-- [x] **Bullet Physics**: Initial bullet firing system with NES APU fire sound, speed regulation, and playfield boundary checks.
 - [x] **Dual Input System**: Desktop keyboard (WASD / Arrow Keys + Space/J) & Mobile Virtual D-Pad + Fire button.
 - [x] **Invincibility Shield**: Initial spawn Force Shield animation and timer.
-- [x] **Telemetry HUD**: Real-time FPS, coordinate position, direction, and shield indicator.
+- [x] **Telemetry HUD**: Real-time FPS, coordinate position, direction, and shield indicator (throttled for high-efficiency rendering).
+- [x] **Modular Blazor UI (`Components/Play/`)**: Clean decomposition into `GameControlBar`, `TelemetryHud`, `MissionBriefingCard`, `VirtualDPad`, and `Play.razor.cs` code-behind.
 
 ---
 
-### 🟡 Phase 3: Destructible Terrain & Bullet Collisions (In Progress / Next)
-- [ ] **Sub-tile Brick Wall Destruction**:
-  - Sub-grid (26×26 of 8×8 px) destruction model matching NES Battle City.
-  - Directional brick chipping (destroying 2 sub-tiles per bullet impact).
-- [ ] **Steel Wall Interaction**:
-  - Bullet reflection / deflection sound (`nesSynth.playClink`).
-  - Bullet cancellation upon hitting steel.
-- [ ] **Bullet vs Bullet Collision**: Mutual cancellation when player and enemy bullets collide head-on.
-- [ ] **Small Explosion Effect**: 3-frame explosion sprite animation (`0xA0..0xA4` from CHR-ROM) on bullet impact.
-- [ ] **Water & Ice Interactions**:
-  - Water: Blocks tank movement, lets bullets pass through.
-  - Ice: Reduces friction / sliding effect when moving over ice tiles.
+### ✅ Phase 3: Destructible Terrain & Bullet Collisions (Done)
+- [x] **Sub-tile Brick Wall Destruction (`DestructibleMap.cs`)**:
+  - 26×26 grid (of 8×8 px sub-tiles) matching authentic NES Battle City ROM layout.
+  - Multi-subtile leading edge collision test: cleanly carves full 16px slices on full hits and 8px slices on half-hits.
+- [x] **Steel Wall Interaction**:
+  - Bullet reflection / deflection metallic sound (`HitSteel`).
+  - Bullet cancellation upon hitting impenetrable steel blocks.
+- [x] **Bullet vs Bullet Collision**: Mutual cancellation when opposing bullets collide head-on.
+- [x] **Small Explosion Animation**: 3-frame explosion sprite animation (`0xA0`, `0xA2`, `0xA4` from CHR-ROM) on bullet impact.
+- [x] **Water & Ice Interactions**:
+  - Water: Blocks tank movement, lets bullets pass through cleanly.
+  - Ice: Traversible terrain with reduced friction.
+- [x] **Phoenix Eagle Base Destruction**: Instant state transition to destroyed eagle sprite with game over sound dispatch.
 
 ---
 
-### ⏳ Phase 4: Enemy AI & Wave Spawning System
+### 🟡 Phase 4: Enemy AI & Wave Spawning System (In Progress / Next)
 - [ ] **3-Point Spawn System**: Top-left, Top-center, and Top-right spawn positions.
 - [ ] **Spawn Star Animation**: 4-frame rotating star sparkle animation before enemy emergence.
 - [ ] **Max 4 Active Enemies**: 20-enemy queue per stage dispatched sequentially.
@@ -101,6 +106,26 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 - [ ] **Player 2 Green Tank Support**: Local 2-player mode with split keyboard / dual controller support.
 - [ ] **Local Storage Persistence**: Best stage progression, high scores, and audio preference saving.
 - [ ] **Stage Editor**: Custom map creator and export tool.
+
+---
+
+### 💡 Phase 8: 👑 Epic Boss Battles & Special Munitions (New Expansion)
+- [ ] **End-of-Stage Boss Encounters (บอสใหญ่ท้ายฉาก)**:
+  - Giant multi-tile Boss Mech Tank appearing after standard 20-tank wave clearance or at landmark stages (Stage 05, 10, 15, 20, 25, 30, 35).
+  - Multi-phase health bar with progressive armor destruction visuals.
+- [ ] **Minion Deployment (Boss ปล่อยลูกน้อง)**:
+  - Boss summons active support battalions (Basic/Fast/Flashing drones) to flank the player.
+- [ ] **Dual-Arm Heavy Cannons (ยิงกระสุนจากแขนสองข้าง)**:
+  - Simultaneous twin-cannon firing with spread and cross-fire trajectory patterns.
+- [ ] **Multi-Tile Jump & Leap Ability (กระโดดข้ามสิ่งกีดขวางได้หลายช่อง)**:
+  - Boss can leap airborne over brick, steel, and water obstacles to reposition or attempt ground-pound slam attacks.
+  - Screen shake & shockwave effect upon landing.
+- [ ] **Special Munition / Heavy Weapon Crates (หีบกระสุนแรงพิเศษ)**:
+  - Droppable tactical weapon crates spawning during boss encounters.
+  - Special ammo types:
+    - ⚡ **Laser / Railgun**: Pierces through multiple walls in a straight beam.
+    - 💥 **Heavy Artillery Plasma Bomb**: Area-of-effect blast destroying 4×4 sub-tiles.
+    - 🎯 **Armor Piercing AP Shells**: Inflicts double damage on Boss armor plating.
 
 ---
 
