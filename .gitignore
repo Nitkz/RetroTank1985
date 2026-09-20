@@ -1,0 +1,26 @@
+﻿## .NET and Build Artifacts
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+.vscode/
+.idea/
+*.user
+*.userosscache
+*.sln.docstates
+
+## OS & Tool generated files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+## Blazor & Static Assets generated
+**/wwwroot/service-worker-assets.js
+_framework/
+
+## ROMs and proprietary binary dumps (Educational notice: keep clean from repository)
+*.nes
+*.bin
+*.dump

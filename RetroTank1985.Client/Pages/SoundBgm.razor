@@ -1,0 +1,437 @@
+@page "/sound-bgm"
+@inject IJSRuntime JS
+
+<PageTitle>RetroTank 1985 | NES Sound & BGM Synthesizer</PageTitle>
+
+<div class="d-flex align-center justify-space-between mb-6">
+    <div>
+        <MudBreadcrumbs Items="_navItems" Class="pa-0 mb-1" />
+        <MudText Typo="Typo.h4" Class="pixel-text" Style="color: #f1c40f;">
+            NES APU SOUND SYNTHESIZER
+        </MudText>
+        <MudText Typo="Typo.body2" Style="color: #94a3b8;">
+            ระบบกำเนิดเสียงสังเคราะห์ 8-bit (Web Audio API) เลียนแบบพฤติกรรมฮาร์ดแวร์ Ricoh 2A03 (NES APU)
+        </MudText>
+    </div>
+
+    <!-- Master Audio Controls -->
+    <MudPaper Elevation="3" Class="pa-3 retro-card d-flex align-center gap-4">
+        <MudTooltip Text="@(_isMuted ? "Unmute" : "Mute")">
+            <MudIconButton Icon="@(_isMuted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)" 
+                           Color="@(_isMuted ? Color.Error : Color.Warning)" 
+                           OnClick="ToggleMute" />
+        </MudTooltip>
+        <div style="width: 140px;">
+            <MudSlider T="double" Value="_volume" ValueChanged="OnVolumeChanged" Min="0" Max="100" Color="Color.Warning" Size="Size.Small" Immediate="true" />
+        </div>
+        <MudText Typo="Typo.caption" Class="pixel-text" Style="font-size: 0.7rem; min-width: 35px;">
+            @($"{_volume}%")
+        </MudText>
+    </MudPaper>
+</div>
+
+<MudGrid Spacing="4">
+    <!-- SFX Section -->
+    <MudItem xs="12" lg="7">
+        <MudCard Elevation="4" Class="retro-card pa-5">
+            <div class="d-flex align-center justify-space-between mb-4">
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.SportsEsports" Color="Color.Warning" Class="mr-2" />
+                    <MudText Typo="Typo.h6" Class="pixel-text" Style="font-size: 0.95rem; color: #f1c40f;">
+                        SOUND EFFECTS (SFX)
+                    </MudText>
+                </div>
+                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" Style="font-size: 0.65rem;">
+                    EVENT-BASED
+                </MudChip>
+            </div>
+
+            <MudGrid Spacing="3">
+                <!-- Tank Shoot -->
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="2" Class="pa-4 retro-card">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem; color: #ffffff;">
+                                TANK FIRE
+                            </MudText>
+                            <span class="channel-tag tag-pulse">PULSE 1</span>
+                        </div>
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                            ความถี่กวาดลงเร็ว (980Hz &rarr; 110Hz) พร้อม Decay 0.12s
+                        </MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Warning" FullWidth="true" StartIcon="@Icons.Material.Filled.FlashOn" OnClick="PlayShot">
+                            Fire Gun
+                        </MudButton>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Brick Hit -->
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="2" Class="pa-4 retro-card">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem; color: #ffffff;">
+                                HIT BRICK
+                            </MudText>
+                            <span class="channel-tag tag-noise">NOISE</span>
+                        </div>
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                            สัญญาณ White Noise สั้น 0.08s ผ่านตัวกรอง Bandpass 1200Hz
+                        </MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" StartIcon="@Icons.Material.Filled.Grain" OnClick="PlayHitBrick">
+                            Hit Brick
+                        </MudButton>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Steel Ricochet -->
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="2" Class="pa-4 retro-card">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem; color: #ffffff;">
+                                STEEL ARMOR
+                            </MudText>
+                            <span class="channel-tag tag-pulse">PULSE 2</span>
+                        </div>
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                            ความถี่สูงสะท้อนโลหะ (1480Hz + 1760Hz) ดังกังวานคมชัด
+                        </MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true" StartIcon="@Icons.Material.Filled.Shield" OnClick="PlayHitSteel">
+                            Ricochet Steel
+                        </MudButton>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Explosion -->
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="2" Class="pa-4 retro-card">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem; color: #ffffff;">
+                                EXPLOSION
+                            </MudText>
+                            <span class="channel-tag tag-noise">NOISE</span>
+                        </div>
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                            Lowpass Noise Sweep (600Hz &rarr; 80Hz) สำหรับรถถังระเบิด
+                        </MudText>
+                        <div class="d-flex gap-2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" StartIcon="@Icons.Material.Filled.LocalFireDepartment" OnClick="@(() => PlayExplosion(false))">
+                                Normal
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" FullWidth="true" OnClick="@(() => PlayExplosion(true))">
+                                Large
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Bonus Item -->
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="2" Class="pa-4 retro-card">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem; color: #ffffff;">
+                                BONUS ITEM
+                            </MudText>
+                            <span class="channel-tag tag-pulse">PULSE ARPEGGIO</span>
+                        </div>
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                            Arpeggio บันไดเสียง C-E-G-C-E-G สำหรับดาว ระเบิด นาฬิกา
+                        </MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Tertiary" FullWidth="true" StartIcon="@Icons.Material.Filled.Stars" OnClick="PlayBonus">
+                            Item Pick
+                        </MudButton>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Armor Hit -->
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="2" Class="pa-4 retro-card">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem; color: #ffffff;">
+                                ARMOR TANK HIT
+                            </MudText>
+                            <span class="channel-tag tag-pulse">SLOT 14</span>
+                        </div>
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                            เสียงยิงโดนรถถังเกราะหนา (ROM $EE67)
+                        </MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Tertiary" FullWidth="true" StartIcon="@Icons.Material.Filled.Security" OnClick="PlayHitArmor">
+                            Armor Hit
+                        </MudButton>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Bonus Appear & Collect -->
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="2" Class="pa-4 retro-card">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem; color: #ffffff;">
+                                POWER-UPS
+                            </MudText>
+                            <span class="channel-tag tag-pulse">SLOT 9 &amp; 6</span>
+                        </div>
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                            ไอเทมเกิด (Spawn $EE48) และเก็บไอเทม (Collect $EE19)
+                        </MudText>
+                        <div class="d-flex gap-2">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" FullWidth="true" OnClick="PlayBonusAppear">
+                                Appear
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Warning" FullWidth="true" StartIcon="@Icons.Material.Filled.Stars" OnClick="PlayBonus">
+                                Collect
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- 1-UP & Pause -->
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="2" Class="pa-4 retro-card">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem; color: #ffffff;">
+                                1-UP &amp; PAUSE
+                            </MudText>
+                            <span class="channel-tag tag-pulse">SLOT 4 &amp; 0</span>
+                        </div>
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                            เพิ่มชีวิต (ROM $EE9F) และเสียงกดหยุดเกม (ROM $EE2C)
+                        </MudText>
+                        <div class="d-flex gap-2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" StartIcon="@Icons.Material.Filled.Favorite" OnClick="PlayLifeUp">
+                                1-UP
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" FullWidth="true" StartIcon="@Icons.Material.Filled.Pause" OnClick="PlayPause">
+                                Pause
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Eagle Destroyed Alarm -->
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="2" Class="pa-4 retro-card">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem; color: #ffffff;">
+                                EAGLE DESTROY
+                            </MudText>
+                            <span class="channel-tag tag-noise">SLOT 11 &amp; 18</span>
+                        </div>
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                            ฐานอินทรีพังพร้อมเสียง Siren เตือนต่อเนื่อง (ROM $838C)
+                        </MudText>
+                        <div class="d-flex gap-2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" StartIcon="@Icons.Material.Filled.Warning" OnClick="PlayEagleHit">
+                                Eagle Hit
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="StopEagleAlarm">
+                                Stop
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Tank Engine Loop -->
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="2" Class="pa-4 retro-card">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem; color: #ffffff;">
+                                TANK ENGINE
+                            </MudText>
+                            <span class="channel-tag tag-pulse">SLOT 17</span>
+                        </div>
+                        <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                            เสียงเครื่องยนต์รถถังวิ่งวนลูปแท้ (F9 jump via ROM $9B34)
+                        </MudText>
+                        <div class="d-flex gap-2">
+                            @if (!_isEnginePlaying)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="StartEngine">
+                                    Start Engine
+                                </MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="StopEngine">
+                                    Stop Engine
+                                </MudButton>
+                            }
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudCard>
+    </MudItem>
+
+    <!-- BGM & Technical Architecture Section -->
+    <MudItem xs="12" lg="5">
+        <MudStack Spacing="4">
+            <!-- BGM Card -->
+            <MudCard Elevation="4" Class="retro-card pa-5">
+                <div class="d-flex align-center justify-space-between mb-4">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.MusicNote" Color="Color.Warning" Class="mr-2" />
+                        <MudText Typo="Typo.h6" Class="pixel-text" Style="font-size: 0.95rem; color: #f1c40f;">
+                            BACKGROUND MUSIC (BGM)
+                        </MudText>
+                    </div>
+                </div>
+
+                <!-- Intro Theme -->
+                <MudPaper Elevation="1" Class="pa-4 mb-3 retro-card">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem;">
+                            STAGE START BGM (ROM $ED36)
+                        </MudText>
+                        <span class="channel-tag tag-tri">PULSE 1 + PULSE 2 + TRI</span>
+                    </div>
+                    <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                        เพลงเปิดฉาก Battle City ถอดรหัสตรงจาก Bytecode ของ ROM ($ED36-$ED88) 3 Channels พร้อม Hardware Duty 12.5% และ Envelope
+                    </MudText>
+                    <div class="d-flex gap-2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="PlayIntroBGM">
+                            Play Stage Start
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Stop" OnClick="StopBGM">
+                            Stop
+                        </MudButton>
+                    </div>
+                </MudPaper>
+
+                <!-- Stage Clear Fanfare -->
+                <MudPaper Elevation="1" Class="pa-4 mb-3 retro-card">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem;">
+                            STAGE CLEAR JINGLE (ROM $EEC1)
+                        </MudText>
+                        <span class="channel-tag tag-pulse">SLOT 21-23</span>
+                    </div>
+                    <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                        เพลงจบฉาก/นับแต้ม (Slot 21-23: Melody, Harmony, Bass) ตามโค้ดต้นฉบับ
+                    </MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="PlayStageClearBGM">
+                        Play Stage Clear
+                    </MudButton>
+                </MudPaper>
+
+                <!-- Victory Theme -->
+                <MudPaper Elevation="1" Class="pa-4 retro-card">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <MudText Typo="Typo.subtitle1" Class="pixel-text" Style="font-size: 0.8rem;">
+                            VICTORY FANFARE (ROM $EF3C)
+                        </MudText>
+                        <span class="channel-tag tag-tri">SLOT 24-26</span>
+                    </div>
+                    <MudText Typo="Typo.caption" Style="color: #94a3b8; display: block;" Class="mb-3">
+                        เพลงชัยชนะเมื่อเคลียร์เกมครบ 35 ด่าน (Melody, Harmony, Bass)
+                    </MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.EmojiEvents" OnClick="PlayVictoryBGM">
+                        Play Victory
+                    </MudButton>
+                </MudPaper>
+            </MudCard>
+
+            <!-- Technical Architecture Card -->
+            <MudCard Elevation="4" Class="retro-card pa-5">
+                <MudText Typo="Typo.h6" Class="pixel-text mb-3" Style="font-size: 0.85rem; color: #2ecc71;">
+                    NES APU HARDWARE SPEC
+                </MudText>
+                <MudSimpleTable Dense="true" Hover="true" Style="background: transparent;">
+                    <thead>
+                        <tr>
+                            <th style="color: #f1c40f;">Channel</th>
+                            <th style="color: #f1c40f;">Waveform</th>
+                            <th style="color: #f1c40f;">Usage in Battle City</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Pulse 1</strong></td>
+                            <td>Square (12.5-75%)</td>
+                            <td>กระสุนยิง, เมโลดี้หลัก Fanfare</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pulse 2</strong></td>
+                            <td>Square (12.5-75%)</td>
+                            <td>กระสุนชนเหล็ก, ฮาร์โมนีคอร์ด</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Triangle</strong></td>
+                            <td>Triangle (4-bit)</td>
+                            <td>เสียงเบส BGM, จังหวะต่ำ</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Noise</strong></td>
+                            <td>White/Periodic</td>
+                            <td>ชนกำแพงอิฐ, รถถังระเบิด, เครื่องยนต์</td>
+                        </tr>
+                    </tbody>
+                </MudSimpleTable>
+            </MudCard>
+        </MudStack>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private double _volume = 40;
+    private bool _isMuted = false;
+    private bool _isEnginePlaying = false;
+    private bool _isMoving = false;
+
+    private List<BreadcrumbItem> _navItems = new()
+    {
+        new BreadcrumbItem("Hub", href: ""),
+        new BreadcrumbItem("Sound & BGM", href: null, disabled: true)
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await UpdateVolume();
+        }
+    }
+
+    private async Task OnVolumeChanged(double val)
+    {
+        _volume = val;
+        await UpdateVolume();
+    }
+
+    private async Task UpdateVolume()
+    {
+        await JS.InvokeVoidAsync("nesSynth.setMasterVolume", _volume / 100.0);
+    }
+
+    private async Task ToggleMute()
+    {
+        _isMuted = await JS.InvokeAsync<bool>("nesSynth.toggleMute");
+    }
+
+    private async Task PlayShot() => await JS.InvokeVoidAsync("nesSynth.playShot");
+    private async Task PlayHitBrick() => await JS.InvokeVoidAsync("nesSynth.playHitBrick");
+    private async Task PlayHitSteel() => await JS.InvokeVoidAsync("nesSynth.playHitSteel");
+    private async Task PlayHitArmor() => await JS.InvokeVoidAsync("nesSynth.playHitArmor");
+    private async Task PlayExplosion(bool isLarge) => await JS.InvokeVoidAsync("nesSynth.playExplosion", isLarge);
+    private async Task PlayBonusAppear() => await JS.InvokeVoidAsync("nesSynth.playBonusAppear");
+    private async Task PlayBonus() => await JS.InvokeVoidAsync("nesSynth.playBonus");
+    private async Task PlayLifeUp() => await JS.InvokeVoidAsync("nesSynth.playLifeUp");
+    private async Task PlayPause() => await JS.InvokeVoidAsync("nesSynth.playPause");
+    private async Task PlayEagleHit() => await JS.InvokeVoidAsync("nesSynth.playEagleHit");
+    private async Task StopEagleAlarm() => await JS.InvokeVoidAsync("nesSynth.stopEagleAlarm");
+
+    private async Task StartEngine()
+    {
+        _isEnginePlaying = true;
+        await JS.InvokeVoidAsync("nesSynth.startEngine", false);
+    }
+
+    private async Task StopEngine()
+    {
+        _isEnginePlaying = false;
+        await JS.InvokeVoidAsync("nesSynth.stopEngine");
+    }
+
+    private async Task PlayIntroBGM() => await JS.InvokeVoidAsync("nesSynth.playIntroBGM");
+    private async Task PlayStageClearBGM() => await JS.InvokeVoidAsync("nesSynth.playStageClearBGM");
+    private async Task PlayVictoryBGM() => await JS.InvokeVoidAsync("nesSynth.playVictoryBGM");
+    private async Task StopBGM() => await JS.InvokeVoidAsync("nesSynth.stopBGM");
+}

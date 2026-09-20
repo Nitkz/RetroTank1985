@@ -1,0 +1,66 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="_retroTheme" IsDarkMode="true" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="2" Dense="false" Class="px-6" Style="background-color: #11141c; border-bottom: 2px solid #232938;">
+        <MudIcon Icon="@Icons.Material.Filled.SportsEsports" Color="Color.Warning" Size="Size.Large" Class="mr-3" />
+        <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 1.1rem;">
+            RETRO TANK 1985
+        </MudText>
+        <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" Class="ml-4 pixel-text" Style="font-size: 0.65rem;">
+            NES REMAKE WASM
+        </MudChip>
+        
+        <MudSpacer />
+
+        <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="" StartIcon="@Icons.Material.Filled.Home">
+            Hub
+        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" Href="sound-bgm" StartIcon="@Icons.Material.Filled.GraphicEq">
+            Sound & BGM
+        </MudButton>
+        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com" Target="_blank" />
+    </MudAppBar>
+
+    <MudMainContent Class="pt-16">
+        <article class="retro-container pt-8">
+            @Body
+        </article>
+    </MudMainContent>
+</MudLayout>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private MudTheme _retroTheme = new MudTheme()
+    {
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#f1c40f",
+            Secondary = "#2ecc71",
+            Tertiary = "#e74c3c",
+            Background = "#0c0d12",
+            Surface = "#161a23",
+            AppbarBackground = "#11141c",
+            DrawerBackground = "#11141c",
+            TextPrimary = "#f8fafc",
+            TextSecondary = "#94a3b8",
+            ActionDefault = "#f1c40f"
+        },
+        Typography = new Typography()
+        {
+            Default = new DefaultTypography()
+            {
+                FontFamily = new[] { "Rajdhani", "sans-serif" }
+            }
+        }
+    };
+}

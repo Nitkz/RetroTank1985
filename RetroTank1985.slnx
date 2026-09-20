@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="RetroTank1985.Client/RetroTank1985.Client.csproj" />
+  <Project Path="RetroTank1985/RetroTank1985.csproj" />
+</Solution>

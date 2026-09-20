@@ -1,0 +1,90 @@
+﻿@page "/"
+<PageTitle>RetroTank 1985 | Hub</PageTitle>
+
+<div class="mb-8 text-center">
+    <MudText Typo="Typo.h3" Class="pixel-text font-bold mb-2" Style="color: #f1c40f; text-shadow: 0 0 16px rgba(241, 196, 15, 0.4);">
+        BATTLE CITY 1985
+    </MudText>
+    <MudText Typo="Typo.h6" Style="color: #94a3b8; letter-spacing: 2px;">
+        NES TECHNICAL REMAKE &amp; RE-ENGINEERING HUB (.NET 9 WASM)
+    </MudText>
+    <MudText Typo="Typo.caption" Class="pixel-text mt-2" Style="color: #64748b; display: block; font-size: 0.65rem;">
+        ORIGINAL GAME IP BELONGS TO BANDAI NAMCO • BUILT FOR EDUCATIONAL &amp; ARCHIVAL PURPOSES
+    </MudText>
+</div>
+
+<MudGrid Justify="Justify.Center" Spacing="4">
+    <!-- Active Section: Sound & BGM Synthesizer -->
+    <MudItem xs="12" sm="6" md="4">
+        <a href="sound-bgm" class="hub-card">
+            <MudCard Elevation="4" Class="retro-card pa-4">
+                <div class="d-flex align-center mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.GraphicEq" Color="Color.Warning" Size="Size.Large" Class="mr-3" />
+                    <div>
+                        <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.95rem;">
+                            SOUND &amp; BGM
+                        </MudText>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Style="font-size: 0.65rem;">
+                            AVAILABLE NOW
+                        </MudChip>
+                    </div>
+                </div>
+                <MudText Typo="Typo.body2" Style="color: #cbd5e1;" Class="mb-4">
+                    จำลอง NES APU Sound Synthesizer ผ่าน Web Audio API ประกอบด้วย Pulse 1/2, Triangle, และ Noise channels สำหรับ SFX และ BGM ดั้งเดิม
+                </MudText>
+                <div class="d-flex justify-space-between align-center">
+                    <span class="pixel-text" style="font-size: 0.7rem; color: #f1c40f;">EXPLORE SYNTH &rarr;</span>
+                    <MudIcon Icon="@Icons.Material.Filled.PlayCircleOutline" Color="Color.Warning" />
+                </div>
+            </MudCard>
+        </a>
+    </MudItem>
+
+    <!-- Planned Section: ROM & Tilemap Inspector -->
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Elevation="4" Class="retro-card pa-4" Style="opacity: 0.6;">
+            <div class="d-flex align-center mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.GridOn" Color="Color.Default" Size="Size.Large" Class="mr-3" />
+                <div>
+                    <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #94a3b8; font-size: 0.95rem;">
+                        ROM &amp; TILES
+                    </MudText>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined" Style="font-size: 0.65rem;">
+                        UPCOMING
+                    </MudChip>
+                </div>
+            </div>
+            <MudText Typo="Typo.body2" Style="color: #64748b;" Class="mb-4">
+                ถอดรหัส CHR-ROM 8KB สำหรับ Sprites (รถถัง, ระเบิด, เหรียญรางวัล) และ Tilemap ฉากกำแพงอิฐ เหล็ก ป่า น้ำ
+            </MudText>
+            <div class="d-flex justify-space-between align-center">
+                <span class="pixel-text" style="font-size: 0.7rem; color: #64748b;">LOCKED</span>
+                <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Default" />
+            </div>
+        </MudCard>
+    </MudItem>
+
+    <!-- Planned Section: Game Core Engine -->
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Elevation="4" Class="retro-card pa-4" Style="opacity: 0.6;">
+            <div class="d-flex align-center mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.SportsEsports" Color="Color.Default" Size="Size.Large" Class="mr-3" />
+                <div>
+                    <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #94a3b8; font-size: 0.95rem;">
+                        STAGE ARENA
+                    </MudText>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined" Style="font-size: 0.65rem;">
+                        UPCOMING
+                    </MudChip>
+                </div>
+            </div>
+            <MudText Typo="Typo.body2" Style="color: #64748b;" Class="mb-4">
+                จำลอง 60 FPS Game Loop, Tank Physics, Collision Detection และ Enemy AI Behavior ตาม NES 6502 Logic
+            </MudText>
+            <div class="d-flex justify-space-between align-center">
+                <span class="pixel-text" style="font-size: 0.7rem; color: #64748b;">LOCKED</span>
+                <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Default" />
+            </div>
+        </MudCard>
+    </MudItem>
+</MudGrid>

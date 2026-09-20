@@ -1,0 +1,66 @@
+﻿/* Custom Retro Theme CSS for Battle City NES Remake */
+:root {
+    --retro-font: 'Press Start 2P', monospace;
+    --ui-font: 'Rajdhani', sans-serif;
+    --nes-bg: #0c0d12;
+    --nes-panel: #161a23;
+    --nes-panel-border: #2c3245;
+    --nes-green: #2ecc71;
+    --nes-yellow: #f1c40f;
+    --nes-red: #e74c3c;
+    --nes-orange: #e67e22;
+}
+
+body.retro-body {
+    background-color: var(--nes-bg);
+    color: #e2e8f0;
+    font-family: var(--ui-font);
+    font-size: 1.1rem;
+    margin: 0;
+    padding: 0;
+}
+
+.pixel-text {
+    font-family: var(--retro-font);
+    letter-spacing: 1px;
+}
+
+.retro-container {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.retro-card {
+    background: var(--nes-panel);
+    border: 2px solid var(--nes-panel-border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.retro-card:hover {
+    border-color: #f1c40f;
+}
+
+.hub-card {
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+}
+
+.hub-card:hover {
+    transform: translateY(-4px);
+}
+
+.channel-tag {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: var(--retro-font);
+    display: inline-block;
+}
+
+.tag-pulse { background: rgba(231, 76, 60, 0.2); color: #ff7979; border: 1px solid #e74c3c; }
+.tag-noise { background: rgba(241, 196, 15, 0.2); color: #f9ca24; border: 1px solid #f1c40f; }
+.tag-tri { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
