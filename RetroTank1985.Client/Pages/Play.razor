@@ -35,7 +35,7 @@
 
         <!-- Game Canvas Screen -->
         <div class="arcade-bezel mb-2" style="width: 512px; max-width: 100%;">
-            <canvas id="gameArenaCanvas" class="game-canvas" width="480" height="480"></canvas>
+            <canvas id="gameArenaCanvas" class="game-canvas" width="512" height="480"></canvas>
         </div>
 
         <!-- Virtual D-Pad / Direct Touch Controller (Positioned right under canvas for portrait ergonomics) -->
@@ -57,7 +57,10 @@
                                OnShieldToggleRequested="HandleDebugShieldToggle"
                                OnResetPlayerRequested="ResetPlayer"
                                OnFortifyEagleRequested="HandleDebugFortifyEagle"
-                               OnSpawnPowerUpRequested="HandleDebugSpawnPowerUp" />
+                               OnSpawnPowerUpRequested="HandleDebugSpawnPowerUp"
+                               OnTriggerCurtainRequested="HandleDebugTriggerCurtain"
+                               OnSimulateClearStageRequested="HandleDebugSimulateClearStage"
+                               OnTriggerGameOverRequested="HandleDebugTriggerGameOver" />
     </MudItem>
 </MudGrid>
 

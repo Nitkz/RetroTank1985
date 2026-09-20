@@ -29,11 +29,15 @@ public interface IBattleCityEngine
     // Sandbox & Debug Tools
     bool SpawnEnemyDebug(EnemyType type, int spawnPoint = -1, bool isFlashing = false);
     void NukeAllEnemies();
+    void SimulateClearStage();
     void ClearEnemies();
     void SetPlayerStarPower(int starLevel);
     void TogglePlayerShield();
     void ToggleEagleSteel(bool fortified);
     void SpawnPowerUpDebug(PowerUpType type);
+    void TriggerStageCurtainDebug();
+    void TriggerGameOverDebug();
+    bool CheckNextStageReady(out int nextStageNum);
 }
 
 public class BattleCityEngine : IBattleCityEngine
@@ -55,6 +59,22 @@ public class BattleCityEngine : IBattleCityEngine
 
     private int _playerRespawnTimer = 0;
 
+    // Stage Curtain & Tally State Variables
+    private int _curtainTimer = 0;
+    private const int CurtainDurationFrames = 75; // ~1.25s shutter wipe
+
+    private int _tallyTimer = 0;
+    private int _tallyStep = 0; // 0: init/delay, 1: counting Basic, 2: counting Fast, 3: counting Power, 4: counting Armor, 5: total & delay, 6: done
+    private int _tallyCountBasic = 0;
+    private int _tallyCountFast = 0;
+    private int _tallyCountPower = 0;
+    private int _tallyCountArmor = 0;
+    private int _tallyPostDelay = 0;
+    private int _waveClearDelayTimer = 0;
+    private int _gameOverDelayTimer = 0;
+    private bool _gameOverSoundTriggered = false;
+    private bool _nextStagePending = false;
+
     public PlayerTank Player { get; }
     public IDestructibleMap Map { get; }
     public ITankPhysics Physics { get; }
@@ -63,7 +83,7 @@ public class BattleCityEngine : IBattleCityEngine
     public IPowerUpSystem PowerUps { get; }
     public IAudioEventQueue Audio { get; }
 
-    public GameState State { get; private set; } = GameState.Playing;
+    public GameState State { get; private set; } = GameState.StageCurtain;
     public int CurrentStage { get; private set; } = 1;
     public int Score { get; private set; } = 0;
     public bool IsPaused => State == GameState.Paused;
@@ -118,9 +138,14 @@ public class BattleCityEngine : IBattleCityEngine
         Player.StarPower = 0;
         ResetPlayer();
 
-        State = GameState.Playing;
+        _curtainTimer = CurtainDurationFrames;
+        State = GameState.StageCurtain;
         _accumulator = 0;
         _lastTimestamp = 0;
+        _nextStagePending = false;
+        _waveClearDelayTimer = 0;
+        _gameOverDelayTimer = 0;
+        _gameOverSoundTriggered = false;
 
         Audio.Enqueue(AudioSoundEffect.IntroBgm);
     }
@@ -132,6 +157,8 @@ public class BattleCityEngine : IBattleCityEngine
             Player.Lives = 3;
         }
         _playerRespawnTimer = 0;
+        _gameOverDelayTimer = 0;
+        _gameOverSoundTriggered = false;
         Player.Reset(4 * 16f, 12 * 16f);
         Bullets.Clear();
     }
@@ -178,6 +205,11 @@ public class BattleCityEngine : IBattleCityEngine
         Enemies.NukeAllEnemies(Bullets, Audio, pts => Score += pts);
     }
 
+    public void SimulateClearStage()
+    {
+        Enemies.SimulateClearAllEnemies(Bullets, Audio, pts => Score += pts);
+    }
+
     public void ClearEnemies()
     {
         Enemies.Clear();
@@ -202,6 +234,172 @@ public class BattleCityEngine : IBattleCityEngine
     public void SpawnPowerUpDebug(PowerUpType type)
     {
         PowerUps.SpawnPowerUpDebug(type, audioQueue: Audio);
+    }
+
+    public void TriggerStageCurtainDebug()
+    {
+        _curtainTimer = CurtainDurationFrames;
+        State = GameState.StageCurtain;
+        Audio.Enqueue(AudioSoundEffect.IntroBgm);
+    }
+
+    public void TriggerGameOverDebug()
+    {
+        State = GameState.GameOver;
+        Audio.Enqueue(AudioSoundEffect.EagleHit);
+        Audio.Enqueue(AudioSoundEffect.GameOver);
+    }
+
+    public bool CheckNextStageReady(out int nextStageNum)
+    {
+        if (_nextStagePending)
+        {
+            _nextStagePending = false;
+            nextStageNum = (CurrentStage % 35) + 1;
+            return true;
+        }
+        nextStageNum = CurrentStage;
+        return false;
+    }
+
+    private void StartStageTally()
+    {
+        State = GameState.StageTally;
+        _tallyTimer = 0;
+        _tallyStep = 0;
+        _tallyCountBasic = 0;
+        _tallyCountFast = 0;
+        _tallyCountPower = 0;
+        _tallyCountArmor = 0;
+        _tallyPostDelay = 0;
+        _nextStagePending = false;
+
+        Audio.Enqueue(AudioSoundEffect.StageClear);
+    }
+
+    private void UpdateStageTally()
+    {
+        _tallyTimer++;
+
+        // Step 0: Initial delay (60 frames)
+        if (_tallyStep == 0)
+        {
+            if (_tallyTimer >= 45)
+            {
+                _tallyStep = 1;
+                _tallyTimer = 0;
+            }
+            return;
+        }
+
+        // Step 1: Count Basic Tanks (Every 10 frames increment by 1)
+        if (_tallyStep == 1)
+        {
+            int target = Enemies.KillsByType[(int)EnemyType.Basic];
+            if (_tallyCountBasic < target)
+            {
+                if (_tallyTimer >= 8)
+                {
+                    _tallyTimer = 0;
+                    _tallyCountBasic++;
+                    Audio.Enqueue(AudioSoundEffect.TallyTick);
+                }
+            }
+            else
+            {
+                if (_tallyTimer >= 15)
+                {
+                    _tallyStep = 2;
+                    _tallyTimer = 0;
+                }
+            }
+            return;
+        }
+
+        // Step 2: Count Fast Tanks
+        if (_tallyStep == 2)
+        {
+            int target = Enemies.KillsByType[(int)EnemyType.Fast];
+            if (_tallyCountFast < target)
+            {
+                if (_tallyTimer >= 8)
+                {
+                    _tallyTimer = 0;
+                    _tallyCountFast++;
+                    Audio.Enqueue(AudioSoundEffect.TallyTick);
+                }
+            }
+            else
+            {
+                if (_tallyTimer >= 15)
+                {
+                    _tallyStep = 3;
+                    _tallyTimer = 0;
+                }
+            }
+            return;
+        }
+
+        // Step 3: Count Power Tanks
+        if (_tallyStep == 3)
+        {
+            int target = Enemies.KillsByType[(int)EnemyType.Power];
+            if (_tallyCountPower < target)
+            {
+                if (_tallyTimer >= 8)
+                {
+                    _tallyTimer = 0;
+                    _tallyCountPower++;
+                    Audio.Enqueue(AudioSoundEffect.TallyTick);
+                }
+            }
+            else
+            {
+                if (_tallyTimer >= 15)
+                {
+                    _tallyStep = 4;
+                    _tallyTimer = 0;
+                }
+            }
+            return;
+        }
+
+        // Step 4: Count Armor Tanks
+        if (_tallyStep == 4)
+        {
+            int target = Enemies.KillsByType[(int)EnemyType.Armor];
+            if (_tallyCountArmor < target)
+            {
+                if (_tallyTimer >= 8)
+                {
+                    _tallyTimer = 0;
+                    _tallyCountArmor++;
+                    Audio.Enqueue(AudioSoundEffect.TallyTick);
+                }
+            }
+            else
+            {
+                if (_tallyTimer >= 15)
+                {
+                    _tallyStep = 5;
+                    _tallyTimer = 0;
+                    Audio.Enqueue(AudioSoundEffect.TallyDone);
+                }
+            }
+            return;
+        }
+
+        // Step 5: Total Summary & Finish Delay
+        if (_tallyStep == 5)
+        {
+            _tallyPostDelay++;
+            // Press Space/Fire to skip post delay or auto-advance after 3.5s (~210 frames)
+            if (_tallyPostDelay >= 210 || (_currentInput.Fire && _tallyPostDelay >= 45))
+            {
+                _tallyStep = 6;
+                _nextStagePending = true;
+            }
+        }
     }
 
     public RenderFrameDto Tick(double timestampMs)
@@ -233,7 +431,22 @@ public class BattleCityEngine : IBattleCityEngine
         // Fixed timestep 60Hz physics and game logic simulation
         while (_accumulator >= MsPerFrame)
         {
-            if (State == GameState.Playing)
+            if (State == GameState.StageCurtain)
+            {
+                if (_curtainTimer > 0)
+                {
+                    _curtainTimer--;
+                }
+                else
+                {
+                    State = GameState.Playing;
+                }
+            }
+            else if (State == GameState.StageTally)
+            {
+                UpdateStageTally();
+            }
+            else if (State == GameState.Playing)
             {
                 // 1. Tank Physics (Movement & Collision)
                 Physics.UpdatePlayer(Player, _currentInput, Map, Enemies.ActiveEnemies, Audio);
@@ -242,6 +455,7 @@ public class BattleCityEngine : IBattleCityEngine
                 Enemies.Update(Player, Map, Bullets, Audio, enemy => 
                 {
                     Score += enemy.PointValue;
+                    Enemies.RecordKill(enemy.Type);
                     if (enemy.IsFlashing)
                     {
                         PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
@@ -252,6 +466,7 @@ public class BattleCityEngine : IBattleCityEngine
                 Bullets.Update(Player, Enemies.ActiveEnemies, Map, Audio, enemy =>
                 {
                     Score += enemy.PointValue;
+                    Enemies.RecordKill(enemy.Type);
                     if (enemy.IsFlashing)
                     {
                         PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
@@ -275,11 +490,49 @@ public class BattleCityEngine : IBattleCityEngine
                     }
                 }
 
-                // 7. Check Game Over Conditions (Eagle destroyed OR out of lives & inactive)
-                if ((Map.IsEagleDestroyed || (Player.Lives <= 0 && !Player.IsActive)) && State != GameState.GameOver)
+                // 7. Check Stage Cleared Condition (All 20 enemies spawned & destroyed)
+                if (Enemies.IsWaveCleared)
                 {
-                    State = GameState.GameOver;
-                    Audio.Enqueue(AudioSoundEffect.EagleHit);
+                    _waveClearDelayTimer++;
+                    // Authentic NES Delay: Allow last explosion animation (~30 frames) to finish 
+                    // and give player ~1.5 seconds (90 frames) of cleared arena before transitioning
+                    if (_waveClearDelayTimer >= 90)
+                    {
+                        _waveClearDelayTimer = 0;
+                        StartStageTally();
+                    }
+                }
+                else
+                {
+                    _waveClearDelayTimer = 0;
+                }
+
+                // 8. Check Game Over Conditions (Eagle destroyed OR out of lives & inactive)
+                bool isGameOverCondition = Map.IsEagleDestroyed || (Player.Lives <= 0 && !Player.IsActive);
+                if (isGameOverCondition)
+                {
+                    if (!_gameOverSoundTriggered)
+                    {
+                        _gameOverSoundTriggered = true;
+                        if (Map.IsEagleDestroyed)
+                        {
+                            Audio.Enqueue(AudioSoundEffect.EagleHit);
+                        }
+                        Audio.Enqueue(AudioSoundEffect.GameOver);
+                    }
+
+                    _gameOverDelayTimer++;
+                    // Authentic NES Delay (~120 frames / 2.0 seconds):
+                    // Allows explosion animation to finish, phoenix destroyed state to show,
+                    // before freezing gameplay or showing Game Over screen
+                    if (_gameOverDelayTimer >= 120 && State != GameState.GameOver)
+                    {
+                        State = GameState.GameOver;
+                    }
+                }
+                else
+                {
+                    _gameOverDelayTimer = 0;
                 }
             }
 
@@ -304,6 +557,20 @@ public class BattleCityEngine : IBattleCityEngine
         _cachedFrame.EnemiesRemaining = Enemies.EnemiesRemaining;
         _cachedFrame.EnemiesActive = Enemies.ActiveEnemyCount;
         _cachedFrame.IsGameOver = State == GameState.GameOver;
+        _cachedFrame.GameState = (byte)State;
+        _cachedFrame.StageNumber = CurrentStage;
+        _cachedFrame.CurtainProgress = Math.Clamp(1.0f - ((float)_curtainTimer / CurtainDurationFrames), 0f, 1f);
+
+        // Kills & Tally info
+        _cachedFrame.KillsBasic = Enemies.KillsByType[(int)EnemyType.Basic];
+        _cachedFrame.KillsFast = Enemies.KillsByType[(int)EnemyType.Fast];
+        _cachedFrame.KillsPower = Enemies.KillsByType[(int)EnemyType.Power];
+        _cachedFrame.KillsArmor = Enemies.KillsByType[(int)EnemyType.Armor];
+        _cachedFrame.TallyStep = _tallyStep;
+        _cachedFrame.TallyCountBasic = _tallyCountBasic;
+        _cachedFrame.TallyCountFast = _tallyCountFast;
+        _cachedFrame.TallyCountPower = _tallyCountPower;
+        _cachedFrame.TallyCountArmor = _tallyCountArmor;
 
         if (Map.IsDirty)
         {
@@ -439,6 +706,5 @@ public class BattleCityEngine : IBattleCityEngine
         _cachedTelemetry.IsGameOver = State == GameState.GameOver;
         return _cachedTelemetry;
     }
-
 }
 

@@ -145,6 +145,18 @@ window.GameBridge = (function () {
         case 13: // BonusAppear
           window.nesSynth.playBonusAppear();
           break;
+        case 14: // TallyTick
+          window.nesSynth.playTallyTick();
+          break;
+        case 15: // TallyDone
+          window.nesSynth.playTallyDone();
+          break;
+        case 16: // StageClear
+          window.nesSynth.playStageClearBGM();
+          break;
+        case 17: // GameOver
+          window.nesSynth.playGameOverBGM();
+          break;
       }
     }
   }

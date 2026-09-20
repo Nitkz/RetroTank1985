@@ -322,11 +322,12 @@ public class BulletSystem : IBulletSystem
         var ex = AcquireExplosion();
         if (ex == null) return;
 
-        ex.X = x - 4f;
-        ex.Y = y - 4f;
+        ex.X = x;
+        ex.Y = y;
         ex.Frame = 0;
         ex.FrameCounter = 0;
         ex.MaxFrames = isBig ? 5 : 3;
+        ex.FrameDelay = isBig ? 5 : 4;
         ex.IsBig = isBig;
         ex.IsActive = true;
 

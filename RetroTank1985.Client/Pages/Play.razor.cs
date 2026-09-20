@@ -111,6 +111,21 @@ public partial class Play : ComponentBase, IAsyncDisposable
         EngineService.Engine.SpawnPowerUpDebug(type);
     }
 
+    private void HandleDebugTriggerCurtain()
+    {
+        EngineService.Engine.TriggerStageCurtainDebug();
+    }
+
+    private void HandleDebugSimulateClearStage()
+    {
+        EngineService.Engine.SimulateClearStage();
+    }
+
+    private void HandleDebugTriggerGameOver()
+    {
+        EngineService.Engine.TriggerGameOverDebug();
+    }
+
     public async ValueTask DisposeAsync()
     {
         EngineService.OnTelemetryUpdated -= HandleTelemetry;

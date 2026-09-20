@@ -128,6 +128,15 @@ public class GameEngineService : IAsyncDisposable
         var frame = _engine.Tick(timestamp);
         frame.Fps = fps;
 
+        // Check if Score Tally finished and requested auto-advancement to next stage
+        if (_engine.CheckNextStageReady(out int nextStageNum))
+        {
+            _ = Task.Run(async () =>
+            {
+                await SetStageAsync(nextStageNum);
+            });
+        }
+
         // Throttle Blazor UI telemetry updates to ~2 times per second (500ms)
         // to avoid saturating Blazor Virtual DOM render cycles at 60 FPS
         if (timestamp - _lastTelemetryTime >= 500 || _lastTelemetryTime == 0)

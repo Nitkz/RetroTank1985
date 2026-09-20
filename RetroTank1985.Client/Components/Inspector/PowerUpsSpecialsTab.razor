@@ -51,7 +51,7 @@
         HEADQUARTERS &amp; SHIELD STATUS
     </MudText>
 
-    <MudGrid Spacing="3">
+    <MudGrid Spacing="3" Class="mb-6">
         @foreach (var special in _specialItems)
         {
             <MudItem xs="12" sm="6" md="3">
@@ -68,6 +68,42 @@
                     <div class="mt-2">
                         <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@special.BadgeColor" Style="font-size: 0.65rem;">
                             @special.Badge
+                        </MudChip>
+                    </div>
+                </div>
+            </MudItem>
+        }
+    </MudGrid>
+
+    <!-- Explosion Animation Sequence (5 Frames) -->
+    <div class="d-flex justify-space-between align-center mb-3">
+        <MudText Typo="Typo.subtitle1" Class="pixel-text font-bold" Style="color: #ef4444; font-size: 0.85rem;">
+            💥 TANK EXPLOSION ANIMATION SEQUENCE (5 PHASES)
+        </MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.VolumeUp"
+                   OnClick="PlayExplosionSfx" Class="pixel-text" Style="font-size: 0.65rem;">
+            TEST EXPLOSION SFX
+        </MudButton>
+    </div>
+
+    <MudGrid Spacing="3">
+        @foreach (var ex in _explosionFrames)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="2">
+                <div class="pa-3 text-center d-flex flex-column justify-space-between" style="background: #11141c; border-radius: 6px; border: 1px solid #7f1d1d; height: 100%;">
+                    <div>
+                        <div class="pixel-text mb-2" style="font-size: 0.65rem; color: #f87171;">@ex.Name</div>
+                        <div class="d-flex justify-center my-2">
+                            <canvas id="@($"itemCanvas_{ex.Id}")" style="image-rendering: pixelated;"></canvas>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #cbd5e1; min-height: 36px;" class="px-1">
+                            @ex.Description
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Error" Style="font-size: 0.55rem; height: 18px;">
+                            @ex.Badge
                         </MudChip>
                     </div>
                 </div>

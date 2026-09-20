@@ -9,12 +9,17 @@ public interface IEnemySystem
     IReadOnlyList<EnemyTank> ActiveEnemies { get; }
     int EnemiesRemaining { get; }
     int ActiveEnemyCount { get; }
+    int[] KillsByType { get; }
+    int TotalKills { get; }
+    bool IsWaveCleared { get; }
 
     void InitializeWave(StageModel? stage);
     void Update(PlayerTank player, IDestructibleMap map, IBulletSystem bullets, IAudioEventQueue audioQueue, Action<EnemyTank>? onEnemyKilled = null);
     void Clear();
+    void RecordKill(EnemyType type);
     bool TrySpawnEnemyDebug(EnemyType type, int spawnPointIndex = -1, bool isFlashing = false);
     void NukeAllEnemies(IBulletSystem bullets, IAudioEventQueue audioQueue, Action<int> onEnemyKilled);
+    void SimulateClearAllEnemies(IBulletSystem bullets, IAudioEventQueue audioQueue, Action<int> onEnemyKilled);
     void FreezeEnemies(int durationFrames = 600);
 }
 
@@ -36,6 +41,7 @@ public class EnemySystem : IEnemySystem
     private readonly EnemyTank[] _enemyPool = new EnemyTank[MaxConcurrentEnemies];
     private readonly List<EnemyType> _waveQueue = new(TotalWaveEnemies);
     private readonly HashSet<int> _flashingIndices = new() { 3, 10, 17 }; // Standard NES 4th, 11th, 18th enemies flash
+    private readonly int[] _killsByType = new int[4]; // 0: Basic, 1: Fast, 2: Power, 3: Armor
 
     private int _spawnPointRotator = 0;
     private int _spawnDelayTimer = 0;
@@ -46,6 +52,9 @@ public class EnemySystem : IEnemySystem
     public IReadOnlyList<EnemyTank> ActiveEnemies => _enemies;
     public int EnemiesRemaining => Math.Max(0, TotalWaveEnemies - _spawnedCount) + ActiveEnemyCount;
     public int ActiveEnemyCount => _enemies.Count(e => e.IsActive);
+    public int[] KillsByType => _killsByType;
+    public int TotalKills => _killsByType[0] + _killsByType[1] + _killsByType[2] + _killsByType[3];
+    public bool IsWaveCleared => _spawnedCount >= TotalWaveEnemies && ActiveEnemyCount == 0;
 
     public EnemySystem()
     {
@@ -58,6 +67,7 @@ public class EnemySystem : IEnemySystem
     public void InitializeWave(StageModel? stage)
     {
         Clear();
+        Array.Clear(_killsByType, 0, _killsByType.Length);
         _waveQueue.Clear();
         _spawnedCount = 0;
         _spawnDelayTimer = 60; // Initial delay before 1st enemy spawns
@@ -373,6 +383,15 @@ public class EnemySystem : IEnemySystem
         }
     }
 
+    public void RecordKill(EnemyType type)
+    {
+        int idx = (int)type;
+        if (idx >= 0 && idx < _killsByType.Length)
+        {
+            _killsByType[idx]++;
+        }
+    }
+
     public void NukeAllEnemies(IBulletSystem bullets, IAudioEventQueue audioQueue, Action<int> onEnemyKilled)
     {
         for (int i = 0; i < _enemies.Count; i++)
@@ -381,12 +400,37 @@ public class EnemySystem : IEnemySystem
             if (e.IsActive)
             {
                 e.IsActive = false;
+                RecordKill(e.Type);
                 bullets.SpawnExplosion(e.X, e.Y, true);
                 onEnemyKilled(e.PointValue);
             }
         }
         _enemies.Clear();
         audioQueue.Enqueue(AudioSoundEffect.Explosion);
+    }
+
+    public void SimulateClearAllEnemies(IBulletSystem bullets, IAudioEventQueue audioQueue, Action<int> onEnemyKilled)
+    {
+        // 1. Kill all currently active enemies
+        NukeAllEnemies(bullets, audioQueue, onEnemyKilled);
+
+        // 2. Count all remaining enemies from queue as destroyed and award points
+        while (_spawnedCount < TotalWaveEnemies && _spawnedCount < _waveQueue.Count)
+        {
+            var type = _waveQueue[_spawnedCount];
+            RecordKill(type);
+            int pts = type switch
+            {
+                EnemyType.Basic => 100,
+                EnemyType.Fast => 200,
+                EnemyType.Power => 300,
+                EnemyType.Armor => 400,
+                _ => 100
+            };
+            onEnemyKilled(pts);
+            _spawnedCount++;
+        }
+        _spawnedCount = TotalWaveEnemies;
     }
 
     public void FreezeEnemies(int durationFrames = 600)

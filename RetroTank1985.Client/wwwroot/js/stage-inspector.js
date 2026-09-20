@@ -171,6 +171,30 @@ window.StageInspector = (function () {
       canvas.width = 16 * scale; canvas.height = 16 * scale;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       window.NesCHR.drawMetasprite(ctx, tiles, palIdx, 0, 0, pt1, scale);
+    },
+
+    async renderSingleTileCustom(canvasId, tileId, palIdx, pt1 = false, scale = 4) {
+      if (!window.NesCHR) return;
+      await window.NesCHR.init();
+      const canvas = await waitForCanvas(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = 16 * scale; canvas.height = 16 * scale;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const baseOffset = pt1 ? 256 : 0;
+      // Draw centered in 16x16 canvas
+      window.NesCHR.drawCHRTile(ctx, baseOffset + tileId, palIdx, 4 * scale, 4 * scale, true, scale);
+    },
+
+    async renderExpandSpriteCustom(canvasId, base, palIdx, scale = 2) {
+      if (!window.NesCHR) return;
+      await window.NesCHR.init();
+      const canvas = await waitForCanvas(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = 32 * scale; canvas.height = 32 * scale;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      window.NesCHR.drawExpandSprite(ctx, base, palIdx, 0, 0, scale);
     }
   };
 })();

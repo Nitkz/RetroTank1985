@@ -13,8 +13,7 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 | **Phase 3** | Destructible Terrain & Bullet-World Collisions | ✅ **Completed** | 2026-09-20 |
 | **Phase 4** | Enemy AI & Wave Spawning System | ✅ **Completed** | 2026-09-20 |
 | **Phase 5** | Phoenix Eagle Base & Droppable Power-Up System | ✅ **Completed** | 2026-09-20 |
-
-| **Phase 6** | Stage Transitions, Score Tally & Game Over Flow | ⏳ **Planned** | Upcoming |
+| **Phase 6** | Stage Transitions, Score Tally & Game Over Flow | ✅ **Completed** | 2026-09-20 |
 | **Phase 7** | Two-Player Co-Op & High Score Persistence | ⏳ **Planned** | Future |
 | **Phase 8** | 👑 Epic Boss Battles & Special Munition Crates | 💡 **New / Planned** | Future Expansion |
 
@@ -56,18 +55,18 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
   - Bullet reflection / deflection metallic sound (`HitSteel`).
   - Bullet cancellation upon hitting impenetrable steel blocks.
 - [x] **Bullet vs Bullet Collision**: Mutual cancellation when opposing bullets collide head-on.
-- [x] **Small Explosion Animation**: 3-frame explosion sprite animation (`0xA0`, `0xA2`, `0xA4` from CHR-ROM) on bullet impact.
+- [x] **Small Bullet Explosion Animation**: 3-frame 16×16 spark animation (`0xF0..0xFB` from PT0 palette SP3) centered at obstacle collision point.
 - [x] **Water & Ice Interactions**:
   - Water: Blocks tank movement, lets bullets pass through cleanly.
   - Ice: Traversible terrain with reduced friction.
-- [x] **Phoenix Eagle Base Destruction**: Instant state transition to destroyed eagle sprite with game over sound dispatch.
+- [x] **Phoenix Eagle Base Destruction**: Instant state transition to destroyed eagle sprite with game over sound dispatch and 5-phase large explosion overlay.
 
 ---
 
 ### ✅ Phase 4: Enemy AI & Wave Spawning System (Done)
 - [x] **3-Point Spawn System**: Top-left (0,0), Top-center (6,0), and Top-right (12,0) spawn positions.
 - [x] **Obstruction-Safe Spawner**: Detects if active tank is occupying the spawn zone (< 14px) and delays/rotates spawner to prevent tanks from spawning on top of each other.
-- [x] **Spawn Star Animation**: 4-frame rotating star sparkle animation (`0xAD, 0xA9, 0xA5, 0xA1`) before enemy emergence.
+- [x] **Authentic Spawn Star Animation**: 15-step triangle wave sparkle animation with 4-frame metasprites (`$A0, $A4, $A8, $AC`) before enemy emergence.
 - [x] **Max 4 Active Enemies**: 20-enemy queue per stage dispatched sequentially from JSON ROM metadata.
 - [x] **4 Distinct Enemy Tank Archetypes**:
   - ⚪ **Basic Tank (Type 0)**: Standard movement speed (60 px/s), standard fire (100 pts, 1 HP).
@@ -101,13 +100,25 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 
 ---
 
-### ⏳ Phase 6: Stage Transitions, Score Tally & Game Over Flow
-- [ ] **Stage Curtain Transition**: Classic NES grey sliding shutter animation before stage starts.
-- [ ] **Score Tally Screen**:
-  - End-of-stage summary screen counting destroyed tanks per type with authentic chime SFX.
-  - Total score calculation and bonus stage progression.
-- [ ] **Game Over Screen**: Classic "GAME OVER" banner and sound sequence.
-- [ ] **Lives & Stage HUD Counter**: Right-side NES HUD with remaining enemy icons, player lives, and flag stage number.
+### ✅ Phase 6: Stage Transitions, Score Tally & Game Over Flow (Done)
+- [x] **Stage Curtain Transition**: Classic NES grey sliding shutter animation before stage starts with Stage banner.
+- [x] **NES Right-Side In-Game HUD**:
+  - 20 Mini enemy tank icons tracking wave remaining enemies.
+  - Player 1 life icon and lives counter.
+  - Stage Flag icon and stage number indicator.
+- [x] **Authentic 5-Phase Tank & Eagle Explosion Sequence**:
+  - Phase 0: 16×16 Spark (`$F0..$F3`).
+  - Phase 1: 16×16 Burst (`$F4..$F7`).
+  - Phase 2: 16×16 Blast (`$F8..$FB`).
+  - Phase 3: 32×32 Giant Wave (16 tiles Base `$D0`).
+  - Phase 4: 32×32 Smoke Plume (16 tiles Base `$E0`).
+- [x] **Authentic Game Over Post-Delay (`BattleCityEngine.cs`)**:
+  - 120-frame (~2.0s) post-game delay allowing explosion animations and destroyed phoenix graphic to finish before showing Game Over overlay.
+- [x] **Score Tally Screen**:
+  - End-of-stage summary screen counting destroyed tanks per type (Basic, Fast, Power, Armor) with authentic tick chime SFX (`TallyTick` + `TallyDone`).
+  - Total score calculation and automatic progression to next stage.
+- [x] **Game Over Screen**: Classic "GAME OVER" banner and sound sequence with instant restart capability.
+- [x] **Sandbox Flow Controls**: Section 5 in `GameDebugSandboxPanel` to instantly trigger Curtain, Simulate Clear Stage (Tally), or Trigger Game Over.
 
 ---
 

@@ -18,7 +18,11 @@ public enum AudioSoundEffect : byte
     Bonus = 10,
     Life = 11,
     HitArmor = 12,
-    BonusAppear = 13
+    BonusAppear = 13,
+    TallyTick = 14,
+    TallyDone = 15,
+    StageClear = 16,
+    GameOver = 17
 }
 
 /// <summary>
@@ -27,9 +31,9 @@ public enum AudioSoundEffect : byte
 public enum GameState : byte
 {
     Ready = 0,
-    Playing = 1,
-    Paused = 2,
-    StageCurtain = 3,
-    StageCleared = 4,
+    StageCurtain = 1,
+    Playing = 2,
+    Paused = 3,
+    StageTally = 4,
     GameOver = 5
 }

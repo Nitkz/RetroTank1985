@@ -73,6 +73,42 @@ public class RenderFrameDto
     [JsonPropertyName("isGameOver")]
     public bool IsGameOver { get; set; }
 
+    [JsonPropertyName("gameState")]
+    public byte GameState { get; set; }
+
+    [JsonPropertyName("stageNumber")]
+    public int StageNumber { get; set; }
+
+    [JsonPropertyName("curtainProgress")]
+    public float CurtainProgress { get; set; }
+
+    [JsonPropertyName("killsBasic")]
+    public int KillsBasic { get; set; }
+
+    [JsonPropertyName("killsFast")]
+    public int KillsFast { get; set; }
+
+    [JsonPropertyName("killsPower")]
+    public int KillsPower { get; set; }
+
+    [JsonPropertyName("killsArmor")]
+    public int KillsArmor { get; set; }
+
+    [JsonPropertyName("tallyStep")]
+    public int TallyStep { get; set; }
+
+    [JsonPropertyName("tallyCountBasic")]
+    public int TallyCountBasic { get; set; }
+
+    [JsonPropertyName("tallyCountFast")]
+    public int TallyCountFast { get; set; }
+
+    [JsonPropertyName("tallyCountPower")]
+    public int TallyCountPower { get; set; }
+
+    [JsonPropertyName("tallyCountArmor")]
+    public int TallyCountArmor { get; set; }
+
     [JsonPropertyName("powerUps")]
     public List<PowerUpRenderDto> PowerUps { get; set; } = new();
 

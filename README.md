@@ -107,8 +107,16 @@ publish-wasm.bat
   - 🔨 **Shovel**: 20-second Eagle base steel fortification with 3s pre-expiration warning blinking.
   - 🚗 **1-UP Tank**: Extra player life award with authentic NES life chime.
   - Floating `+500 PTS` score popup upon item pickup.
-- **Phoenix Eagle HQ Base**:
-  - Intact vs Destroyed sprite states (`0xC8..0xCB` &rarr; `0xCC..0xCF`), `EagleHit` SFX, and arcade Game Over overlay.
+- **Phoenix Eagle HQ Base & Game Over Flow**:
+  - Intact vs Destroyed sprite states (`0xC8..0xCB` &rarr; `0xCC..0xCF`), `EagleHit` SFX, and authentic 120-frame (~2.0s) post-game delay allowing explosions and destruction to finish before arcade Game Over overlay.
+- **Authentic 5-Phase Explosion Sequence**:
+  - Small Bullet Impact: 3-frame 16×16 spark animation (`0xF0..0xFB` from PT0 palette SP3).
+  - Tank & Eagle Explosion: 5-phase expanding blast (16×16 Spark, Burst, Blast &rarr; 32×32 Giant Wave Base `$D0` &rarr; 32×32 Smoke Plume Base `$E0`).
+- **15-Step Triangle Wave Spawn Star Animation**: Authentic Famicom sparkle sequence cycling `$A0, $A4, $A8, $AC` metasprites before tank emergence.
+- **Stage Transitions & Score Tally Screen (Phase 6)**:
+  - Classic NES grey shutter curtain wipe with Stage banner.
+  - End-of-stage tank tally counting destroyed Basic, Fast, Power, and Armor tanks with authentic audio chimes.
+  - Right-side NES HUD tracking 20 remaining enemy tank icons, player lives, and stage flag number.
 - **Dedicated Modular Debug & Sandbox Panel**: Live spawner lab, Star Power tier upgrades (0-3), Eagle fortification, Nuke all, and instant 6-item Power-Up lab.
 - **Dual Controller Support**: Full keyboard (WASD / Arrows + Space/J) and on-screen Touch D-Pad with Fire button.
 - **Live Telemetry HUD**: Throttled 500ms status monitor reporting real-time FPS, coordinate position, direction, remaining wave enemies, and active field enemies.
