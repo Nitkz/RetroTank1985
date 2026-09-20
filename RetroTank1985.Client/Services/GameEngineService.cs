@@ -33,7 +33,7 @@ public class GameEngineService : IAsyncDisposable
         var stage = await _stageService.GetStageAsync(stageNumber);
         if (stage == null) return false;
 
-        _engine.InitializeStage(stage.Grid, stageNumber);
+        _engine.InitializeStage(stage, stageNumber);
 
         var success = await _js.InvokeAsync<bool>(
             "GameBridge.init",
@@ -67,10 +67,11 @@ public class GameEngineService : IAsyncDisposable
         var stage = await _stageService.GetStageAsync(stageNumber);
         if (stage == null) return;
 
-        _engine.InitializeStage(stage.Grid, stageNumber);
+        _engine.InitializeStage(stage, stageNumber);
         await _js.InvokeVoidAsync("GameBridge.setStage", stage.Grid, stageNumber);
         OnStageChanged?.Invoke(stageNumber);
     }
+
 
     public async Task ResetPlayerAsync()
     {
@@ -78,11 +79,18 @@ public class GameEngineService : IAsyncDisposable
         await _js.InvokeVoidAsync("GameBridge.resetPlayer");
     }
 
+    [JSInvokable]
+    public async Task RestartCurrentStage()
+    {
+        await SetStageAsync(_engine.CurrentStage);
+    }
+
     public async Task TogglePauseAsync()
     {
         _engine.TogglePause();
         await _js.InvokeVoidAsync("GameBridge.togglePause");
     }
+
 
     public async Task SetVirtualInputAsync(string control, bool isPressed)
     {

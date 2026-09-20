@@ -1,7 +1,9 @@
 using RetroTank1985.Client.Engine.Enums;
 using RetroTank1985.Client.Engine.Models;
+using RetroTank1985.Client.Models;
 
 namespace RetroTank1985.Client.Engine.Core;
+
 
 public interface IBulletSystem
 {
@@ -9,10 +11,12 @@ public interface IBulletSystem
     IReadOnlyList<Explosion> ActiveExplosions { get; }
 
     bool TryFirePlayerBullet(PlayerTank player, IAudioEventQueue audioQueue);
-    void Update(IDestructibleMap map, IAudioEventQueue audioQueue);
+    bool TryFireEnemyBullet(EnemyTank enemy, IAudioEventQueue audioQueue);
+    void Update(PlayerTank player, IReadOnlyList<EnemyTank> enemies, IDestructibleMap map, IAudioEventQueue audioQueue, Action<int> onEnemyKilled);
     void Clear();
     void SpawnExplosion(float x, float y, bool isBig = false);
 }
+
 
 public class BulletSystem : IBulletSystem
 {
@@ -119,9 +123,69 @@ public class BulletSystem : IBulletSystem
         return true;
     }
 
-    public void Update(IDestructibleMap map, IAudioEventQueue audioQueue)
+    public bool TryFireEnemyBullet(EnemyTank enemy, IAudioEventQueue audioQueue)
     {
-        // 1. Update Bullets
+        if (!enemy.IsActive || enemy.IsSpawning) return false;
+
+        // Count bullets for this enemy (max 1 active bullet per standard enemy)
+        int activeForEnemy = 0;
+        for (int i = 0; i < _bullets.Count; i++)
+        {
+            if (!_bullets[i].IsPlayerBullet && _bullets[i].OwnerId == enemy.Id && _bullets[i].IsActive)
+                activeForEnemy++;
+        }
+
+        if (activeForEnemy >= 1) return false;
+
+        var bullet = AcquireBullet();
+        if (bullet == null) return false;
+
+        float bx = enemy.X + 6f;
+        float by = enemy.Y + 6f;
+
+        switch (enemy.Direction)
+        {
+            case Direction.Up:
+                by = enemy.Y - 4f;
+                break;
+            case Direction.Down:
+                by = enemy.Y + 16f;
+                break;
+            case Direction.Left:
+                bx = enemy.X - 4f;
+                break;
+            case Direction.Right:
+                bx = enemy.X + 16f;
+                break;
+        }
+
+        bullet.Id = _nextBulletId++;
+        bullet.OwnerId = enemy.Id;
+        bullet.X = bx;
+        bullet.Y = by;
+        bullet.Direction = enemy.Direction;
+        bullet.Speed = enemy.Type == EnemyType.Power ? Bullet.FastSpeed : Bullet.NormalSpeed;
+        bullet.IsPlayerBullet = false;
+
+        bullet.CanBreakSteel = false;
+        bullet.IsActive = true;
+
+        if (!_bullets.Contains(bullet))
+        {
+            _bullets.Add(bullet);
+        }
+
+        return true;
+    }
+
+    public void Update(
+        PlayerTank player, 
+        IReadOnlyList<EnemyTank> enemies, 
+        IDestructibleMap map, 
+        IAudioEventQueue audioQueue, 
+        Action<int> onEnemyKilled)
+    {
+        // 1. Update Bullets Movement & Terrain Collision
         for (int i = _bullets.Count - 1; i >= 0; i--)
         {
             var b = _bullets[i];
@@ -158,9 +222,64 @@ public class BulletSystem : IBulletSystem
                 _bullets.RemoveAt(i);
                 continue;
             }
+
+            // 2. Player Bullet vs Enemy Tanks Collision (10x10 px hitbox)
+            if (b.IsPlayerBullet)
+            {
+                for (int eIdx = 0; eIdx < enemies.Count; eIdx++)
+                {
+                    var enemy = enemies[eIdx];
+                    if (!enemy.IsActive || enemy.IsSpawning) continue;
+
+                    if (MathF.Abs(b.X - enemy.X) < 14f && MathF.Abs(b.Y - enemy.Y) < 14f)
+                    {
+                        b.IsActive = false;
+                        enemy.Hp--;
+
+                        if (enemy.Hp <= 0)
+                        {
+                            enemy.IsActive = false;
+                            SpawnExplosion(enemy.X, enemy.Y, true);
+                            audioQueue.Enqueue(AudioSoundEffect.Explosion);
+                            onEnemyKilled(enemy.PointValue);
+                        }
+                        else
+                        {
+                            SpawnExplosion(b.X, b.Y, false);
+                            audioQueue.Enqueue(AudioSoundEffect.HitArmor);
+                        }
+
+                        _bullets.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
+            // 3. Enemy Bullet vs Player Tank Collision
+            else if (!b.IsPlayerBullet && player.IsActive)
+            {
+                if (MathF.Abs(b.X - player.X) < 14f && MathF.Abs(b.Y - player.Y) < 14f)
+                {
+                    b.IsActive = false;
+                    _bullets.RemoveAt(i);
+
+                    if (player.ShieldActive)
+                    {
+                        SpawnExplosion(b.X, b.Y, false);
+                        audioQueue.Enqueue(AudioSoundEffect.HitSteel);
+                    }
+                    else
+                    {
+                        player.IsActive = false;
+                        player.Lives--;
+                        SpawnExplosion(player.X, player.Y, true);
+                        audioQueue.Enqueue(AudioSoundEffect.Explosion);
+                    }
+                    continue;
+                }
+            }
         }
 
-        // 2. Update Bullet-vs-Bullet collisions
+        // 4. Update Bullet-vs-Bullet collisions
         for (int i = 0; i < _bullets.Count; i++)
         {
             for (int j = i + 1; j < _bullets.Count; j++)
@@ -178,6 +297,7 @@ public class BulletSystem : IBulletSystem
                 }
             }
         }
+
 
         // 3. Update Explosions
         for (int i = _explosions.Count - 1; i >= 0; i--)

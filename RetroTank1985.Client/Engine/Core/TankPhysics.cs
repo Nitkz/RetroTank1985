@@ -5,15 +5,16 @@ namespace RetroTank1985.Client.Engine.Core;
 
 public interface ITankPhysics
 {
-    void UpdatePlayer(PlayerTank player, InputState input, IDestructibleMap map, IAudioEventQueue audioQueue);
+    void UpdatePlayer(PlayerTank player, InputState input, IDestructibleMap map, IReadOnlyList<EnemyTank> enemies, IAudioEventQueue audioQueue);
 }
 
 public class TankPhysics : ITankPhysics
 {
     private const float SnappingThreshold = 6.0f;
+    private const float TankCollisionSize = 15.0f; // 15px bounding box to prevent overlap
     private bool _engineSoundActive = false;
 
-    public void UpdatePlayer(PlayerTank player, InputState input, IDestructibleMap map, IAudioEventQueue audioQueue)
+    public void UpdatePlayer(PlayerTank player, InputState input, IDestructibleMap map, IReadOnlyList<EnemyTank> enemies, IAudioEventQueue audioQueue)
     {
         if (!player.IsActive) return;
 
@@ -58,7 +59,9 @@ public class TankPhysics : ITankPhysics
             float nextX = player.X + dx;
             float nextY = player.Y + dy;
 
-            if (map.CanTankMoveTo(nextX, nextY, PlayerTank.TankSize))
+            bool canMove = map.CanTankMoveTo(nextX, nextY, PlayerTank.TankSize) && !CollidesWithAnyEnemy(player, nextX, nextY, enemies);
+
+            if (canMove)
             {
                 player.X = nextX;
                 player.Y = nextY;
@@ -69,7 +72,7 @@ public class TankPhysics : ITankPhysics
                 if (player.Direction.IsVertical())
                 {
                     float snappedX = MathF.Round(player.X / 8f) * 8f;
-                    if (MathF.Abs(player.X - snappedX) > 0.01f && map.CanTankMoveTo(snappedX, nextY, PlayerTank.TankSize))
+                    if (MathF.Abs(player.X - snappedX) > 0.01f && map.CanTankMoveTo(snappedX, nextY, PlayerTank.TankSize) && !CollidesWithAnyEnemy(player, snappedX, nextY, enemies))
                     {
                         player.X = snappedX;
                         player.Y = nextY;
@@ -78,7 +81,7 @@ public class TankPhysics : ITankPhysics
                 else // Horizontal
                 {
                     float snappedY = MathF.Round(player.Y / 8f) * 8f;
-                    if (MathF.Abs(player.Y - snappedY) > 0.01f && map.CanTankMoveTo(nextX, snappedY, PlayerTank.TankSize))
+                    if (MathF.Abs(player.Y - snappedY) > 0.01f && map.CanTankMoveTo(nextX, snappedY, PlayerTank.TankSize) && !CollidesWithAnyEnemy(player, nextX, snappedY, enemies))
                     {
                         player.X = nextX;
                         player.Y = snappedY;
@@ -121,5 +124,31 @@ public class TankPhysics : ITankPhysics
                 player.ShieldActive = false;
             }
         }
+    }
+
+    private const float TankCollisionThreshold = 14.0f;
+
+    private static bool CollidesWithAnyEnemy(PlayerTank player, float nextX, float nextY, IReadOnlyList<EnemyTank> enemies)
+    {
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            var e = enemies[i];
+            if (!e.IsActive || e.IsSpawning) continue;
+
+            // If already overlapping, allow moving away (increasing distance)
+            float currentDist = MathF.Max(MathF.Abs(player.X - e.X), MathF.Abs(player.Y - e.Y));
+            float nextDist = MathF.Max(MathF.Abs(nextX - e.X), MathF.Abs(nextY - e.Y));
+            if (currentDist < TankCollisionThreshold && nextDist > currentDist)
+            {
+                continue; // Moving away, allowed
+            }
+
+            // AABB Box intersection check with 14px threshold to allow tight corridor turning
+            if (MathF.Abs(nextX - e.X) < TankCollisionThreshold && MathF.Abs(nextY - e.Y) < TankCollisionThreshold)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

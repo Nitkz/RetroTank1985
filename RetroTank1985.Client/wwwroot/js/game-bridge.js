@@ -56,8 +56,14 @@ window.GameBridge = (function () {
       case 'Escape':
         keys.pause = true;
         break;
+      case 'KeyR':
+        if (dotNetRef) {
+          dotNetRef.invokeMethodAsync('RestartCurrentStage');
+        }
+        break;
     }
   }
+
 
   function onKeyUp(e) {
     switch (e.code) {
@@ -129,6 +135,9 @@ window.GameBridge = (function () {
         case 11: // Life
           window.nesSynth.playLife();
           break;
+        case 12: // HitArmor
+          window.nesSynth.playHitArmor();
+          break;
       }
     }
   }
@@ -172,6 +181,12 @@ window.GameBridge = (function () {
         }
       } catch (err) {
         console.error('[GameBridge] Tick error:', err);
+      } finally {
+        // Reset single-pulse pause if it was triggered via touch/click
+        if (keys.pausePulse) {
+          keys.pause = false;
+          keys.pausePulse = false;
+        }
       }
     }
 
@@ -237,7 +252,8 @@ window.GameBridge = (function () {
     },
 
     togglePause() {
-      // Pause is handled in C# OnEngineTick or SetPause
+      keys.pause = true;
+      keys.pausePulse = true;
     },
 
     setVirtualInput(control, isPressed) {
@@ -246,7 +262,12 @@ window.GameBridge = (function () {
       if (control === 'left') keys.left = isPressed;
       if (control === 'right') keys.right = isPressed;
       if (control === 'fire') keys.fire = isPressed;
-      if (control === 'pause' && isPressed) keys.pause = true;
+      if (control === 'pause') {
+        if (isPressed) {
+          keys.pause = true;
+          keys.pausePulse = true;
+        }
+      }
     }
   };
 })();

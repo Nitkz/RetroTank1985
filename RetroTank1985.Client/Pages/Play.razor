@@ -1,45 +1,65 @@
 @page "/play"
+@using RetroTank1985.Client.Components.Play
 
 <PageTitle>RetroTank 1985 | Stage Arena</PageTitle>
 
-<!-- Header Section -->
-<div class="mb-4 d-flex flex-column flex-md-row justify-space-between align-start align-md-center gap-4">
-    <div>
-        <div class="d-flex align-center gap-2">
-            <MudText Typo="Typo.h4" Class="pixel-text" Style="color: #ef4444; text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);">
-                STAGE ARENA
-            </MudText>
-            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
-                C# HYBRID ENGINE
-            </MudChip>
-        </div>
-        <MudText Typo="Typo.body2" Style="color: #94a3b8;" Class="mt-1">
-            .NET 9 C# Game Brain &bull; 60 FPS Canvas Muscle &bull; Sub-Tile Destructible Terrain &bull; APU Synth
-        </MudText>
-    </div>
+<!-- Header Title -->
+<div class="mb-3 d-flex align-center gap-2">
+    <MudText Typo="Typo.h5" Class="pixel-text" Style="color: #ef4444; text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);">
+        STAGE ARENA
+    </MudText>
+    <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
+        C# HYBRID ENGINE
+    </MudChip>
+    <span class="pixel-text ml-2 d-none d-md-inline" style="color: #64748b; font-size: 0.6rem;">
+        60 FPS ZERO-ALLOC &bull; SUB-TILE DESTRUCTIBLE &bull; NES APU SYNTH
+    </span>
+</div>
 
-    <!-- Top Action & Stage Control Bar -->
+<!-- Full-Width Top Action & Stage Navigation Bar -->
+<div class="mb-4 w-100">
     <GameControlBar SelectedStage="@_selectedStage"
                     IsMuted="@_isMuted"
                     StageChanged="OnStageSelected"
-                    OnReset="ResetPlayer"
+                    OnRestartStage="RestartStage"
                     OnToggleMute="ToggleMute" />
 </div>
 
 <MudGrid Spacing="3">
-    <!-- Left: Main Game Screen Canvas & Live Telemetry -->
-    <MudItem xs="12" lg="7" Class="d-flex flex-column align-center justify-center">
-        <div class="arcade-bezel">
+    <!-- Primary Arena Column (Screen + Telemetry + Immediate Mobile D-Pad Control) -->
+    <MudItem xs="12" lg="7" Class="d-flex flex-column align-center">
+        <!-- Telemetry HUD -->
+        <div class="mb-2" style="width: 512px; max-width: 100%;">
+            <TelemetryHud Telemetry="@_telemetry" />
+        </div>
+
+        <!-- Game Canvas Screen -->
+        <div class="arcade-bezel mb-2" style="width: 512px; max-width: 100%;">
             <canvas id="gameArenaCanvas" class="game-canvas" width="480" height="480"></canvas>
         </div>
 
-        <TelemetryHud Telemetry="@_telemetry" />
+        <!-- Virtual D-Pad / Direct Touch Controller (Positioned right under canvas for portrait ergonomics) -->
+        <div style="width: 512px; max-width: 100%;">
+            <VirtualDPad />
+        </div>
     </MudItem>
 
-    <!-- Right: Mission Briefing & Virtual Controller -->
+    <!-- Sidebar Column (Recon Briefing & Sandbox Cheat Lab) -->
     <MudItem xs="12" lg="5">
+        <!-- 1. Mission Briefing Card -->
         <MissionBriefingCard StageNumber="@_selectedStage" Stage="@_currentStage" />
 
-        <VirtualDPad />
+        <!-- 2. Debug & Cheat Sandbox Drawer (Collapsible) -->
+        <GameDebugSandboxPanel OnSpawnRequested="HandleDebugSpawn"
+                               OnNukeRequested="HandleDebugNuke"
+                               OnClearRequested="HandleDebugClear"
+                               OnStarPowerRequested="HandleDebugStarPower"
+                               OnShieldToggleRequested="HandleDebugShieldToggle"
+                               OnResetPlayerRequested="ResetPlayer"
+                               OnFortifyEagleRequested="HandleDebugFortifyEagle" />
     </MudItem>
 </MudGrid>
+
+
+
+

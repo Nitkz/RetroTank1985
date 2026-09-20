@@ -9,6 +9,7 @@ public class Bullet
     public const float FastSpeed = 4.0f;
 
     public int Id { get; set; }
+    public int OwnerId { get; set; }
     public float X { get; set; }
     public float Y { get; set; }
     public Direction Direction { get; set; }
@@ -16,6 +17,7 @@ public class Bullet
     public bool IsPlayerBullet { get; set; } = true;
     public bool CanBreakSteel { get; set; } = false;
     public bool IsActive { get; set; } = true;
+
 }
 
 public class Explosion
@@ -39,4 +41,8 @@ public class TelemetryData
     public bool Shield { get; set; } = true;
     public int Lives { get; set; } = 3;
     public int Score { get; set; } = 0;
+    public int EnemiesLeft { get; set; } = 20;
+    public int EnemiesActive { get; set; } = 0;
+    public bool IsGameOver { get; set; } = false;
 }
+

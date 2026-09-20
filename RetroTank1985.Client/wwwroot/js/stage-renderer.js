@@ -97,11 +97,57 @@ window.StageRenderer = (function () {
         }
       }
 
-      // 3. Player Tank
+      // 3. Enemy Tanks & Spawning Stars
+      if (frameData.enemies && frameData.enemies.length > 0) {
+        const SPAWN_STARS = [0xAD, 0xA9, 0xA5, 0xA1];
+        const eLen = frameData.enemies.length;
+        const nowFrame = Math.floor(performance.now() / 130);
+
+        for (let i = 0; i < eLen; i++) {
+          const e = frameData.enemies[i];
+          const ex = BORDER + Math.round(e.x) * SCALE;
+          const ey = BORDER + Math.round(e.y) * SCALE;
+
+          if (e.isSpawning) {
+            // 4-Frame Spawning Star Sparkle Metasprite (0xAD, 0xA9, 0xA5, 0xA1)
+            const starPhase = Math.min(3, Math.floor((30 - e.spawnTimer) / 7.5));
+            const starTile = SPAWN_STARS[starPhase];
+            window.NesCHR.drawMetasprite(ctx, [starTile, starTile + 2, starTile + 1, starTile + 3], 7, ex, ey, false, SCALE);
+          } else {
+            // Determine Palette & CHR base for Archetype
+            let base = 0x80;
+            let pal = 6; // Default Grey
+
+            if (e.type === 0) { base = 0x80; pal = 6; }
+            else if (e.type === 1) { base = 0xA0; pal = 6; }
+            else if (e.type === 2) { base = 0xC0; pal = 6; }
+            else if (e.type === 3) {
+              base = 0xE0;
+              // Armor Tank color shifts based on HP: 4:Green (5), 3:Yellow (4), 2:Red/Orange (7), 1:Grey (6)
+              if (e.hp >= 4) pal = 5;
+              else if (e.hp === 3) pal = 4;
+              else if (e.hp === 2) pal = 7;
+              else pal = 6;
+            }
+
+            // Red Flashing Tank: alternate between base palette and SP3 (7) every few frames
+            if (e.isFlashing && (nowFrame % 2 === 0)) {
+              pal = 7;
+            }
+
+            const T = base + e.dir * 8 + (e.anim % 2) * 4;
+            window.NesCHR.drawTankMetasprite(ctx, T, pal, ex, ey, true, SCALE);
+          }
+        }
+      }
+
+      // 4. Player Tank (Upgrades visual sprite based on StarPower 0=0x00, 1=0x20, 2=0x40, 3=0x60)
       if (frameData.pActive) {
         const px = BORDER + Math.round(frameData.pX) * SCALE;
         const py = BORDER + Math.round(frameData.pY) * SCALE;
-        const T = frameData.pDir * 8 + (frameData.pAnim % 2) * 4;
+        const starTier = Math.min(3, Math.max(0, frameData.pStarPower || 0));
+        const tierBase = starTier * 0x20;
+        const T = tierBase + frameData.pDir * 8 + (frameData.pAnim % 2) * 4;
         window.NesCHR.drawTankMetasprite(ctx, T, 4, px, py, true, SCALE);
 
         if (frameData.pShield) {
@@ -110,7 +156,7 @@ window.StageRenderer = (function () {
         }
       }
 
-      // 4. Explosions
+      // 5. Explosions
       if (frameData.explosions && frameData.explosions.length > 0) {
         const explosionFrames = [0xA0, 0xA2, 0xA4];
         const exLen = frameData.explosions.length;
@@ -121,7 +167,7 @@ window.StageRenderer = (function () {
         }
       }
 
-      // 5. Fast Foreground Trees
+      // 6. Fast Foreground Trees
       const treeCount = treeSubTiles.length;
       if (treeCount > 0) {
         for (let i = 0; i < treeCount; i++) {
@@ -130,22 +176,44 @@ window.StageRenderer = (function () {
         }
       }
 
+
       // 6. Overlays
       if (frameData.isPaused) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
         ctx.fillRect(BORDER, BORDER, PLAYFIELD, PLAYFIELD);
-        ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 20px "Press Start 2P", monospace';
-        ctx.textAlign = 'center'; ctx.fillText('PAUSE', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD / 2);
+        ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 22px "Press Start 2P", monospace';
+        ctx.textAlign = 'center'; 
+        ctx.fillText('PAUSE', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD / 2 - 10);
+
+        const blink = Math.floor(performance.now() / 400) % 2 === 0;
+        if (blink) {
+          ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 9px "Press Start 2P", monospace';
+          ctx.fillText('PRESS [P] OR ESC TO RESUME', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD / 2 + 25);
+        }
         ctx.textAlign = 'start';
-      } else if (frameData.eagleDestroyed) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      } else if (frameData.isGameOver || frameData.eagleDestroyed) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
         ctx.fillRect(BORDER, BORDER, PLAYFIELD, PLAYFIELD);
         ctx.fillStyle = '#ef4444'; ctx.font = 'bold 22px "Press Start 2P", monospace';
-        ctx.textAlign = 'center'; ctx.fillText('GAME OVER', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD / 2 - 10);
-        ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 12px "Press Start 2P", monospace';
-        ctx.fillText('EAGLE DESTROYED', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD / 2 + 25);
+        ctx.textAlign = 'center'; 
+        ctx.fillText('GAME OVER', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD / 2 - 25);
+
+        ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 10px "Press Start 2P", monospace';
+        if (frameData.eagleDestroyed) {
+          ctx.fillText('EAGLE DESTROYED', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD / 2 + 5);
+        } else {
+          ctx.fillText('OUT OF LIVES', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD / 2 + 5);
+        }
+
+        // Blinking Press R or Click Restart prompt
+        const blink = Math.floor(performance.now() / 400) % 2 === 0;
+        if (blink) {
+          ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 10px "Press Start 2P", monospace';
+          ctx.fillText('PRESS [R] OR RESTART', BORDER + PLAYFIELD / 2, BORDER + PLAYFIELD / 2 + 45);
+        }
         ctx.textAlign = 'start';
       }
     }
   };
 })();
+

@@ -1,0 +1,203 @@
+@using RetroTank1985.Client.Engine.Core
+@using RetroTank1985.Client.Engine.Enums
+@using RetroTank1985.Client.Models
+
+<MudCard Elevation="3" Class="retro-card pa-3 mb-4" Style="border: 1px solid #334155; background: #0b0f19;">
+    <!-- Panel Header -->
+    <div class="d-flex justify-space-between align-center mb-2">
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.BugReport" Size="Size.Small" Style="color: #f59e0b;" />
+            <span class="pixel-text" style="font-size: 0.75rem; color: #f59e0b;">DEBUG &amp; SANDBOX TOOLBOX</span>
+        </div>
+        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning" Class="pixel-text" Style="font-size: 0.55rem; height: 18px;">
+            PHASE 4
+        </MudChip>
+    </div>
+
+    <!-- Section 1: Enemy Spawner Lab -->
+    <div class="pa-2 mb-2" style="background: #111827; border-radius: 4px; border: 1px solid #1f2937;">
+        <div class="d-flex justify-space-between align-center mb-1">
+            <span class="pixel-text" style="font-size: 0.65rem; color: #94a3b8;">1. ENEMY SPAWNER LAB</span>
+            <div class="d-flex align-center gap-1">
+                <MudCheckBox T="bool" 
+                             @bind-Value="_isFlashing" 
+                             Dense="true" 
+                             Size="Size.Small" 
+                             Color="Color.Error">
+                    <span class="pixel-text" style="font-size: 0.55rem; color: #ef4444;">RED FLASHING</span>
+                </MudCheckBox>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-1 mb-2">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Default" 
+                       Size="Size.Small" 
+                       Class="pixel-text" 
+                       Style="font-size: 0.55rem; padding: 2px 6px;"
+                       OnClick="@(() => OnSpawnEnemy(EnemyType.Basic))">
+                + BASIC (100)
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Info" 
+                       Size="Size.Small" 
+                       Class="pixel-text" 
+                       Style="font-size: 0.55rem; padding: 2px 6px;"
+                       OnClick="@(() => OnSpawnEnemy(EnemyType.Fast))">
+                + FAST (200)
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Warning" 
+                       Size="Size.Small" 
+                       Class="pixel-text" 
+                       Style="font-size: 0.55rem; padding: 2px 6px;"
+                       OnClick="@(() => OnSpawnEnemy(EnemyType.Power))">
+                + POWER (300)
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Success" 
+                       Size="Size.Small" 
+                       Class="pixel-text" 
+                       Style="font-size: 0.55rem; padding: 2px 6px;"
+                       OnClick="@(() => OnSpawnEnemy(EnemyType.Armor))">
+                + ARMOR (400)
+            </MudButton>
+        </div>
+
+        <!-- Wave & Nuke Actions -->
+        <div class="d-flex gap-1">
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Error" 
+                       Size="Size.Small" 
+                       FullWidth="true"
+                       Class="pixel-text" 
+                       Style="font-size: 0.55rem;"
+                       StartIcon="@Icons.Material.Filled.LocalFireDepartment"
+                       OnClick="OnNukeAll">
+                NUKE ALL (BOMB)
+            </MudButton>
+
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Dark" 
+                       Size="Size.Small" 
+                       FullWidth="true"
+                       Class="pixel-text" 
+                       Style="font-size: 0.55rem;"
+                       StartIcon="@Icons.Material.Filled.ClearAll"
+                       OnClick="OnClearEnemies">
+                CLEAR ALL
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- Section 2: Player & Weapon Lab -->
+    <div class="pa-2 mb-2" style="background: #111827; border-radius: 4px; border: 1px solid #1f2937;">
+        <span class="pixel-text d-block mb-1" style="font-size: 0.65rem; color: #94a3b8;">2. PLAYER WEAPON LAB</span>
+        
+        <div class="d-flex align-center gap-1 flex-wrap mb-2">
+            <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small" Color="Color.Warning" Class="w-100">
+                <MudButton Class="pixel-text flex-grow-1" Style="font-size: 0.5rem;" OnClick="@(() => OnSetStarPower(0))">
+                    NORMAL
+                </MudButton>
+                <MudButton Class="pixel-text flex-grow-1" Style="font-size: 0.5rem;" OnClick="@(() => OnSetStarPower(1))">
+                    ★ FAST
+                </MudButton>
+                <MudButton Class="pixel-text flex-grow-1" Style="font-size: 0.5rem;" OnClick="@(() => OnSetStarPower(2))">
+                    ★★ DUAL
+                </MudButton>
+                <MudButton Class="pixel-text flex-grow-1" Style="font-size: 0.5rem;" OnClick="@(() => OnSetStarPower(3))">
+                    ★★★ STEEL
+                </MudButton>
+            </MudButtonGroup>
+        </div>
+
+        <div class="d-flex gap-1">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Info" 
+                       Size="Size.Small" 
+                       FullWidth="true" 
+                       Class="pixel-text" 
+                       Style="font-size: 0.55rem;" 
+                       StartIcon="@Icons.Material.Filled.Shield" 
+                       OnClick="OnToggleShield">
+                SHIELD
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       Size="Size.Small" 
+                       FullWidth="true" 
+                       Class="pixel-text" 
+                       Style="font-size: 0.55rem;" 
+                       StartIcon="@Icons.Material.Filled.RestartAlt" 
+                       OnClick="OnResetPlayer">
+                RESET P1
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- Section 3: Base Fortress Lab -->
+    <div class="pa-2" style="background: #111827; border-radius: 4px; border: 1px solid #1f2937;">
+        <span class="pixel-text d-block mb-1" style="font-size: 0.65rem; color: #94a3b8;">3. BASE FORTRESS LAB (SHOVEL)</span>
+        <div class="d-flex gap-1">
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Secondary" 
+                       Size="Size.Small" 
+                       FullWidth="true" 
+                       Class="pixel-text" 
+                       Style="font-size: 0.55rem;" 
+                       StartIcon="@Icons.Material.Filled.Security" 
+                       OnClick="@(() => OnFortifyEagle(true))">
+                STEEL FORTRESS
+            </MudButton>
+
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Warning" 
+                       Size="Size.Small" 
+                       FullWidth="true" 
+                       Class="pixel-text" 
+                       Style="font-size: 0.55rem;" 
+                       StartIcon="@Icons.Material.Filled.Construction" 
+                       OnClick="@(() => OnFortifyEagle(false))">
+                BRICK WALLS
+            </MudButton>
+        </div>
+    </div>
+</MudCard>
+
+@code {
+    [Parameter] public EventCallback<EnemyTypeSpawnArgs> OnSpawnRequested { get; set; }
+    [Parameter] public EventCallback OnNukeRequested { get; set; }
+    [Parameter] public EventCallback OnClearRequested { get; set; }
+    [Parameter] public EventCallback<int> OnStarPowerRequested { get; set; }
+    [Parameter] public EventCallback OnShieldToggleRequested { get; set; }
+    [Parameter] public EventCallback OnResetPlayerRequested { get; set; }
+    [Parameter] public EventCallback<bool> OnFortifyEagleRequested { get; set; }
+
+    private bool _isFlashing = false;
+
+    public class EnemyTypeSpawnArgs
+    {
+        public EnemyType Type { get; set; }
+        public bool IsFlashing { get; set; }
+    }
+
+    private async Task OnSpawnEnemy(EnemyType type)
+    {
+        await OnSpawnRequested.InvokeAsync(new EnemyTypeSpawnArgs
+        {
+            Type = type,
+            IsFlashing = _isFlashing
+        });
+    }
+
+    private async Task OnNukeAll() => await OnNukeRequested.InvokeAsync();
+    private async Task OnClearEnemies() => await OnClearRequested.InvokeAsync();
+    private async Task OnSetStarPower(int level) => await OnStarPowerRequested.InvokeAsync(level);
+    private async Task OnToggleShield() => await OnShieldToggleRequested.InvokeAsync();
+    private async Task OnResetPlayer() => await OnResetPlayerRequested.InvokeAsync();
+    private async Task OnFortifyEagle(bool fortified) => await OnFortifyEagleRequested.InvokeAsync(fortified);
+}

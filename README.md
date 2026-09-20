@@ -88,13 +88,19 @@ publish-wasm.bat
 ### 2. Stage Arena (`/play`) — C# Hybrid Game Engine
 - **60 FPS Fixed Timestep**: Deterministic physics simulation decoupled from display refresh rates.
 - **Zero-Allocation 60 FPS Pipeline**:
-  - Reused `RenderFrameDto` snapshot instance and pre-allocated Bullet/Explosion pools.
+  - Reused `RenderFrameDto` snapshot instance and pre-allocated Bullet/Explosion/Enemy pools.
   - Double-buffered audio queue (`AudioEventQueue`) eliminating GC allocations.
   - Offscreen Canvas sub-tile terrain buffering with pre-filtered foreground tree list (`treeSubTiles`).
-- **Famicom 8px Grid Snapping**: Authentic turning mechanics allowing smooth navigation into 1-tile corridors.
+- **Famicom 8px Grid Snapping & Mutual Tank Collision**:
+  - Authentic turning mechanics allowing smooth navigation into 1-tile corridors.
+  - Mutual Tank-vs-Tank collision (Player vs Enemy & Enemy vs Enemy) preventing tanks from passing through one another, coupled with anti-lock un-stick physics.
 - **26×26 Sub-Tile Destructible Terrain**: Multi-subtile leading-edge bounding box detection carving 16px slices on direct hits and 8px slices on half-hits.
+- **20-Tank Enemy Wave & 3-Point Spawner**:
+  - 4 archetypes (Basic, Fast, Power, and 4-HP Armor tank with 4-tier NES palette color shifts & metallic hit SFX).
+  - Obstruction-safe spawner preventing tanks from spawning on top of occupied points.
+- **Dedicated Modular Debug & Sandbox Panel**: Live spawner lab, Star Power tier upgrades (0-3), Eagle fortification, and Nuke all.
 - **Dual Controller Support**: Full keyboard (WASD / Arrows + Space/J) and on-screen Touch D-Pad with Fire button.
-- **Live Telemetry HUD**: Throttled 500ms status monitor reporting real-time FPS, coordinate position, direction, and force shield.
+- **Live Telemetry HUD**: Throttled 500ms status monitor reporting real-time FPS, coordinate position, direction, remaining wave enemies, and active field enemies.
 
 ### 3. NES Sound & BGM Synthesizer (`/sound-bgm`)
 Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behavior:

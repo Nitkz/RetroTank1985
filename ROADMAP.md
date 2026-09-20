@@ -11,8 +11,9 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 | **Phase 1** | Reverse Engineering & Asset Pipeline (Audio, Stages, CHR) | ✅ **Completed** | 2026-09-20 |
 | **Phase 2** | C# 60 FPS NES Game Loop & Player Tank Controller | ✅ **Completed** | 2026-09-20 |
 | **Phase 3** | Destructible Terrain & Bullet-World Collisions | ✅ **Completed** | 2026-09-20 |
-| **Phase 4** | Enemy AI & Wave Spawning System | 🟡 **In Progress** | Next |
+| **Phase 4** | Enemy AI & Wave Spawning System | ✅ **Completed** | 2026-09-20 |
 | **Phase 5** | Phoenix Eagle Base & Droppable Power-Up System | ⏳ **Planned** | Upcoming |
+
 | **Phase 6** | Stage Transitions, Score Tally & Game Over Flow | ⏳ **Planned** | Upcoming |
 | **Phase 7** | Two-Player Co-Op & High Score Persistence | ⏳ **Planned** | Future |
 | **Phase 8** | 👑 Epic Boss Battles & Special Munition Crates | 💡 **New / Planned** | Future Expansion |
@@ -63,17 +64,24 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 
 ---
 
-### 🟡 Phase 4: Enemy AI & Wave Spawning System (In Progress / Next)
-- [ ] **3-Point Spawn System**: Top-left, Top-center, and Top-right spawn positions.
-- [ ] **Spawn Star Animation**: 4-frame rotating star sparkle animation before enemy emergence.
-- [ ] **Max 4 Active Enemies**: 20-enemy queue per stage dispatched sequentially.
-- [ ] **4 Distinct Enemy Tank Archetypes**:
-  - ⚪ **Basic Tank**: Slow movement, slow fire (100 pts).
-  - 🟡 **Fast Tank**: High movement speed, aggressive pathfinding (200 pts).
-  - 🔴 **Power Tank**: High-velocity armor-piercing bullets (300 pts).
-  - 🟢 **Armor Tank**: 4-hit durability with visual damage color shifting (400 pts).
-- [ ] **Flashing Enemy Tanks**: Red-flashing variants carrying power-ups.
-- [ ] **Enemy Pathfinding AI**: Directional choosing algorithm favoring downward/player/eagle paths.
+### ✅ Phase 4: Enemy AI & Wave Spawning System (Done)
+- [x] **3-Point Spawn System**: Top-left (0,0), Top-center (6,0), and Top-right (12,0) spawn positions.
+- [x] **Obstruction-Safe Spawner**: Detects if active tank is occupying the spawn zone (< 14px) and delays/rotates spawner to prevent tanks from spawning on top of each other.
+- [x] **Spawn Star Animation**: 4-frame rotating star sparkle animation (`0xAD, 0xA9, 0xA5, 0xA1`) before enemy emergence.
+- [x] **Max 4 Active Enemies**: 20-enemy queue per stage dispatched sequentially from JSON ROM metadata.
+- [x] **4 Distinct Enemy Tank Archetypes**:
+  - ⚪ **Basic Tank (Type 0)**: Standard movement speed (60 px/s), standard fire (100 pts, 1 HP).
+  - 🟡 **Fast Tank (Type 1)**: High movement speed (~150 px/s), rapid pathing (200 pts, 1 HP).
+  - 🔴 **Power Tank (Type 2)**: High-velocity armor-piercing bullets (300 pts, 1 HP).
+  - 🟢 **Armor Tank (Type 3)**: 4-hit durability with visual damage color shifting (Green `SP1` -> Yellow `SP0` -> Red `SP3` -> Grey `SP2`, 400 pts) and metallic armor hit SFX.
+- [x] **Flashing Enemy Tanks**: Red-flashing variants cycling SP2 <-> SP3 palette every 8 frames.
+- [x] **Enemy Pathfinding AI**: Directional choosing algorithm favoring downward/player/eagle paths + 8px grid snapping & obstacle avoidance.
+- [x] **Mutual Tank-vs-Tank Collision Physics**:
+  - Player vs Enemy & Enemy vs Enemy 14px AABB boundary blocking.
+  - Anti-lock physics allowing tanks to freely move in directions that increase separation if initial overlap occurs.
+  - Smart AI pathfinding (`PickOpenDirection`) finding open alternate headings when hitting obstacles or other tanks.
+- [x] **Dedicated Debug & Sandbox Panel (`GameDebugSandboxPanel.razor`)**: Direct spawner lab for all 4 types + Flashing, Star Power lab (Tiers 0-3), Eagle steel fortify, and Nuke all (Bomb).
+
 
 ---
 

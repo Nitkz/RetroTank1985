@@ -1,48 +1,69 @@
-<div class="d-flex align-center gap-2 flex-wrap">
-    <MudButton Variant="Variant.Outlined" 
-               Color="Color.Warning" 
-               Size="Size.Small" 
-               OnClick="OnPrevClicked" 
-               Disabled="@(SelectedStage <= 1)">
-        &lt; PREV
-    </MudButton>
+@using RetroTank1985.Client.Engine.Core
+@using RetroTank1985.Client.Engine.Enums
+@using RetroTank1985.Client.Models
 
-    <MudSelect T="int" 
-               Value="@SelectedStage" 
-               ValueChanged="OnStageSelected" 
-               Dense="true" 
-               Margin="Margin.Dense" 
-               Style="min-width: 140px; font-family: var(--retro-font); font-size: 0.8rem;">
-        @for (int s = 1; s <= 35; s++)
-        {
-            var stageNum = s;
-            <MudSelectItem Value="@stageNum">STAGE @stageNum.ToString("D2")</MudSelectItem>
-        }
-    </MudSelect>
+<!-- Clean Compact Game Top Control Bar -->
+<div class="d-flex align-center justify-space-between flex-wrap gap-2 pa-2 w-100" 
+     style="background: #0f172a; border-radius: 8px; border: 1px solid #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+    
+    <!-- Stage Selector & Step Navigation -->
+    <div class="d-flex align-center gap-2 flex-wrap">
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Warning" 
+                   Size="Size.Small" 
+                   OnClick="OnPrevClicked" 
+                   Disabled="@(SelectedStage <= 1)"
+                   Class="pixel-text"
+                   Style="font-size: 0.65rem;">
+            &lt; PREV
+        </MudButton>
 
-    <MudButton Variant="Variant.Outlined" 
-               Color="Color.Warning" 
-               Size="Size.Small" 
-               OnClick="OnNextClicked" 
-               Disabled="@(SelectedStage >= 35)">
-        NEXT &gt;
-    </MudButton>
+        <MudSelect T="int" 
+                   Value="@SelectedStage" 
+                   ValueChanged="OnStageSelected" 
+                   Dense="true" 
+                   Margin="Margin.Dense" 
+                   Style="min-width: 140px; font-family: var(--retro-font); font-size: 0.75rem;">
+            @for (int s = 1; s <= 35; s++)
+            {
+                var stageNum = s;
+                <MudSelectItem Value="@stageNum">STAGE @stageNum.ToString("D2")</MudSelectItem>
+            }
+        </MudSelect>
 
-    <MudButton Variant="Variant.Filled" 
-               Color="Color.Error" 
-               Size="Size.Small" 
-               OnClick="OnResetClicked" 
-               StartIcon="@Icons.Material.Filled.Refresh">
-        SPAWN P1
-    </MudButton>
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Warning" 
+                   Size="Size.Small" 
+                   OnClick="OnNextClicked" 
+                   Disabled="@(SelectedStage >= 35)"
+                   Class="pixel-text"
+                   Style="font-size: 0.65rem;">
+            NEXT &gt;
+        </MudButton>
 
-    <MudButton Variant="Variant.Filled" 
-               Color="@(IsMuted ? Color.Default : Color.Success)" 
-               Size="Size.Small" 
-               OnClick="OnMuteToggled" 
-               StartIcon="@(IsMuted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)">
-        @(IsMuted ? "MUTED" : "SOUND ON")
-    </MudButton>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Error" 
+                   Size="Size.Small" 
+                   OnClick="OnRestartStageClicked" 
+                   StartIcon="@Icons.Material.Filled.Replay"
+                   Class="pixel-text"
+                   Style="font-size: 0.65rem; background-color: #ef4444;">
+            RESTART (R)
+        </MudButton>
+    </div>
+
+    <!-- Quick Audio & Toolbox Toggle -->
+    <div class="d-flex align-center gap-2">
+        <MudButton Variant="Variant.Filled" 
+                   Color="@(IsMuted ? Color.Default : Color.Success)" 
+                   Size="Size.Small" 
+                   OnClick="OnMuteToggled" 
+                   Class="pixel-text"
+                   Style="font-size: 0.65rem;"
+                   StartIcon="@(IsMuted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)">
+            @(IsMuted ? "MUTED" : "SOUND ON")
+        </MudButton>
+    </div>
 </div>
 
 @code {
@@ -50,11 +71,16 @@
     [Parameter] public bool IsMuted { get; set; }
     [Parameter] public EventCallback<int> StageChanged { get; set; }
     [Parameter] public EventCallback OnReset { get; set; }
+    [Parameter] public EventCallback OnRestartStage { get; set; }
     [Parameter] public EventCallback OnToggleMute { get; set; }
 
     private async Task OnStageSelected(int stageNum) => await StageChanged.InvokeAsync(stageNum);
     private async Task OnPrevClicked() => await StageChanged.InvokeAsync(SelectedStage - 1);
     private async Task OnNextClicked() => await StageChanged.InvokeAsync(SelectedStage + 1);
     private async Task OnResetClicked() => await OnReset.InvokeAsync();
+    private async Task OnRestartStageClicked() => await OnRestartStage.InvokeAsync();
     private async Task OnMuteToggled() => await OnToggleMute.InvokeAsync();
 }
+
+
+

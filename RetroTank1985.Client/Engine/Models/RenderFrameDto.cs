@@ -28,6 +28,9 @@ public class RenderFrameDto
     [JsonPropertyName("pActive")]
     public bool PlayerActive { get; set; }
 
+    [JsonPropertyName("pStarPower")]
+    public int PlayerStarPower { get; set; }
+
     [JsonPropertyName("bullets")]
     public List<BulletRenderDto> Bullets { get; set; } = new();
 
@@ -57,7 +60,21 @@ public class RenderFrameDto
 
     [JsonPropertyName("lives")]
     public int Lives { get; set; }
+
+    [JsonPropertyName("enemies")]
+    public List<EnemyRenderDto> Enemies { get; set; } = new();
+
+    [JsonPropertyName("enemiesRemaining")]
+    public int EnemiesRemaining { get; set; }
+
+    [JsonPropertyName("enemiesActive")]
+    public int EnemiesActive { get; set; }
+
+    [JsonPropertyName("isGameOver")]
+    public bool IsGameOver { get; set; }
 }
+
+
 
 public class BulletRenderDto
 {
@@ -69,6 +86,39 @@ public class BulletRenderDto
 
     [JsonPropertyName("dir")]
     public byte Dir { get; set; }
+}
+
+public class EnemyRenderDto
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("x")]
+    public float X { get; set; }
+
+    [JsonPropertyName("y")]
+    public float Y { get; set; }
+
+    [JsonPropertyName("dir")]
+    public byte Dir { get; set; }
+
+    [JsonPropertyName("type")]
+    public byte Type { get; set; }
+
+    [JsonPropertyName("hp")]
+    public int Hp { get; set; }
+
+    [JsonPropertyName("isFlashing")]
+    public bool IsFlashing { get; set; }
+
+    [JsonPropertyName("isSpawning")]
+    public bool IsSpawning { get; set; }
+
+    [JsonPropertyName("spawnTimer")]
+    public int SpawnTimer { get; set; }
+
+    [JsonPropertyName("anim")]
+    public int AnimFrame { get; set; }
 }
 
 public class ExplosionRenderDto
@@ -85,3 +135,4 @@ public class ExplosionRenderDto
     [JsonPropertyName("big")]
     public bool Big { get; set; }
 }
+

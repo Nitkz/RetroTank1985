@@ -127,22 +127,35 @@ window.NesCHR = (function () {
       }
     }
 
-    for (let d = 0; d < 4; d++) {
-      for (let a = 0; a < 2; a++) {
-        const t = 256 + (d * 8 + a * 4);
-        getCachedCHRTile(t, 4, true, SCALE);
-        getCachedCHRTile(t + 1, 4, true, SCALE);
-        getCachedCHRTile(t + 2, 4, true, SCALE);
-        getCachedCHRTile(t + 3, 4, true, SCALE);
+    // Pre-warm Player Tiers (0x00, 0x20, 0x40, 0x60) & Enemy Tank Metasprites (Basic 0x80, Fast 0xA0, Power 0xC0, Armor 0xE0)
+    const tankBases = [0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xE0];
+    const tankPalettes = [4, 5, 6, 7]; // Yellow, Green, Grey, Red
+
+    for (let b = 0; b < tankBases.length; b++) {
+      const base = tankBases[b];
+      for (let d = 0; d < 4; d++) {
+        for (let a = 0; a < 2; a++) {
+          const t = 256 + (base + d * 8 + a * 4);
+          for (let p = 0; p < tankPalettes.length; p++) {
+            const pal = tankPalettes[p];
+            getCachedCHRTile(t, pal, true, SCALE);
+            getCachedCHRTile(t + 1, pal, true, SCALE);
+            getCachedCHRTile(t + 2, pal, true, SCALE);
+            getCachedCHRTile(t + 3, pal, true, SCALE);
+          }
+        }
       }
     }
 
-    const specialTiles = [0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0xA0, 0xA2, 0xA4];
+    // Spawn stars & Shield & Explosions
+    const specialTiles = [0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0xA0, 0xA2, 0xA4, 0xA6, 0xAD, 0xA9, 0xA5, 0xA1];
     for (let i = 0; i < specialTiles.length; i++) {
       getCachedCHRTile(specialTiles[i], 0, true, SCALE);
       getCachedCHRTile(specialTiles[i], 6, true, SCALE);
+      getCachedCHRTile(specialTiles[i], 7, true, SCALE);
     }
   }
+
 
   return {
     SCALE,
