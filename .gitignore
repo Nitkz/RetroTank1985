@@ -1,4 +1,4 @@
-﻿## .NET and Build Artifacts
+## .NET and Build Artifacts
 [Bb]in/
 [Oo]bj/
 [Ll]og/
@@ -24,3 +24,6 @@ _framework/
 *.nes
 *.bin
 *.dump
+
+## Publish Profiles
+RetroTank1985/Properties/PublishProfiles/iviewdockerregistry.nitksoft.com.pubxml
