@@ -65,17 +65,31 @@ public struct NetworkEntityState
         float dx = Math.Abs(hostX - predictedX);
         float dy = Math.Abs(hostY - predictedY);
 
-        // กรณีความคลาดเคลื่อนสูงมาก (> 20px เช่น เกิดใหม่ โดนชนกระเด็น หรือวาร์ป) ให้ Hard Snap พิกัดตาม Host ทันที
-        if (dx > 20f || dy > 20f)
+        // หากความคลาดเคลื่อนสูงมาก (> 16px เช่น เกิดใหม่ โดนชนกระเด็น หรือวาร์ป) ให้ Hard Snap พิกัดตาม Host ทันที
+        if (dx > 16f || dy > 16f)
         {
             CurrentX = hostX;
             CurrentY = hostY;
             return (hostX, hostY);
         }
 
-        // กรณีความคลาดเคลื่อนเล็กน้อย (1-4px จาก Latency) ให้ค่อยๆ นวดตำแหน่ง (Smooth blend 25% error correction)
-        float reconciledX = predictedX + (hostX - predictedX) * 0.25f;
-        float reconciledY = predictedY + (hostY - predictedY) * 0.25f;
+        // หากความคลาดเคลื่อนต่ำมาก (< 1.5px) ให้เชื่อ Local Prediction 100% เพื่อไม่ให้เกิดอาการเลื่อนหรือหลุดล็อก Grid
+        if (dx <= 1.5f && dy <= 1.5f)
+        {
+            CurrentX = predictedX;
+            CurrentY = predictedY;
+            return (predictedX, predictedY);
+        }
+
+        // หากคลาดเคลื่อนระดับกลาง (1.5px - 16px จาก Latency) ให้ค่อยๆ ดึงเข้าหา Host แบบคง Snap Grid
+        float reconciledX = predictedX + (hostX - predictedX) * 0.20f;
+        float reconciledY = predictedY + (hostY - predictedY) * 0.20f;
+
+        // บังคับ Snap 8px Grid หากแกนใดแกนหนึ่งใกล้เส้นทางเดิน 8px
+        float gridX = MathF.Round(reconciledX / 8f) * 8f;
+        float gridY = MathF.Round(reconciledY / 8f) * 8f;
+        if (MathF.Abs(reconciledX - gridX) < 0.5f) reconciledX = gridX;
+        if (MathF.Abs(reconciledY - gridY) < 0.5f) reconciledY = gridY;
 
         CurrentX = reconciledX;
         CurrentY = reconciledY;
