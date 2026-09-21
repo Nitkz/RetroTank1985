@@ -103,6 +103,8 @@ public class CoopSyncSnapshotDto
     public byte? ActivePowerUpType { get; set; }
     public float PowerUpX { get; set; }
     public float PowerUpY { get; set; }
+    public bool PowerUpIsVisible { get; set; } = true;
+    public int PowerUpLifetimeRemaining { get; set; } = 600;
 
     public bool IsEagleDestroyed { get; set; }
     public int RemainingEnemyWaveCount { get; set; }

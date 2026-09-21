@@ -10,7 +10,7 @@ public interface IPowerUpSystem
 
     void DropRandomPowerUp(float x, float y, IAudioEventQueue audioQueue);
     void SpawnPowerUpDebug(PowerUpType type, float? x = null, float? y = null, IAudioEventQueue? audioQueue = null);
-    void SyncFromNetwork(byte? powerUpType, float x, float y);
+    void SyncFromNetwork(byte? powerUpType, float x, float y, bool isVisible = true, int lifetimeRemaining = 600);
     void UpdateVisuals();
     void SpawnScorePopup(float x, float y, int score);
     void Update(
@@ -126,7 +126,7 @@ public class PowerUpSystem : IPowerUpSystem
         audioQueue?.Enqueue(AudioSoundEffect.BonusAppear);
     }
 
-    public void SyncFromNetwork(byte? powerUpType, float x, float y)
+    public void SyncFromNetwork(byte? powerUpType, float x, float y, bool isVisible = true, int lifetimeRemaining = 600)
     {
         if (!powerUpType.HasValue)
         {
@@ -138,9 +138,11 @@ public class PowerUpSystem : IPowerUpSystem
         var pType = (PowerUpType)powerUpType.Value;
         if (_powerUps.Count > 0 && _powerUps[0].IsActive && _powerUps[0].Type == pType)
         {
-            // Same powerup still active, update position without resetting animation frame / blinking
+            // Same powerup still active, sync position and host authoritative visibility & lifetime directly
             _powerUps[0].X = x;
             _powerUps[0].Y = y;
+            _powerUps[0].IsVisible = isVisible;
+            _powerUps[0].Lifetime = lifetimeRemaining;
             return;
         }
 
@@ -153,10 +155,10 @@ public class PowerUpSystem : IPowerUpSystem
         p.Type = pType;
         p.X = x;
         p.Y = y;
-        p.Lifetime = 600;
+        p.Lifetime = lifetimeRemaining;
         p.BlinkCounter = 0;
         p.IsActive = true;
-        p.IsVisible = true;
+        p.IsVisible = isVisible;
         _powerUps.Add(p);
     }
 

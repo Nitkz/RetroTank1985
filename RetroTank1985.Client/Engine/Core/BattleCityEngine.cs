@@ -465,6 +465,8 @@ public class BattleCityEngine : IBattleCityEngine
                 snapshot.ActivePowerUpType = (byte)p.Type;
                 snapshot.PowerUpX = p.X;
                 snapshot.PowerUpY = p.Y;
+                snapshot.PowerUpIsVisible = p.IsVisible;
+                snapshot.PowerUpLifetimeRemaining = p.Lifetime;
             }
         }
 
@@ -607,7 +609,7 @@ public class BattleCityEngine : IBattleCityEngine
             var oldP = PowerUps.ActivePowerUps[0];
             PowerUps.SpawnScorePopup(oldP.X, oldP.Y, 500);
         }
-        PowerUps.SyncFromNetwork(snapshot.ActivePowerUpType, snapshot.PowerUpX, snapshot.PowerUpY);
+        PowerUps.SyncFromNetwork(snapshot.ActivePowerUpType, snapshot.PowerUpX, snapshot.PowerUpY, snapshot.PowerUpIsVisible, snapshot.PowerUpLifetimeRemaining);
 
         // Sync Destructible Map SubTiles from Host
         if (snapshot.SubTiles != null)
