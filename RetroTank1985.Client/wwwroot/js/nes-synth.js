@@ -299,7 +299,9 @@ function updateVolState(s) {
 // ─── Trigger a sound ────────────────────────────────────────────
 function playSound(slotIdx) {
   if (!soundEnabled || !audioCtx || slotIdx < 0 || slotIdx >= 28) return;
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
+    audioCtx.resume().catch(function() {});
+  }
 
   const seq = SOUND_SEQ[slotIdx];
   if (!seq || seq.length < 5) return;
@@ -699,19 +701,42 @@ function toggleSound() {
 }
 
 
+// ─── Set Mute State ─────────────────────────────────────────────
+function setSoundMuted(muted) {
+  soundEnabled = !muted;
+  if (!soundEnabled) {
+    stopAllSounds();
+    if (masterGain && audioCtx) {
+      masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+    }
+  } else {
+    if (masterGain && audioCtx) {
+      masterGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    }
+  }
+}
+
 // Bridge to Blazor WASM window.nesSynth
 window.nesSynth = {
     isAudioUnlocked: false,
 
+    ensureAudioContext: function() {
+        if (!audioInited) {
+            initAudio();
+        }
+        if (audioCtx && (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted')) {
+            audioCtx.resume().catch(function() {});
+        }
+    },
+
     initAudioUnlock: function() {
-        if (this.isAudioUnlocked) return;
         const self = this;
 
         const unlockHandler = function() {
             self.init();
 
             if (audioCtx) {
-                if (audioCtx.state === 'suspended') {
+                if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
                     audioCtx.resume().catch(function(e) { console.warn('audioCtx resume:', e); });
                 }
                 // Play a 1-sample silent buffer to firmly unlock Web Audio on iOS Safari
@@ -725,21 +750,36 @@ window.nesSynth = {
             }
 
             self.isAudioUnlocked = true;
-            document.removeEventListener('touchstart', unlockHandler, true);
-            document.removeEventListener('touchend', unlockHandler, true);
-            document.removeEventListener('click', unlockHandler, true);
-            document.removeEventListener('keydown', unlockHandler, true);
         };
 
-        document.addEventListener('touchstart', unlockHandler, { capture: true, passive: true });
-        document.addEventListener('touchend', unlockHandler, { capture: true, passive: true });
-        document.addEventListener('click', unlockHandler, { capture: true, passive: true });
-        document.addEventListener('keydown', unlockHandler, { capture: true, passive: true });
+        // Attach to all user touch/click/key gestures
+        ['touchstart', 'touchend', 'click', 'keydown', 'pointerdown'].forEach(function(evtName) {
+            document.addEventListener(evtName, unlockHandler, { capture: true, passive: true });
+        });
+
+        // Resume audio on iOS visibility change / page restore
+        if (typeof document !== 'undefined') {
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden && audioCtx && (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted')) {
+                    audioCtx.resume().catch(function() {});
+                }
+            });
+            window.addEventListener('pageshow', function() {
+                if (audioCtx && (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted')) {
+                    audioCtx.resume().catch(function() {});
+                }
+            });
+            window.addEventListener('focus', function() {
+                if (audioCtx && (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted')) {
+                    audioCtx.resume().catch(function() {});
+                }
+            });
+        }
     },
 
     init: function() {
         initAudio();
-        if (audioCtx && audioCtx.state === 'suspended') {
+        if (audioCtx && (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted')) {
             audioCtx.resume().catch(function(e) {});
         }
         if (!window._nesTicker) {
@@ -750,6 +790,10 @@ window.nesSynth = {
         if (audioCtx && masterGain) {
             masterGain.gain.setValueAtTime(Math.max(0, Math.min(1, val)), audioCtx.currentTime);
         }
+    },
+    setMute: function(isMuted) {
+        this.init();
+        setSoundMuted(isMuted);
     },
     toggleMute: function() {
         this.init();
