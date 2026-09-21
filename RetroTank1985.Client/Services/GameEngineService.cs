@@ -201,6 +201,24 @@ public class GameEngineService : IAsyncDisposable
         {
             _engine.SetP1Input(up, down, left, right, fire, pause);
         }
+        else if (IsCoopSession && !IsCoopHost)
+        {
+            // Client-Side Prediction: Feed local keyboard/touch input into Player 2 immediately (0ms response)
+            _engine.SetInput(new InputState
+            {
+                Up = false,
+                Down = false,
+                Left = false,
+                Right = false,
+                Fire = false,
+                P2Up = up || p2Up,
+                P2Down = down || p2Down,
+                P2Left = left || p2Left,
+                P2Right = right || p2Right,
+                P2Fire = fire || p2Fire,
+                Pause = pause
+            });
+        }
         else if (!IsCoopSession)
         {
             _engine.SetInput(new InputState

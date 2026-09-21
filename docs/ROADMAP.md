@@ -15,8 +15,8 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 | **Phase 5** | Phoenix Eagle Base & Droppable Power-Up System | ✅ **Completed** | 2026-09-20 |
 | **Phase 6** | Stage Transitions, Score Tally & Game Over Flow | ✅ **Completed** | 2026-09-20 |
 | **Phase 7** | Two-Player Co-Op & High Score Persistence | ✅ **Completed** | 2026-09-20 |
-| **Phase 8** | 🌐 Real-Time Online 2-Player Co-Op (WebRTC P2P & SignalR) | 🚀 **Next In Progress** | 2026-09-25 |
-| **Phase 9** | 👑 Epic Boss Battles & Special Munition Crates | 💡 **Planned** | Future Expansion |
+| **Phase 8** | 🌐 Real-Time Online 2-Player Co-Op (SignalR Full State & Fast Sync) | ✅ **Completed** | 2026-09-21 |
+| **Phase 9** | 👑 Epic Boss Battles & Special Munition Crates | 🚀 **Next In Progress** | Future Expansion |
 | **Phase 10** | 🛠️ Stage Editor & Custom Campaign Builder | ⏳ **Planned** | Future Expansion |
 
 ---
@@ -140,7 +140,7 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 
 ---
 
-### 🚀 Phase 8: 🌐 Real-Time Online 2-Player Co-Op & Modern UX (In Progress)
+### ✅ Phase 8: 🌐 Real-Time Online 2-Player Co-Op & Modern UX (Done)
 > 📄 **Detailed Design Document:** [ONLINE_COOP_DESIGN_SPEC.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/ONLINE_COOP_DESIGN_SPEC.md)
 
 - [x] **Frictionless Onboarding & Mode Selection Hub (`/`)**:
@@ -153,7 +153,7 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
   - Dedicated `STAGE XX` badge, sound toggle, fullscreen mode, and safe exit.
   - Single-player automatic hiding of P2 controller switch and emote wheel.
 - [x] **Lobby Options & Matchmaking (`/coop`)**:
-  - Host pre-game Options configuration dialog.
+  - Host pre-game Options configuration dialog & real-time broadcast to Guest.
   - Real-time Difficulty & Armor preset badge broadcast to lobby players.
   - 6-character memorable Room Codes (e.g. `TANK85`).
   - One-click invite link sharing (`https://.../coop?room=TANK85`).
@@ -164,19 +164,23 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 - [x] **Developer Suite & Sandbox Rebrand (`/dev`, `/sandbox`)**:
   - Engine Sandbox & Physics Lab (`/sandbox`, `/dev/sandbox`).
   - Unified Developer Portal (`/dev`) linking Sandbox, Audio Synth, and Stage Inspector.
-- [ ] **Dual-Mode Networking Architecture**:
-  - **WebRTC DataChannels (P2P)**: Direct browser-to-browser UDP channel for static Cloudflare Pages / Standalone WASM deployment.
-  - **SignalR Binary WebSockets Hub**: High-performance fallback and dedicated server multiplayer backend for ASP.NET Core host.
-- [ ] **Host-Authoritative Simulation & Delta Sync**:
-  - Player 1 (Host) runs full physics, enemy AI, destructible terrain mutations, and power-up RNG.
-  - Compact `CoopSyncSnapshotDto` state streaming (30–60Hz) with delta compression (< 2 KB/s).
-- [ ] **Client-Side Prediction & Entity Interpolation (P2 Guest)**:
-  - Local prediction for P2 tank steering and shooting for instant 0ms control feedback.
-  - Smooth Hermite interpolation for enemy tanks and projectile trajectories.
-  - Soft-snap desync reconciliation.
-- [ ] **Borrow Life Mechanic**: Dead players can borrow extra lives from teammates by pressing Fire at respawn.
-- [ ] **Dual-Player End-of-Stage Tally & MVP System**:
-  - Synchronized tally screen displaying individual kill stats, point breakdown, and match MVP awards.
+- [x] **SignalR Binary/JSON WebSockets Hub Architecture**:
+  - High-performance dedicated server multiplayer backend for ASP.NET Core host.
+  - Dynamic room lifecycle, heartbeat monitoring, and automatic disconnect grace recovery.
+- [x] **Host-Authoritative Simulation & Full Snapshot Sync (20Hz)**:
+  - Player 1 (Host) runs full physics, enemy AI, destructible terrain mutations, audio event dispatching, and power-up RNG.
+  - Compact `CoopSyncSnapshotDto` state streaming throttled to 20Hz (ลด Traffic 66%).
+- [x] **Client-Side Local Prediction & Entity Interpolation (P2 Guest)**:
+  - 0ms Local Input Simulation สำหรับการเคลื่อนที่ของ Player 2 บนเครื่อง Guest
+  - Smooth Lerp interpolation สำหรับ Player 1 (Host)
+  - Smooth Error Reconciliation (25% blend) & Soft-snap desync (> 20px) ใน `NetworkEntityState.cs`
+  - Guest physics skipping สำหรับศัตรูและกระสุนเพื่อป้องกันการคำนวณซ้ำซ้อน
+- [x] **Bidirectional Borrow Life Mechanic (FEAT-02)**:
+  - P1 ↔ P2 mutual life borrowing at respawn with 2-second debounce cooldown.
+- [x] **Synchronized Dual-Player Stage Tally Screen (FEAT-03)**:
+  - Synchronized end-of-stage summary screen displaying individual kill stats, point breakdown, and SFX chimes across both clients.
+- [x] **In-Game Quick Rematch / Continue Flow (FEAT-06)**:
+  - Instant mission retry from Game Over screen without leaving room or re-entering code.
 
 ---
 

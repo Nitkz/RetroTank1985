@@ -524,11 +524,22 @@ public class BattleCityEngine : IBattleCityEngine
         Player.ShieldActive = snapshot.Player1.ShieldTimeRemaining > 0;
         Player.InvulnerableTimer = snapshot.Player1.InvulnerableTimer;
 
-        _netStateP2.UpdateTarget(snapshot.Player2.X, snapshot.Player2.Y);
-        Player2.X = _netStateP2.CurrentX;
-        Player2.Y = _netStateP2.CurrentY;
-        Player2.Direction = (Direction)snapshot.Player2.Direction;
-        Player2.IsMoving = snapshot.Player2.IsMoving;
+        // Player 2: Reconcile predicted position with Host authoritative position
+        if (IsNetworkGuest)
+        {
+            var (reconciledX, reconciledY) = _netStateP2.ReconcilePrediction(Player2.X, Player2.Y, snapshot.Player2.X, snapshot.Player2.Y);
+            Player2.X = reconciledX;
+            Player2.Y = reconciledY;
+        }
+        else
+        {
+            _netStateP2.UpdateTarget(snapshot.Player2.X, snapshot.Player2.Y);
+            Player2.X = _netStateP2.CurrentX;
+            Player2.Y = _netStateP2.CurrentY;
+            Player2.Direction = (Direction)snapshot.Player2.Direction;
+            Player2.IsMoving = snapshot.Player2.IsMoving;
+        }
+
         Player2.IsActive = snapshot.Player2.IsActive;
         Player2.Lives = snapshot.Player2.Lives;
         Player2.Hp = snapshot.Player2.Hp;
@@ -1128,7 +1139,8 @@ public class BattleCityEngine : IBattleCityEngine
             Player.X = _netStateP1.CurrentX;
             Player.Y = _netStateP1.CurrentY;
         }
-        if (_netStateP2.Initialized)
+        // Only interpolate P2 if not running as Network Guest (Guest predicts own P2 tank locally)
+        if (!IsNetworkGuest && _netStateP2.Initialized)
         {
             _netStateP2.Interpolate(0.40f);
             Player2.X = _netStateP2.CurrentX;

@@ -49,6 +49,39 @@ public struct NetworkEntityState
         if (Math.Abs(TargetY - CurrentY) < 0.08f) CurrentY = TargetY;
     }
 
+    /// <summary>
+    /// ปรับสมดุลระหว่าง Local Predicted Position กับ Host Authoritative Position
+    /// </summary>
+    public (float NewX, float NewY) ReconcilePrediction(float predictedX, float predictedY, float hostX, float hostY)
+    {
+        if (!Initialized)
+        {
+            Initialized = true;
+            CurrentX = hostX;
+            CurrentY = hostY;
+            return (hostX, hostY);
+        }
+
+        float dx = Math.Abs(hostX - predictedX);
+        float dy = Math.Abs(hostY - predictedY);
+
+        // กรณีความคลาดเคลื่อนสูงมาก (> 20px เช่น เกิดใหม่ โดนชนกระเด็น หรือวาร์ป) ให้ Hard Snap พิกัดตาม Host ทันที
+        if (dx > 20f || dy > 20f)
+        {
+            CurrentX = hostX;
+            CurrentY = hostY;
+            return (hostX, hostY);
+        }
+
+        // กรณีความคลาดเคลื่อนเล็กน้อย (1-4px จาก Latency) ให้ค่อยๆ นวดตำแหน่ง (Smooth blend 25% error correction)
+        float reconciledX = predictedX + (hostX - predictedX) * 0.25f;
+        float reconciledY = predictedY + (hostY - predictedY) * 0.25f;
+
+        CurrentX = reconciledX;
+        CurrentY = reconciledY;
+        return (reconciledX, reconciledY);
+    }
+
     public void Reset()
     {
         Initialized = false;
