@@ -20,6 +20,7 @@ public interface IDestructibleMap
     bool HandleBulletHit(Bullet bullet, out AudioSoundEffect soundEffect, out bool hitEagle);
     byte[] GetSubTileBytes();
     void LoadSubTileBytes(byte[] subTileBytes);
+    void SetEagleDestroyed(bool destroyed);
     void FortifyEagleWithSteel(bool steel, int durationFrames = 0);
     void UpdateShovelTimer();
 }
@@ -376,6 +377,22 @@ public class DestructibleMap : IDestructibleMap
 
         if (changed)
         {
+            IsDirty = true;
+        }
+    }
+
+    public void SetEagleDestroyed(bool destroyed)
+    {
+        if (IsEagleDestroyed != destroyed)
+        {
+            IsEagleDestroyed = destroyed;
+            if (destroyed)
+            {
+                _grid[24, 12] = SubTileType.DestroyedEagle;
+                _grid[24, 13] = SubTileType.DestroyedEagle;
+                _grid[25, 12] = SubTileType.DestroyedEagle;
+                _grid[25, 13] = SubTileType.DestroyedEagle;
+            }
             IsDirty = true;
         }
     }

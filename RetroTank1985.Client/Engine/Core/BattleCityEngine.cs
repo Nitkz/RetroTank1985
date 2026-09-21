@@ -611,10 +611,14 @@ public class BattleCityEngine : IBattleCityEngine
         }
         PowerUps.SyncFromNetwork(snapshot.ActivePowerUpType, snapshot.PowerUpX, snapshot.PowerUpY, snapshot.PowerUpIsVisible, snapshot.PowerUpLifetimeRemaining);
 
-        // Sync Destructible Map SubTiles from Host
+        // Sync Destructible Map SubTiles and Eagle state from Host
         if (snapshot.SubTiles != null)
         {
             Map.LoadSubTileBytes(snapshot.SubTiles);
+        }
+        if (snapshot.IsEagleDestroyed)
+        {
+            Map.SetEagleDestroyed(true);
         }
 
         // Play Synchronized Audio Events on Guest (e.g. Power-Up Pickup SFX, Tally ticks)
