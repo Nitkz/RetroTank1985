@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Components;
 using RetroTank1985.Client.Pages;
 using RetroTank1985.Components;
+using RetroTank1985.Hubs;
+using RetroTank1985.Services;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 builder.Services.AddMudServices();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IRoomManager, InMemoryRoomManager>();
 builder.Services.AddScoped(sp =>
 {
     var nav = sp.GetRequiredService<NavigationManager>();
@@ -45,8 +49,10 @@ app.UseAntiforgery();
 
 app.UseStaticFiles();
 app.MapStaticAssets();
+app.MapHub<CoopLobbyHub>("/hubs/coop-lobby");
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(RetroTank1985.Client._Imports).Assembly);
 
 app.Run();
+
