@@ -55,14 +55,15 @@ public class EnemySystem : IEnemySystem
     private readonly int[] _killsByTypeP2 = new int[4];
     private readonly int[] _killsByTypeCombined = new int[4];
 
+    private readonly Random _rand = new();
     private int _spawnPointRotator = 0;
     private int _spawnDelayTimer = 0;
     private int _spawnedCount = 0;
     private int _nextEnemyId = 1;
-    private readonly Random _rand = new();
+    private int? _syncedRemainingEnemies = null;
 
     public IReadOnlyList<EnemyTank> ActiveEnemies => _enemies;
-    public int EnemiesRemaining => Math.Max(0, TotalWaveEnemies - _spawnedCount) + ActiveEnemyCount;
+    public int EnemiesRemaining => _syncedRemainingEnemies ?? (Math.Max(0, TotalWaveEnemies - _spawnedCount) + ActiveEnemyCount);
     public int ActiveEnemyCount => _enemies.Count(e => e.IsActive);
     public int[] KillsByType
     {
@@ -75,7 +76,7 @@ public class EnemySystem : IEnemySystem
     public int[] KillsByTypeP1 => _killsByTypeP1;
     public int[] KillsByTypeP2 => _killsByTypeP2;
     public int TotalKills => KillsByType[0] + KillsByType[1] + KillsByType[2] + KillsByType[3];
-    public bool IsWaveCleared => _spawnedCount >= TotalWaveEnemies && ActiveEnemyCount == 0;
+    public bool IsWaveCleared => (_syncedRemainingEnemies.HasValue ? _syncedRemainingEnemies.Value == 0 : _spawnedCount >= TotalWaveEnemies) && ActiveEnemyCount == 0;
 
     public EnemySystem()
     {
@@ -88,6 +89,7 @@ public class EnemySystem : IEnemySystem
     public void InitializeWave(StageModel? stage)
     {
         Clear();
+        _syncedRemainingEnemies = null;
         Array.Clear(_killsByTypeP1, 0, _killsByTypeP1.Length);
         Array.Clear(_killsByTypeP2, 0, _killsByTypeP2.Length);
         Array.Clear(_killsByTypeCombined, 0, _killsByTypeCombined.Length);
@@ -120,6 +122,7 @@ public class EnemySystem : IEnemySystem
 
     public void SyncFromNetwork(EnemyNetworkSnapshot[] snapshots, int remainingWaveCount)
     {
+        _syncedRemainingEnemies = remainingWaveCount;
         for (int i = 0; i < MaxConcurrentEnemies; i++) _enemyPool[i].IsActive = false;
         _enemies.Clear();
 
