@@ -128,20 +128,36 @@ public class PowerUpSystem : IPowerUpSystem
 
     public void SyncFromNetwork(byte? powerUpType, float x, float y)
     {
+        if (!powerUpType.HasValue)
+        {
+            for (int i = 0; i < MaxPowerUps; i++) _powerUpPool[i].IsActive = false;
+            _powerUps.Clear();
+            return;
+        }
+
+        var pType = (PowerUpType)powerUpType.Value;
+        if (_powerUps.Count > 0 && _powerUps[0].IsActive && _powerUps[0].Type == pType)
+        {
+            // Same powerup still active, update position without resetting animation frame / blinking
+            _powerUps[0].X = x;
+            _powerUps[0].Y = y;
+            return;
+        }
+
+        // New or different powerup arrived
         for (int i = 0; i < MaxPowerUps; i++) _powerUpPool[i].IsActive = false;
         _powerUps.Clear();
 
-        if (powerUpType.HasValue)
-        {
-            var p = _powerUpPool[0];
-            p.Id = 1;
-            p.Type = (PowerUpType)powerUpType.Value;
-            p.X = x;
-            p.Y = y;
-            p.IsActive = true;
-            p.IsVisible = true;
-            _powerUps.Add(p);
-        }
+        var p = _powerUpPool[0];
+        p.Id = 1;
+        p.Type = pType;
+        p.X = x;
+        p.Y = y;
+        p.Lifetime = 600;
+        p.BlinkCounter = 0;
+        p.IsActive = true;
+        p.IsVisible = true;
+        _powerUps.Add(p);
     }
 
     public void Update(

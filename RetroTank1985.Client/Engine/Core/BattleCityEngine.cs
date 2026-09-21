@@ -596,8 +596,13 @@ public class BattleCityEngine : IBattleCityEngine
             Enemies.SyncFromNetwork(snapshot.Enemies, snapshot.RemainingEnemyWaveCount);
         }
 
-        // Sync Active Power-Up Item to Guest Engine (and spawn floating score popup if item was just picked up)
-        if (PowerUps.ActivePowerUps.Count > 0 && !snapshot.ActivePowerUpType.HasValue)
+        // Sync Active Power-Up Item to Guest Engine
+        // Only spawn floating score popup if item disappeared because it was COLLECTED (Bonus/Life SFX event present in snapshot)
+        bool hasBonusCollectedSfx = snapshot.AudioEvents != null && 
+                                    (snapshot.AudioEvents.Contains((byte)AudioSoundEffect.Bonus) || 
+                                     snapshot.AudioEvents.Contains((byte)AudioSoundEffect.Life));
+
+        if (PowerUps.ActivePowerUps.Count > 0 && !snapshot.ActivePowerUpType.HasValue && hasBonusCollectedSfx)
         {
             var oldP = PowerUps.ActivePowerUps[0];
             PowerUps.SpawnScorePopup(oldP.X, oldP.Y, 500);
