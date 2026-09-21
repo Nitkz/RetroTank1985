@@ -340,11 +340,28 @@ window.GameBridge = (function () {
 
     toggleFullscreen(elementId) {
       const elem = (elementId ? document.getElementById(elementId) : null) || canvas || document.documentElement;
+      
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+      if (isIOS) {
+        // iOS Safari on iPhone doesn't support requestFullscreen on div/canvas
+        elem.classList.toggle('is-pseudo-fullscreen');
+        window.scrollTo(0, 0);
+        return;
+      }
+
+      // Standard W3C Fullscreen API (Android Chrome, iPadOS with full API, Desktop)
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         if (elem.requestFullscreen) {
-          elem.requestFullscreen().catch(err => console.warn('Fullscreen failed:', err));
+          elem.requestFullscreen().catch(err => {
+            console.warn('Standard fullscreen failed, falling back to pseudo-fullscreen:', err);
+            elem.classList.toggle('is-pseudo-fullscreen');
+          });
         } else if (elem.webkitRequestFullscreen) {
           elem.webkitRequestFullscreen();
+        } else {
+          elem.classList.toggle('is-pseudo-fullscreen');
         }
       } else {
         if (document.exitFullscreen) {
@@ -352,6 +369,7 @@ window.GameBridge = (function () {
         } else if (document.webkitExitFullscreen) {
           document.webkitExitFullscreen();
         }
+        elem.classList.remove('is-pseudo-fullscreen');
       }
     }
   };

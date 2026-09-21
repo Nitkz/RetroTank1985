@@ -81,7 +81,8 @@ body.retro-body {
 }
 
 .arcade-bezel:fullscreen,
-.arcade-bezel:-webkit-full-screen {
+.arcade-bezel:-webkit-full-screen,
+.arcade-bezel.is-pseudo-fullscreen {
     background: #000000;
     border: none;
     border-radius: 0;
@@ -89,33 +90,38 @@ body.retro-body {
     box-shadow: none;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     max-width: 100vw;
     max-height: 100vh;
+    max-height: 100dvh;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    position: relative;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 2147483640 !important;
     overflow: hidden;
 }
 
 .arcade-bezel:fullscreen .game-canvas,
-.arcade-bezel:-webkit-full-screen .game-canvas {
+.arcade-bezel:-webkit-full-screen .game-canvas,
+.arcade-bezel.is-pseudo-fullscreen .game-canvas {
     max-height: 100vh;
+    max-height: 100dvh;
     max-width: 100vw;
-    height: 100vh;
+    height: 100%;
     width: auto;
     object-fit: contain;
 }
 
 /* When in fullscreen, MobaTouchController transforms into a transparent HUD Overlay */
-.arcade-bezel:fullscreen,
-.arcade-bezel:-webkit-full-screen {
-    position: relative !important;
-}
-
 .arcade-bezel:fullscreen .moba-touch-panel,
-.arcade-bezel:-webkit-full-screen .moba-touch-panel {
+.arcade-bezel:-webkit-full-screen .moba-touch-panel,
+.arcade-bezel.is-pseudo-fullscreen .moba-touch-panel {
     position: absolute !important;
     bottom: 0 !important;
     left: 0 !important;
@@ -139,7 +145,8 @@ body.retro-body {
 }
 
 .arcade-bezel:fullscreen .moba-controller-area,
-.arcade-bezel:-webkit-full-screen .moba-controller-area {
+.arcade-bezel:-webkit-full-screen .moba-controller-area,
+.arcade-bezel.is-pseudo-fullscreen .moba-controller-area {
     width: 100% !important;
     height: 200px !important;
     pointer-events: auto !important;
@@ -148,24 +155,45 @@ body.retro-body {
 .arcade-bezel:fullscreen .moba-touch-panel .moba-joystick-touchzone,
 .arcade-bezel:fullscreen .moba-touch-panel .moba-action-zone,
 .arcade-bezel:-webkit-full-screen .moba-touch-panel .moba-joystick-touchzone,
-.arcade-bezel:-webkit-full-screen .moba-touch-panel .moba-action-zone {
+.arcade-bezel:-webkit-full-screen .moba-touch-panel .moba-action-zone,
+.arcade-bezel.is-pseudo-fullscreen .moba-touch-panel .moba-joystick-touchzone,
+.arcade-bezel.is-pseudo-fullscreen .moba-touch-panel .moba-action-zone {
     pointer-events: auto !important;
 }
 
 .arcade-bezel:fullscreen .moba-touch-panel .moba-joystick-base,
-.arcade-bezel:-webkit-full-screen .moba-touch-panel .moba-joystick-base {
+.arcade-bezel:-webkit-full-screen .moba-touch-panel .moba-joystick-base,
+.arcade-bezel.is-pseudo-fullscreen .moba-touch-panel .moba-joystick-base {
     background: radial-gradient(circle, rgba(15, 23, 42, 0.4) 0%, rgba(10, 14, 23, 0.6) 100%);
     border-color: rgba(241, 196, 15, 0.5);
 }
 
 .arcade-bezel:fullscreen .moba-touch-panel .moba-attack-btn,
-.arcade-bezel:-webkit-full-screen .moba-touch-panel .moba-attack-btn {
+.arcade-bezel:-webkit-full-screen .moba-touch-panel .moba-attack-btn,
+.arcade-bezel.is-pseudo-fullscreen .moba-touch-panel .moba-attack-btn {
     opacity: 0.9;
     pointer-events: auto !important;
 }
 
 .arcade-bezel:fullscreen .moba-panel-header,
 .arcade-bezel:-webkit-full-screen .moba-panel-header {
+    display: none !important;
+}
+
+/* In iOS Pseudo-fullscreen, keep a compact floating exit fullscreen button in the top-right header */
+.arcade-bezel.is-pseudo-fullscreen .moba-panel-header {
+    display: flex !important;
+    position: absolute !important;
+    top: max(8px, env(safe-area-inset-top)) !important;
+    right: max(8px, env(safe-area-inset-right)) !important;
+    left: auto !important;
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+    background: transparent !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.arcade-bezel.is-pseudo-fullscreen .moba-panel-header > div:first-child {
     display: none !important;
 }
 
