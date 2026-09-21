@@ -1,70 +1,140 @@
 @using RetroTank1985.Client.Helpers
 
-<div class="d-flex align-center justify-space-between flex-wrap gap-2 pa-2 w-100 mb-3" 
-     style="max-width: 800px; background: #0f172a; border-radius: 8px; border: 1px solid #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+<div class="arcade-control-bar-wrapper d-flex align-center justify-space-between flex-wrap gap-2 pa-2 w-100 mb-3" 
+     style="max-width: 800px; background: linear-gradient(180deg, #131b2e 0%, #0a0f1d 100%); border-radius: 10px; border: 1px solid #1e293b; box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);">
     
     <!-- Left Section: Stage Indicator Badge & Exit Button -->
     <div class="d-flex align-center gap-2 flex-wrap">
-        <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.5); border-radius: 4px; border: 1px solid @(IsCoopSession ? "#38bdf8" : "#f59e0b");">
+        <div class="d-flex align-center px-3 py-1 stage-badge" style="background: rgba(0,0,0,0.6); border-radius: 6px; border: 1px solid @(IsCoopSession ? "#38bdf8" : "#f59e0b"); box-shadow: 0 0 10px @(IsCoopSession ? "rgba(56, 189, 248, 0.2)" : "rgba(245, 158, 11, 0.2)");">
             <MudIcon Icon="@Icons.Material.Filled.Flag" Style="@($"color: {(IsCoopSession ? "#38bdf8" : "#f59e0b")};")" Size="Size.Small" Class="mr-1" />
-            <span class="pixel-text font-bold" style="color: @(IsCoopSession ? "#38bdf8" : "#f59e0b"); font-size: 0.75rem;">
+            <span class="pixel-text font-bold" style="color: @(IsCoopSession ? "#38bdf8" : "#f59e0b"); font-size: 0.75rem; letter-spacing: 0.5px;">
                 STAGE @SelectedStage.ToString("D2")
             </span>
         </div>
 
-        <!-- Exit to Menu / Leave Room Button -->
-        <MudButton Variant="Variant.Outlined" 
-                   Color="Color.Error" 
-                   Size="Size.Small" 
-                   OnClick="OnExit" 
-                   StartIcon="@Icons.Material.Filled.ExitToApp"
-                   Class="pixel-text" 
-                   Style="font-size: 0.65rem;">
-            @(IsCoopSession ? "LEAVE ROOM" : "EXIT [ESC]")
-        </MudButton>
+        <!-- Exit Button -->
+        <button class="arcade-tactile-btn btn-exit" 
+                title="@(IsCoopSession ? "Leave Room" : "Exit to Menu [ESC]")" 
+                @onclick="OnExit">
+            <MudIcon Icon="@Icons.Material.Filled.ExitToApp" Size="Size.Small" Style="color: #f87171;" />
+            <span class="pixel-text ml-1" style="font-size: 0.65rem; color: #f87171;">
+                @(IsCoopSession ? "LEAVE" : "EXIT")
+            </span>
+        </button>
     </div>
 
-    <!-- Right Section: In-Game Utilities (Emote for Co-Op, Audio, Fullscreen) -->
+    <!-- Right Section: In-Game Utilities (Pause, Fullscreen, Mute, Emote) -->
     <div class="d-flex align-center gap-2 flex-wrap">
+        <!-- Pause Button -->
+        <button class="arcade-tactile-btn btn-pause" 
+                title="Pause Game [P / ESC]" 
+                @onclick="OnTogglePause">
+            <MudIcon Icon="@Icons.Material.Filled.Pause" Size="Size.Small" Style="color: #facc15;" />
+            <span class="pixel-text ml-1" style="font-size: 0.65rem; color: #facc15;">PAUSE [P]</span>
+        </button>
+
+        <!-- Fullscreen Mode Toggle Button -->
+        <button class="arcade-tactile-btn btn-fullscreen" 
+                title="Toggle Fullscreen Arcade Display [F]" 
+                @onclick="OnToggleFullscreen">
+            <MudIcon Icon="@Icons.Material.Filled.Fullscreen" Size="Size.Small" Style="color: #38bdf8;" />
+            <span class="pixel-text ml-1" style="font-size: 0.65rem; color: #38bdf8;">FULL [F]</span>
+        </button>
+
+        <!-- Audio Mute Toggle -->
+        <button class="arcade-tactile-btn btn-sound @(IsMuted ? "is-muted" : "is-active")" 
+                title="Toggle Game Audio" 
+                @onclick="OnToggleMute">
+            <MudIcon Icon="@(IsMuted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)" 
+                     Size="Size.Small" 
+                     Style="@($"color: {(IsMuted ? "#94a3b8" : "#4ade80")};")" />
+            <span class="pixel-text ml-1" style="font-size: 0.65rem; color: @(IsMuted ? "#94a3b8" : "#4ade80");">
+                @(IsMuted ? "MUTED" : "SOUND")
+            </span>
+        </button>
+
         @if (IsCoopSession)
         {
             <!-- Emote Trigger Button for Co-Op -->
-            <MudButton Variant="Variant.Filled" 
-                       Color="Color.Secondary" 
-                       Size="Size.Small" 
-                       OnClick="OnToggleEmote" 
-                       StartIcon="@Icons.Material.Filled.ChatBubbleOutline"
-                       Class="pixel-text" 
-                       Style="font-size: 0.65rem;">
-                EMOTE [C]
-            </MudButton>
+            <button class="arcade-tactile-btn btn-emote" 
+                    title="Open Emote Wheel [C]" 
+                    @onclick="OnToggleEmote">
+                <MudIcon Icon="@Icons.Material.Filled.ChatBubbleOutline" Size="Size.Small" Style="color: #c084fc;" />
+                <span class="pixel-text ml-1" style="font-size: 0.65rem; color: #c084fc;">EMOTE [C]</span>
+            </button>
         }
-
-        <!-- Audio Mute Toggle -->
-        <MudButton Variant="Variant.Filled" 
-                   Color="@(IsMuted ? Color.Default : Color.Success)" 
-                   Size="Size.Small" 
-                   OnClick="OnToggleMute" 
-                   Class="pixel-text" 
-                   Style="font-size: 0.65rem;"
-                   StartIcon="@(IsMuted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)">
-            @(IsMuted ? "MUTED" : "SOUND ON")
-        </MudButton>
-
-        <!-- Fullscreen Mode Toggle Button -->
-        <MudTooltip Text="Toggle Fullscreen Arcade Display (Or press [F])">
-            <MudButton Variant="Variant.Filled" 
-                       Color="Color.Warning" 
-                       Size="Size.Small" 
-                       OnClick="OnToggleFullscreen" 
-                       Class="pixel-text" 
-                       Style="font-size: 0.65rem;"
-                       StartIcon="@Icons.Material.Filled.Fullscreen">
-                FULLSCREEN [F]
-            </MudButton>
-        </MudTooltip>
     </div>
 </div>
+
+<style>
+    .arcade-tactile-btn {
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid #334155;
+        border-radius: 6px;
+        padding: 5px 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        transition: all 0.12s ease;
+        user-select: none;
+        outline: none;
+    }
+
+    .arcade-tactile-btn:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.15);
+        border-color: #475569;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .arcade-tactile-btn:active {
+        transform: translateY(1px);
+        filter: brightness(0.9);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .arcade-tactile-btn.btn-pause {
+        border-color: rgba(250, 204, 21, 0.3);
+    }
+    .arcade-tactile-btn.btn-pause:hover {
+        border-color: rgba(250, 204, 21, 0.7);
+        box-shadow: 0 0 12px rgba(250, 204, 21, 0.25);
+    }
+
+    .arcade-tactile-btn.btn-fullscreen {
+        border-color: rgba(56, 189, 248, 0.3);
+    }
+    .arcade-tactile-btn.btn-fullscreen:hover {
+        border-color: rgba(56, 189, 248, 0.7);
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+    }
+
+    .arcade-tactile-btn.btn-exit {
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+    .arcade-tactile-btn.btn-exit:hover {
+        border-color: rgba(239, 68, 68, 0.7);
+        box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+    }
+
+    .arcade-tactile-btn.btn-sound.is-active {
+        border-color: rgba(74, 222, 128, 0.3);
+    }
+    .arcade-tactile-btn.btn-sound.is-active:hover {
+        border-color: rgba(74, 222, 128, 0.7);
+        box-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
+    }
+
+    .arcade-tactile-btn.btn-emote {
+        border-color: rgba(192, 132, 252, 0.3);
+    }
+    .arcade-tactile-btn.btn-emote:hover {
+        border-color: rgba(192, 132, 252, 0.7);
+        box-shadow: 0 0 12px rgba(192, 132, 252, 0.25);
+    }
+</style>
 
 @code {
     [Parameter] public bool IsCoopSession { get; set; }
@@ -75,4 +145,5 @@
     [Parameter] public EventCallback OnToggleMute { get; set; }
     [Parameter] public EventCallback OnToggleFullscreen { get; set; }
     [Parameter] public EventCallback OnToggleEmote { get; set; }
+    [Parameter] public EventCallback OnTogglePause { get; set; }
 }
