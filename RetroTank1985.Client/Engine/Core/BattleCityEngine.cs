@@ -77,6 +77,7 @@ public class BattleCityEngine : IBattleCityEngine
     private int _player1RespawnTimer = 0;
     private int _player2RespawnTimer = 0;
     private int _borrowLifeCooldownFrames = 0;
+    private readonly List<byte> _pendingNetworkAudioEvents = new(8);
 
     // Stage Curtain & Tally State Variables
     private int _curtainTimer = 0;
@@ -217,6 +218,7 @@ public class BattleCityEngine : IBattleCityEngine
         _player1RespawnTimer = 0;
         _player2RespawnTimer = 0;
         _borrowLifeCooldownFrames = 0;
+        _pendingNetworkAudioEvents.Clear();
 
         int p1Lives = preservePlayerState ? Math.Max(1, Player.Lives) : Settings.StartingLives;
         int p1Stars = preservePlayerState ? Player.StarPower : 0;
@@ -450,6 +452,13 @@ public class BattleCityEngine : IBattleCityEngine
             snapshot.SubTiles = Map.GetSubTileBytes();
         }
 
+        // Pending Audio Events Sync (e.g. Power-Up Pickup SFX)
+        if (_pendingNetworkAudioEvents.Count > 0)
+        {
+            snapshot.AudioEvents = _pendingNetworkAudioEvents.ToArray();
+            _pendingNetworkAudioEvents.Clear();
+        }
+
         return snapshot;
     }
 
@@ -524,6 +533,19 @@ public class BattleCityEngine : IBattleCityEngine
         if (snapshot.SubTiles != null)
         {
             Map.LoadSubTileBytes(snapshot.SubTiles);
+        }
+
+        // Play Synchronized Audio Events on Guest (e.g. Power-Up Pickup SFX)
+        if (snapshot.AudioEvents != null)
+        {
+            foreach (var sfxByte in snapshot.AudioEvents)
+            {
+                var sfx = (AudioSoundEffect)sfxByte;
+                if (sfx != AudioSoundEffect.None)
+                {
+                    Audio.Enqueue(sfx);
+                }
+            }
         }
     }
 
@@ -929,6 +951,11 @@ public class BattleCityEngine : IBattleCityEngine
                     {
                         if (playerIdx == 2) Player2.Score += pts;
                         else Player.Score += pts;
+                    }, (pType, playerIdx) =>
+                    {
+                        // Record audio event to broadcast to network (Guest)
+                        var sfx = pType == PowerUpType.TankLife ? AudioSoundEffect.Life : AudioSoundEffect.Bonus;
+                        _pendingNetworkAudioEvents.Add((byte)sfx);
                     });
                 }
 

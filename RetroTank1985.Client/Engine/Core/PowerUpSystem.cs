@@ -17,7 +17,8 @@ public interface IPowerUpSystem
         IDestructibleMap map,
         IBulletSystem bullets,
         IAudioEventQueue audioQueue,
-        Action<int, int> onAddScore);
+        Action<int, int> onAddScore,
+        Action<PowerUpType, int>? onPowerUpCollected = null);
     void Clear();
 }
 
@@ -147,7 +148,8 @@ public class PowerUpSystem : IPowerUpSystem
         IDestructibleMap map,
         IBulletSystem bullets,
         IAudioEventQueue audioQueue,
-        Action<int, int> onAddScore)
+        Action<int, int> onAddScore,
+        Action<PowerUpType, int>? onPowerUpCollected = null)
     {
         // 1. Update Active Power-Ups & Check Player Pickup Collision
         for (int i = _powerUps.Count - 1; i >= 0; i--)
@@ -186,6 +188,7 @@ public class PowerUpSystem : IPowerUpSystem
                 if (player.IsActive && MathF.Abs(p.X - player.X) < 16f && MathF.Abs(p.Y - player.Y) < 16f)
                 {
                     ApplyPowerUpEffect(p.Type, player, enemies, map, bullets, audioQueue, pts => onAddScore(pts, player.PlayerIndex));
+                    onPowerUpCollected?.Invoke(p.Type, player.PlayerIndex);
 
                     // Spawn floating +500 PTS popup
                     SpawnScorePopup(p.X, p.Y, 500);
