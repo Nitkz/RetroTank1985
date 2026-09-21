@@ -96,4 +96,19 @@ public class CoopSyncSnapshotDto
     public int RemainingEnemyWaveCount { get; set; }
 
     public byte[]? AudioEvents { get; set; }
+
+    // Synchronized GameState & Stage Tally (FEAT-03)
+    public byte GameState { get; set; }
+    public int StageNumber { get; set; }
+    public int TallyStep { get; set; }
+    public int TallyCountBasicP1 { get; set; }
+    public int TallyCountFastP1 { get; set; }
+    public int TallyCountPowerP1 { get; set; }
+    public int TallyCountArmorP1 { get; set; }
+    public int TallyCountBasicP2 { get; set; }
+    public int TallyCountFastP2 { get; set; }
+    public int TallyCountPowerP2 { get; set; }
+    public int TallyCountArmorP2 { get; set; }
+    public int ScoreP1 { get; set; }
+    public int ScoreP2 { get; set; }
 }

@@ -92,6 +92,7 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
             LobbyService.OnPlayerLeftEvent += HandlePlayerLeftSession;
             LobbyService.OnConnectionStateChanged += HandleConnectionStateChanged;
             LobbyService.OnPlayerJoinedEvent += HandlePlayerReconnected;
+            LobbyService.OnStageReloadRequestedEvent += HandleStageReloadRequested;
 
             if (_isCoopHost)
             {
@@ -206,7 +207,19 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
     {
         if (!_isCoopSession || !_isCoopHost) return;
         _isGameOverOverlayVisible = false;
+        await LobbyService.RestartMatchAsync(_selectedStage);
         await EngineService.SetStageAsync(_selectedStage);
+    }
+
+    private async void HandleStageReloadRequested(int newStageNumber)
+    {
+        await InvokeAsync(async () =>
+        {
+            _selectedStage = newStageNumber;
+            _isGameOverOverlayVisible = false;
+            await EngineService.SetStageAsync(newStageNumber);
+            StateHasChanged();
+        });
     }
 
     private void HandleReturnToLobby()
@@ -226,6 +239,10 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
     {
         _isGameOverOverlayVisible = false;
         _selectedStage = 1;
+        if (_isCoopSession && _isCoopHost)
+        {
+            await LobbyService.RestartMatchAsync(1);
+        }
         await EngineService.SetStageAsync(1);
     }
 
@@ -468,6 +485,7 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
             LobbyService.OnPlayerLeftEvent -= HandlePlayerLeftSession;
             LobbyService.OnConnectionStateChanged -= HandleConnectionStateChanged;
             LobbyService.OnPlayerJoinedEvent -= HandlePlayerReconnected;
+            LobbyService.OnStageReloadRequestedEvent -= HandleStageReloadRequested;
 
             if (_wasCoopHost)
             {

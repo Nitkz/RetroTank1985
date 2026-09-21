@@ -119,6 +119,19 @@ public class CoopLobbyHub : Hub<ICoopLobbyClient>, ICoopLobbyHub
         return result;
     }
 
+    public async Task<RoomActionResult> RestartMatch(string roomCode, int stageNumber)
+    {
+        var result = await _roomManager.ChangeStageAsync(Context.ConnectionId, roomCode, stageNumber);
+        if (result.Success && result.Room != null)
+        {
+            await _roomManager.UpdateRoomStateAsync(Context.ConnectionId, roomCode, CoopRoomState.InGame);
+            var groupName = GetRoomGroupName(roomCode);
+            await Clients.Group(groupName).OnStageReloadRequested(stageNumber);
+            await Clients.Group(groupName).OnRoomUpdated(result.Room);
+        }
+        return result;
+    }
+
     public async Task<RoomActionResult> UpdateRoomState(string roomCode, CoopRoomState newState)
     {
         var result = await _roomManager.UpdateRoomStateAsync(Context.ConnectionId, roomCode, newState);

@@ -189,6 +189,7 @@ public class GameEngineService : IAsyncDisposable
                 Sequence = _guestInputSequence,
                 Direction = dir,
                 IsFiring = isFiring,
+                BorrowLifeReq = isFiring && _engine.Player2.Lives <= 0,
                 Emote = emoteToSend,
                 ClientTimestamp = (ushort)(timestamp % 65535)
             };

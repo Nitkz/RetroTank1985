@@ -338,13 +338,14 @@ public class BattleCityEngine : IBattleCityEngine
             Audio.Enqueue(AudioSoundEffect.RadioChirp);
         }
 
-        if (input.BorrowLifeReq && Player2.Lives <= 0 && Player.Lives >= 2 && _borrowLifeCooldownFrames <= 0)
+        if ((input.BorrowLifeReq || input.IsFiring) && Player2.Lives <= 0 && !Player2.IsActive && Player.Lives >= 2 && _borrowLifeCooldownFrames <= 0)
         {
             _borrowLifeCooldownFrames = 120; // 2-second cooldown to prevent duplicate/spam deductions
             Player.Lives--;
             Player2.Lives = 1;
             Player2.Reset(8 * 16f, 12 * 16f);
             Audio.Enqueue(AudioSoundEffect.Life);
+            _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.Life);
         }
     }
 
@@ -452,7 +453,22 @@ public class BattleCityEngine : IBattleCityEngine
             snapshot.SubTiles = Map.GetSubTileBytes();
         }
 
-        // Pending Audio Events Sync (e.g. Power-Up Pickup SFX)
+        // Synchronized GameState & Stage Tally Data (FEAT-03)
+        snapshot.GameState = (byte)State;
+        snapshot.StageNumber = CurrentStage;
+        snapshot.TallyStep = _tallyStep;
+        snapshot.TallyCountBasicP1 = _tallyCountBasicP1;
+        snapshot.TallyCountFastP1 = _tallyCountFastP1;
+        snapshot.TallyCountPowerP1 = _tallyCountPowerP1;
+        snapshot.TallyCountArmorP1 = _tallyCountArmorP1;
+        snapshot.TallyCountBasicP2 = _tallyCountBasicP2;
+        snapshot.TallyCountFastP2 = _tallyCountFastP2;
+        snapshot.TallyCountPowerP2 = _tallyCountPowerP2;
+        snapshot.TallyCountArmorP2 = _tallyCountArmorP2;
+        snapshot.ScoreP1 = Player.Score;
+        snapshot.ScoreP2 = Player2.Score;
+
+        // Pending Audio Events Sync (e.g. Power-Up Pickup SFX, Tally ticks)
         if (_pendingNetworkAudioEvents.Count > 0)
         {
             snapshot.AudioEvents = _pendingNetworkAudioEvents.ToArray();
@@ -474,6 +490,24 @@ public class BattleCityEngine : IBattleCityEngine
         {
             Bullets.SpawnExplosion(Player2.X, Player2.Y, true);
             Audio.Enqueue(AudioSoundEffect.Explosion);
+        }
+
+        // Synchronize Game State & Stage Tally Screen from Host (FEAT-03)
+        if (IsNetworkGuest)
+        {
+            State = (GameState)snapshot.GameState;
+            CurrentStage = snapshot.StageNumber;
+            _tallyStep = snapshot.TallyStep;
+            _tallyCountBasicP1 = snapshot.TallyCountBasicP1;
+            _tallyCountFastP1 = snapshot.TallyCountFastP1;
+            _tallyCountPowerP1 = snapshot.TallyCountPowerP1;
+            _tallyCountArmorP1 = snapshot.TallyCountArmorP1;
+            _tallyCountBasicP2 = snapshot.TallyCountBasicP2;
+            _tallyCountFastP2 = snapshot.TallyCountFastP2;
+            _tallyCountPowerP2 = snapshot.TallyCountPowerP2;
+            _tallyCountArmorP2 = snapshot.TallyCountArmorP2;
+            Player.Score = snapshot.ScoreP1;
+            Player2.Score = snapshot.ScoreP2;
         }
 
         // Apply Host Simulation to Guest with Smooth Interpolation Target
@@ -535,7 +569,7 @@ public class BattleCityEngine : IBattleCityEngine
             Map.LoadSubTileBytes(snapshot.SubTiles);
         }
 
-        // Play Synchronized Audio Events on Guest (e.g. Power-Up Pickup SFX)
+        // Play Synchronized Audio Events on Guest (e.g. Power-Up Pickup SFX, Tally ticks)
         if (snapshot.AudioEvents != null)
         {
             foreach (var sfxByte in snapshot.AudioEvents)
@@ -629,6 +663,7 @@ public class BattleCityEngine : IBattleCityEngine
     public void SpawnPowerUpDebug(PowerUpType type)
     {
         PowerUps.SpawnPowerUpDebug(type, audioQueue: Audio);
+        _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.BonusAppear);
     }
 
     public void TriggerStageCurtainDebug()
@@ -674,6 +709,7 @@ public class BattleCityEngine : IBattleCityEngine
         _nextStagePending = false;
 
         Audio.Enqueue(AudioSoundEffect.StageClear);
+        _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.StageClear);
     }
 
     private void UpdateStageTally()
@@ -707,6 +743,7 @@ public class BattleCityEngine : IBattleCityEngine
                     if (!doneP1) _tallyCountBasicP1++;
                     if (!doneP2) _tallyCountBasicP2++;
                     Audio.Enqueue(AudioSoundEffect.TallyTick);
+                    _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.TallyTick);
                 }
             }
             else
@@ -736,6 +773,7 @@ public class BattleCityEngine : IBattleCityEngine
                     if (!doneP1) _tallyCountFastP1++;
                     if (!doneP2) _tallyCountFastP2++;
                     Audio.Enqueue(AudioSoundEffect.TallyTick);
+                    _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.TallyTick);
                 }
             }
             else
@@ -765,6 +803,7 @@ public class BattleCityEngine : IBattleCityEngine
                     if (!doneP1) _tallyCountPowerP1++;
                     if (!doneP2) _tallyCountPowerP2++;
                     Audio.Enqueue(AudioSoundEffect.TallyTick);
+                    _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.TallyTick);
                 }
             }
             else
@@ -794,6 +833,7 @@ public class BattleCityEngine : IBattleCityEngine
                     if (!doneP1) _tallyCountArmorP1++;
                     if (!doneP2) _tallyCountArmorP2++;
                     Audio.Enqueue(AudioSoundEffect.TallyTick);
+                    _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.TallyTick);
                 }
             }
             else
@@ -803,6 +843,7 @@ public class BattleCityEngine : IBattleCityEngine
                     _tallyStep = 5;
                     _tallyTimer = 0;
                     Audio.Enqueue(AudioSoundEffect.TallyDone);
+                    _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.TallyDone);
                 }
             }
             return;
@@ -876,7 +917,11 @@ public class BattleCityEngine : IBattleCityEngine
             }
             else if (State == GameState.StageTally)
             {
-                UpdateStageTally();
+                // Host handles Tally state machine and broadcasts snapshot; Guest observes
+                if (!IsNetworkGuest)
+                {
+                    UpdateStageTally();
+                }
             }
             else if (State == GameState.Playing)
             {
@@ -906,6 +951,31 @@ public class BattleCityEngine : IBattleCityEngine
                         Audio);
                 }
 
+                // 1b. Check Borrow Life for P1 (from P2) or Local P2 (from P1)
+                if (IsTwoPlayerMode && _borrowLifeCooldownFrames <= 0)
+                {
+                    // P1 borrows from P2 (Host or Local P1)
+                    if (_currentInput.Fire && Player.Lives <= 0 && !Player.IsActive && Player2.Lives >= 2)
+                    {
+                        _borrowLifeCooldownFrames = 120;
+                        Player2.Lives--;
+                        Player.Lives = 1;
+                        Player.Reset(4 * 16f, 12 * 16f);
+                        Audio.Enqueue(AudioSoundEffect.Life);
+                        _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.Life);
+                    }
+                    // Local P2 borrows from P1 (when not running as Network Guest)
+                    else if (!IsNetworkGuest && _currentInput.P2Fire && Player2.Lives <= 0 && !Player2.IsActive && Player.Lives >= 2)
+                    {
+                        _borrowLifeCooldownFrames = 120;
+                        Player.Lives--;
+                        Player2.Lives = 1;
+                        Player2.Reset(8 * 16f, 12 * 16f);
+                        Audio.Enqueue(AudioSoundEffect.Life);
+                        _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.Life);
+                    }
+                }
+
                 // 2. Enemy AI & Movement (Host & Solo only — Guest synchronizes from Host Snapshot)
                 if (!IsNetworkGuest)
                 {
@@ -924,6 +994,7 @@ public class BattleCityEngine : IBattleCityEngine
                         if (enemy.IsFlashing)
                         {
                             PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
+                            _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.BonusAppear);
                         }
                     });
 
@@ -943,6 +1014,7 @@ public class BattleCityEngine : IBattleCityEngine
                         if (enemy.IsFlashing)
                         {
                             PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
+                            _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.BonusAppear);
                         }
                     });
 

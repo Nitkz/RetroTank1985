@@ -34,6 +34,7 @@ public class CoopLobbyClientService : IAsyncDisposable
     public event Action<WebRtcSignalMessage>? OnSignalReceivedEvent;
     public event Action<CoopSyncSnapshotDto>? OnGameSnapshotReceivedEvent;
     public event Action<PlayerInputPacket>? OnPlayerInputReceivedEvent;
+    public event Action<int>? OnStageReloadRequestedEvent;
     public event Action<string>? OnErrorOccurred;
     public event Action<HubConnectionState>? OnConnectionStateChanged;
     public event Action<int>? OnRttMeasured;
@@ -144,6 +145,11 @@ public class CoopLobbyClientService : IAsyncDisposable
             OnPlayerInputReceivedEvent?.Invoke(input);
         });
 
+        _hubConnection.On<int>(nameof(ICoopLobbyClient.OnStageReloadRequested), stageNumber =>
+        {
+            OnStageReloadRequestedEvent?.Invoke(stageNumber);
+        });
+
         _hubConnection.On<string>(nameof(ICoopLobbyClient.OnErrorMessage), msg =>
         {
             OnErrorOccurred?.Invoke(msg);
@@ -227,6 +233,15 @@ public class CoopLobbyClientService : IAsyncDisposable
     {
         if (_hubConnection == null || CurrentRoom == null) return RoomActionResult.Fail("Not in room");
         return await _hubConnection.InvokeAsync<RoomActionResult>(nameof(ICoopLobbyHub.ChangeStage), CurrentRoom.RoomCode, stageNumber);
+    }
+
+    /// <summary>
+    /// Host สั่ง Rematch เริ่มเล่นรอบใหม่ทันที (ดึงทั้ง Host และ Guest เข้าด่านใหม่พร้อมกัน)
+    /// </summary>
+    public async Task<RoomActionResult> RestartMatchAsync(int stageNumber)
+    {
+        if (_hubConnection == null || CurrentRoom == null) return RoomActionResult.Fail("Not in room");
+        return await _hubConnection.InvokeAsync<RoomActionResult>(nameof(ICoopLobbyHub.RestartMatch), CurrentRoom.RoomCode, stageNumber);
     }
 
     /// <summary>

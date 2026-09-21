@@ -16,6 +16,7 @@ public interface ICoopLobbyClient
     Task OnReceiveSignal(WebRtcSignalMessage signal);
     Task OnReceiveGameSnapshot(CoopSyncSnapshotDto snapshot);
     Task OnReceivePlayerInput(PlayerInputPacket input);
+    Task OnStageReloadRequested(int stageNumber);
     Task OnErrorMessage(string message);
 }
 
@@ -31,6 +32,7 @@ public interface ICoopLobbyHub
     Task<RoomActionResult> ChangeStage(string roomCode, int stageNumber);
     Task<RoomActionResult> ChangeGameSettings(string roomCode, GameSettings settings);
     Task<RoomActionResult> StartGame(string roomCode);
+    Task<RoomActionResult> RestartMatch(string roomCode, int stageNumber);
     Task<RoomActionResult> UpdateRoomState(string roomCode, CoopRoomState newState);
     Task SendSignal(WebRtcSignalMessage signal);
     Task SendGameSnapshot(string roomCode, CoopSyncSnapshotDto snapshot);
