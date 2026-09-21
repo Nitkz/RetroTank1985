@@ -19,7 +19,16 @@ public class GameEngineService : IAsyncDisposable
     public event Func<CoopSyncSnapshotDto, Task>? OnCoopSnapshotGenerated;
     public event Func<PlayerInputPacket, Task>? OnGuestInputGenerated;
 
-    public bool IsCoopSession { get; set; } = false;
+    private bool _isCoopSession = false;
+    public bool IsCoopSession
+    {
+        get => _isCoopSession;
+        set
+        {
+            _isCoopSession = value;
+            _engine.IsCoopSession = value;
+        }
+    }
     public bool IsCoopHost { get; set; } = false;
     private uint _networkFrameCounter = 0;
     private uint _guestInputSequence = 0;

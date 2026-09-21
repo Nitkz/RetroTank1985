@@ -23,6 +23,7 @@ public interface IBattleCityEngine
     int Score { get; }
     bool IsPaused { get; }
     bool IsNetworkGuest { get; set; }
+    bool IsCoopSession { get; set; }
 
     void ApplySettings(GameSettings settings);
     void InitializeStage(StageModel? stage, int stageNumber, bool preservePlayerState = false);
@@ -111,6 +112,8 @@ public class BattleCityEngine : IBattleCityEngine
     // Client-side Entity Interpolation states
     private NetworkEntityState _netStateP1 = new();
     private NetworkEntityState _netStateP2 = new();
+
+    public bool IsCoopSession { get; set; } = false;
 
     // Disconnect Grace Period State
     public bool IsDisconnectGracePeriodActive { get; private set; } = false;
@@ -284,6 +287,12 @@ public class BattleCityEngine : IBattleCityEngine
 
     public void TogglePause()
     {
+        // Manual pause is disabled in Online Co-Op multiplayer matches
+        if (IsCoopSession || IsNetworkGuest)
+        {
+            return;
+        }
+
         if (State == GameState.Playing)
         {
             State = GameState.Paused;

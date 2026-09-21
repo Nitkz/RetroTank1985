@@ -25,13 +25,16 @@
 
     <!-- Right Section: In-Game Utilities (Pause, Fullscreen, Mute, Emote) -->
     <div class="d-flex align-center gap-2 flex-wrap">
-        <!-- Pause Button -->
-        <button class="arcade-tactile-btn btn-pause" 
-                title="Pause Game [P / ESC]" 
-                @onclick="OnTogglePause">
-            <MudIcon Icon="@Icons.Material.Filled.Pause" Size="Size.Small" Style="color: #facc15;" />
-            <span class="pixel-text ml-1" style="font-size: 0.65rem; color: #facc15;">PAUSE [P]</span>
-        </button>
+        @if (!IsCoopSession)
+        {
+            <!-- Pause Button (1P Campaign Solo Mode Only) -->
+            <button class="arcade-tactile-btn btn-pause" 
+                    title="Pause Game [P / ESC]" 
+                    @onclick="OnTogglePause">
+                <MudIcon Icon="@Icons.Material.Filled.Pause" Size="Size.Small" Style="color: #facc15;" />
+                <span class="pixel-text ml-1" style="font-size: 0.65rem; color: #facc15;">PAUSE [P]</span>
+            </button>
+        }
 
         <!-- Fullscreen Mode Toggle Button -->
         <button class="arcade-tactile-btn btn-fullscreen" 

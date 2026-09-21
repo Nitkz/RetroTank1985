@@ -50,8 +50,9 @@
         <!-- MOBA-Style Virtual Touch Controller (Inline on normal view, Overlay on Fullscreen) -->
         <div class="w-100 mt-2" style="padding: 0;">
             <MobaTouchController PlayerIndex="@(_isCoopSession ? (_isCoopHost ? 1 : 2) : 1)" 
-                                ShowPlayerSwitch="false" 
-                                ShowEmote="@_isCoopSession" />
+                                 ShowPlayerSwitch="false" 
+                                 ShowEmote="@_isCoopSession" 
+                                 ShowPause="@(!_isCoopSession)" />
         </div>
 
         <!-- 4. Tactical Emote Wheel Modal (Inside Bezel for Fullscreen Support) -->

@@ -43,13 +43,16 @@
                 </button>
             }
 
-            <button class="moba-top-util-btn" 
-                    title="Pause"
-                    ontouchstart="window.GameBridge && window.GameBridge.setVirtualInput('pause', true); event.preventDefault();"
-                    onclick="window.GameBridge && window.GameBridge.setVirtualInput('pause', true);">
-                <MudIcon Icon="@Icons.Material.Filled.Pause" Size="Size.Small" />
-                <span class="pixel-text ml-1" style="font-size: 0.6rem;">PAUSE</span>
-            </button>
+            @if (ShowPause)
+            {
+                <button class="moba-top-util-btn" 
+                        title="Pause"
+                        ontouchstart="window.GameBridge && window.GameBridge.setVirtualInput('pause', true); event.preventDefault();"
+                        onclick="window.GameBridge && window.GameBridge.setVirtualInput('pause', true);">
+                    <MudIcon Icon="@Icons.Material.Filled.Pause" Size="Size.Small" />
+                    <span class="pixel-text ml-1" style="font-size: 0.6rem;">PAUSE</span>
+                </button>
+            }
             <button class="moba-top-util-btn" 
                     title="Fullscreen"
                     ontouchstart="window.GameBridge && window.GameBridge.toggleFullscreen('arcadeBezelContainer'); event.preventDefault();"
@@ -451,6 +454,7 @@
     [Parameter] public int PlayerIndex { get; set; } = 1;
     [Parameter] public bool ShowPlayerSwitch { get; set; } = false;
     [Parameter] public bool ShowEmote { get; set; } = false;
+    [Parameter] public bool ShowPause { get; set; } = true;
     [Parameter] public string Class { get; set; } = "";
     [Parameter] public string Style { get; set; } = "";
     [Parameter] public EventCallback<int> OnPlayerChanged { get; set; }
