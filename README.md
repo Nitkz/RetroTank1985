@@ -197,7 +197,7 @@ RetroTank1985/
 │   │   ├── Arcade.razor         # Focused Single-Player & Co-Op Arena
 │   │   ├── Coop.razor           # Online Co-Op Matchmaking & Lobby
 │   │   ├── DevPortal.razor      # Central Developer Suite (/dev)
-│   │   ├── Play.razor           # Engine Sandbox & Physics Lab (/sandbox)
+│   │   ├── Sandbox.razor        # Engine Sandbox & Physics Lab (/sandbox)
 │   │   ├── SoundBgm.razor       # Sound & BGM Synthesizer
 │   │   └── StageInspector.razor # Stage & CHR Inspector
 │   ├── Services/

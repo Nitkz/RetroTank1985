@@ -6,7 +6,7 @@ using RetroTank1985.Client.Services;
 
 namespace RetroTank1985.Client.Pages;
 
-public partial class Play : ComponentBase, IAsyncDisposable
+public partial class Sandbox : ComponentBase, IAsyncDisposable
 {
     [Inject] private StageService StageService { get; set; } = default!;
     [Inject] private GameEngineService EngineService { get; set; } = default!;
