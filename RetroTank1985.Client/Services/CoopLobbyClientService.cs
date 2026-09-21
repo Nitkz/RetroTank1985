@@ -35,6 +35,7 @@ public class CoopLobbyClientService : IAsyncDisposable
     public event Action<PlayerInputPacket>? OnPlayerInputReceivedEvent;
     public event Action<string>? OnErrorOccurred;
     public event Action<HubConnectionState>? OnConnectionStateChanged;
+    public event Action<int>? OnRttMeasured;
 
     public CoopLobbyClientService(NavigationManager navigationManager, ILogger<CoopLobbyClientService> logger)
     {
@@ -236,6 +237,15 @@ public class CoopLobbyClientService : IAsyncDisposable
     }
 
     /// <summary>
+    /// อัปเดตสถานะห้อง เช่น InGame, StageCompleted, GameOver
+    /// </summary>
+    public async Task<RoomActionResult> UpdateRoomStateAsync(CoopRoomState newState)
+    {
+        if (_hubConnection == null || CurrentRoom == null) return RoomActionResult.Fail("Not in room");
+        return await _hubConnection.InvokeAsync<RoomActionResult>(nameof(ICoopLobbyHub.UpdateRoomState), CurrentRoom.RoomCode, newState);
+    }
+
+    /// <summary>
     /// ส่ง WebRTC Signal Message (SDP Offer/Answer หรือ ICE Candidate)
     /// </summary>
     public async Task SendSignalAsync(WebRtcSignalMessage signal)
@@ -263,6 +273,8 @@ public class CoopLobbyClientService : IAsyncDisposable
         await _hubConnection.InvokeAsync(nameof(ICoopLobbyHub.SendPlayerInput), roomCode, input);
     }
 
+    private int _lastMeasuredRtt = 0;
+
     private void StartHeartbeat()
     {
         _heartbeatTimer?.Dispose();
@@ -273,14 +285,28 @@ public class CoopLobbyClientService : IAsyncDisposable
                 try
                 {
                     var start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                    await _hubConnection.InvokeAsync(nameof(ICoopLobbyHub.SendHeartbeat), CurrentRoom.RoomCode, 15);
+                    // Send last measured RTT to server for storage in player slot
+                    await _hubConnection.InvokeAsync(nameof(ICoopLobbyHub.SendHeartbeat), CurrentRoom.RoomCode, _lastMeasuredRtt);
+                    var end = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                    _lastMeasuredRtt = (int)Math.Max(1, end - start);
+                    OnRttMeasured?.Invoke(_lastMeasuredRtt);
+
+                    // Also update locally for immediate UI responsiveness
+                    if (MySlot != null)
+                    {
+                        MySlot.PingMs = _lastMeasuredRtt;
+                        if (CurrentRoom != null)
+                        {
+                            OnRoomStateChanged?.Invoke(CurrentRoom);
+                        }
+                    }
                 }
                 catch
                 {
                     // Ignore ping error
                 }
             }
-        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+        }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5));
     }
 
     public async ValueTask DisposeAsync()

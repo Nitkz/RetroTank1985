@@ -1,3 +1,4 @@
+using RetroTank1985.Shared.Enums;
 using RetroTank1985.Shared.Models.Network;
 
 namespace RetroTank1985.Shared.Contracts;
@@ -28,6 +29,7 @@ public interface ICoopLobbyHub
     Task<RoomActionResult> SetReady(string roomCode, bool isReady);
     Task<RoomActionResult> ChangeStage(string roomCode, int stageNumber);
     Task<RoomActionResult> StartGame(string roomCode);
+    Task<RoomActionResult> UpdateRoomState(string roomCode, CoopRoomState newState);
     Task SendSignal(WebRtcSignalMessage signal);
     Task SendGameSnapshot(string roomCode, CoopSyncSnapshotDto snapshot);
     Task SendPlayerInput(string roomCode, PlayerInputPacket input);

@@ -107,6 +107,17 @@ public class CoopLobbyHub : Hub<ICoopLobbyClient>, ICoopLobbyHub
         return result;
     }
 
+    public async Task<RoomActionResult> UpdateRoomState(string roomCode, CoopRoomState newState)
+    {
+        var result = await _roomManager.UpdateRoomStateAsync(Context.ConnectionId, roomCode, newState);
+        if (result.Success && result.Room != null)
+        {
+            var groupName = GetRoomGroupName(roomCode);
+            await Clients.Group(groupName).OnRoomUpdated(result.Room);
+        }
+        return result;
+    }
+
     public async Task SendSignal(WebRtcSignalMessage signal)
     {
         signal.SenderConnectionId = Context.ConnectionId;

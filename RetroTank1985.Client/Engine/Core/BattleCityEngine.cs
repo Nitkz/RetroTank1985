@@ -22,6 +22,7 @@ public interface IBattleCityEngine
     int CurrentStage { get; }
     int Score { get; }
     bool IsPaused { get; }
+    bool IsNetworkGuest { get; set; }
 
     void ApplySettings(GameSettings settings);
     void InitializeStage(StageModel? stage, int stageNumber, bool preservePlayerState = false);
@@ -75,6 +76,7 @@ public class BattleCityEngine : IBattleCityEngine
 
     private int _player1RespawnTimer = 0;
     private int _player2RespawnTimer = 0;
+    private int _borrowLifeCooldownFrames = 0;
 
     // Stage Curtain & Tally State Variables
     private int _curtainTimer = 0;
@@ -101,6 +103,7 @@ public class BattleCityEngine : IBattleCityEngine
     public PlayerTank Player { get; }
     public PlayerTank Player2 { get; }
     public bool IsTwoPlayerMode { get; set; } = false;
+    public bool IsNetworkGuest { get; set; } = false;
     public int HighScore { get; set; } = 20000;
     public GameSettings Settings { get; private set; } = new();
 
@@ -213,6 +216,7 @@ public class BattleCityEngine : IBattleCityEngine
         
         _player1RespawnTimer = 0;
         _player2RespawnTimer = 0;
+        _borrowLifeCooldownFrames = 0;
 
         int p1Lives = preservePlayerState ? Math.Max(1, Player.Lives) : Settings.StartingLives;
         int p1Stars = preservePlayerState ? Player.StarPower : 0;
@@ -332,8 +336,9 @@ public class BattleCityEngine : IBattleCityEngine
             Audio.Enqueue(AudioSoundEffect.RadioChirp);
         }
 
-        if (input.BorrowLifeReq && Player2.Lives <= 0 && Player.Lives >= 2)
+        if (input.BorrowLifeReq && Player2.Lives <= 0 && Player.Lives >= 2 && _borrowLifeCooldownFrames <= 0)
         {
+            _borrowLifeCooldownFrames = 120; // 2-second cooldown to prevent duplicate/spam deductions
             Player.Lives--;
             Player2.Lives = 1;
             Player2.Reset(8 * 16f, 12 * 16f);
@@ -815,14 +820,14 @@ public class BattleCityEngine : IBattleCityEngine
         _previousPause = _currentInput.Pause;
 
         // Player 1 Fire trigger
-        if (_currentInput.Fire && !_previousP1Fire && State == GameState.Playing)
+        if (!IsNetworkGuest && _currentInput.Fire && !_previousP1Fire && State == GameState.Playing)
         {
             Bullets.TryFirePlayerBullet(Player, Audio);
         }
         _previousP1Fire = _currentInput.Fire;
 
-        // Player 2 Fire trigger
-        if (IsTwoPlayerMode && _currentInput.P2Fire && !_previousP2Fire && State == GameState.Playing)
+        // Player 2 Fire trigger (Host or Local 2P only — Guest fires via input packet to Host)
+        if (!IsNetworkGuest && IsTwoPlayerMode && _currentInput.P2Fire && !_previousP2Fire && State == GameState.Playing)
         {
             Bullets.TryFirePlayerBullet(Player2, Audio);
         }
@@ -879,50 +884,53 @@ public class BattleCityEngine : IBattleCityEngine
                         Audio);
                 }
 
-                // 2. Enemy AI & Movement
-                Enemies.Update(_playersList, Map, Bullets, Audio, (enemy, ownerPlayer) => 
+                // 2. Enemy AI & Movement (Host & Solo only — Guest synchronizes from Host Snapshot)
+                if (!IsNetworkGuest)
                 {
-                    if (ownerPlayer == 2)
+                    Enemies.Update(_playersList, Map, Bullets, Audio, (enemy, ownerPlayer) => 
                     {
-                        Player2.Score += enemy.PointValue;
-                    }
-                    else
-                    {
-                        Player.Score += enemy.PointValue;
-                    }
+                        if (ownerPlayer == 2)
+                        {
+                            Player2.Score += enemy.PointValue;
+                        }
+                        else
+                        {
+                            Player.Score += enemy.PointValue;
+                        }
 
-                    Enemies.RecordKill(enemy.Type, ownerPlayer);
-                    if (enemy.IsFlashing)
-                    {
-                        PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
-                    }
-                });
+                        Enemies.RecordKill(enemy.Type, ownerPlayer);
+                        if (enemy.IsFlashing)
+                        {
+                            PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
+                        }
+                    });
 
-                // 3. Bullets & Explosions Update
-                Bullets.Update(_playersList, Enemies.ActiveEnemies, Map, Audio, (enemy, ownerPlayer) =>
-                {
-                    if (ownerPlayer == 2)
+                    // 3. Bullets & Explosions Update
+                    Bullets.Update(_playersList, Enemies.ActiveEnemies, Map, Audio, (enemy, ownerPlayer) =>
                     {
-                        Player2.Score += enemy.PointValue;
-                    }
-                    else
-                    {
-                        Player.Score += enemy.PointValue;
-                    }
+                        if (ownerPlayer == 2)
+                        {
+                            Player2.Score += enemy.PointValue;
+                        }
+                        else
+                        {
+                            Player.Score += enemy.PointValue;
+                        }
 
-                    Enemies.RecordKill(enemy.Type, ownerPlayer);
-                    if (enemy.IsFlashing)
-                    {
-                        PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
-                    }
-                });
+                        Enemies.RecordKill(enemy.Type, ownerPlayer);
+                        if (enemy.IsFlashing)
+                        {
+                            PowerUps.DropRandomPowerUp(enemy.X, enemy.Y, Audio);
+                        }
+                    });
 
-                // 4. Power-Up System Update
-                PowerUps.Update(_playersList, Enemies, Map, Bullets, Audio, (pts, playerIdx) =>
-                {
-                    if (playerIdx == 2) Player2.Score += pts;
-                    else Player.Score += pts;
-                });
+                    // 4. Power-Up System Update
+                    PowerUps.Update(_playersList, Enemies, Map, Bullets, Audio, (pts, playerIdx) =>
+                    {
+                        if (playerIdx == 2) Player2.Score += pts;
+                        else Player.Score += pts;
+                    });
+                }
 
                 // 5. Destructible Map Shovel countdown update
                 Map.UpdateShovelTimer();
@@ -959,6 +967,12 @@ public class BattleCityEngine : IBattleCityEngine
                 {
                     Player2.EmoteTimer--;
                     if (Player2.EmoteTimer <= 0) Player2.ActiveEmote = RetroEmoteType.None;
+                }
+
+                // 6c. Borrow Life Cooldown decrement
+                if (_borrowLifeCooldownFrames > 0)
+                {
+                    _borrowLifeCooldownFrames--;
                 }
 
                 // 7. Check Stage Cleared Condition

@@ -56,6 +56,10 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
     // Game Over Overlay state
     private bool _isGameOverOverlayVisible = false;
 
+    // Retained Co-Op role for cleanup in DisposeAsync
+    private bool _wasCoopSession = false;
+    private bool _wasCoopHost = false;
+
     protected override async Task OnInitializedAsync()
     {
         _highScore = await StorageService.GetHighScoreAsync();
@@ -70,8 +74,12 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
             _roomCode = QueryRoom ?? LobbyService.CurrentRoom?.RoomCode ?? string.Empty;
             _selectedStage = QueryStage ?? 1;
 
+            _wasCoopSession = _isCoopSession;
+            _wasCoopHost = _isCoopHost;
+
             EngineService.IsCoopSession = true;
             EngineService.IsCoopHost = _isCoopHost;
+            EngineService.Engine.IsNetworkGuest = !_isCoopHost;
 
             // Subscribe to disconnection events for Grace Period handling
             LobbyService.OnPlayerLeftEvent += HandlePlayerLeftSession;
@@ -133,6 +141,12 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
                         await JS.InvokeVoidAsync("nesSynth.setMute", true);
                     }
                     await EngineService.StartAsync();
+
+                    // Host informs Server that the match is actively InGame
+                    if (_isCoopSession && _isCoopHost)
+                    {
+                        _ = LobbyService.UpdateRoomStateAsync(RetroTank1985.Shared.Enums.CoopRoomState.InGame);
+                    }
                 }
             }
         }
@@ -348,6 +362,15 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
         {
             CancelDisconnectionGracePeriod();
         }
+
+        // OPT-03: If Host, force Map.IsDirty = true so the very next snapshot contains full sub-tiles
+        if (_isCoopSession && _isCoopHost)
+        {
+            EngineService.Engine.Map.IsDirty = true;
+            // Also immediately broadcast a fresh snapshot with full state
+            var fullSnapshot = EngineService.Engine.CreateNetworkSnapshot(1);
+            _ = HandleBroadcastSnapshot(fullSnapshot);
+        }
     }
 
     private void StartDisconnectionGracePeriod()
@@ -407,6 +430,7 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
         // Convert Host to Solo 1P Mode
         _isCoopSession = false;
         EngineService.IsCoopSession = false;
+        EngineService.Engine.IsNetworkGuest = false;
         EngineService.SetTwoPlayerMode(false);
         InvokeAsync(StateHasChanged);
     }
@@ -432,22 +456,22 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
         _gracePeriodTimer?.Dispose();
         _gracePeriodTimer = null;
 
-        if (_isCoopSession)
+        if (_wasCoopSession)
         {
             LobbyService.OnPlayerLeftEvent -= HandlePlayerLeftSession;
             LobbyService.OnConnectionStateChanged -= HandleConnectionStateChanged;
             LobbyService.OnPlayerJoinedEvent -= HandlePlayerReconnected;
-        }
 
-        if (_isCoopHost)
-        {
-            EngineService.OnCoopSnapshotGenerated -= HandleBroadcastSnapshot;
-            LobbyService.OnPlayerInputReceivedEvent -= HandleGuestInputReceived;
-        }
-        else
-        {
-            EngineService.OnGuestInputGenerated -= HandleGuestInputGeneratedLocally;
-            LobbyService.OnGameSnapshotReceivedEvent -= HandleSnapshotReceivedFromHost;
+            if (_wasCoopHost)
+            {
+                EngineService.OnCoopSnapshotGenerated -= HandleBroadcastSnapshot;
+                LobbyService.OnPlayerInputReceivedEvent -= HandleGuestInputReceived;
+            }
+            else
+            {
+                EngineService.OnGuestInputGenerated -= HandleGuestInputGeneratedLocally;
+                LobbyService.OnGameSnapshotReceivedEvent -= HandleSnapshotReceivedFromHost;
+            }
         }
 
         try

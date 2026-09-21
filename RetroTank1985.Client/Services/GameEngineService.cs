@@ -225,9 +225,12 @@ public class GameEngineService : IAsyncDisposable
         if (IsCoopSession && IsCoopHost && OnCoopSnapshotGenerated != null)
         {
             _networkFrameCounter++;
-            // Send Snapshot at 30-60Hz (every frame or alternate frame)
-            var snapshot = _engine.CreateNetworkSnapshot(_networkFrameCounter);
-            _ = OnCoopSnapshotGenerated.Invoke(snapshot);
+            // Throttle snapshot to 30Hz on SignalR (send on even frames only)
+            if (_networkFrameCounter % 2 == 0)
+            {
+                var snapshot = _engine.CreateNetworkSnapshot(_networkFrameCounter);
+                _ = OnCoopSnapshotGenerated.Invoke(snapshot);
+            }
         }
 
         // Auto-save High Score when broken

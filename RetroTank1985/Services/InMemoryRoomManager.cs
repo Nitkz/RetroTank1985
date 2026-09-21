@@ -28,12 +28,12 @@ public class InMemoryRoomManager : IRoomManager, IDisposable
         _cleanupTimer = new Timer(CleanupInactiveRooms, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
     }
 
-    public Task<RoomActionResult> CreateRoomAsync(string connectionId, string playerId, CreateRoomRequest request)
+    public async Task<RoomActionResult> CreateRoomAsync(string connectionId, string playerId, CreateRoomRequest request)
     {
         // Check if player already in a room
         if (_connectionToRoomMap.TryGetValue(connectionId, out var existingRoomCode))
         {
-            LeaveRoomAsync(connectionId, existingRoomCode);
+            await LeaveRoomAsync(connectionId, existingRoomCode);
         }
 
         var roomCode = GenerateUniqueRoomCode();
@@ -64,36 +64,36 @@ public class InMemoryRoomManager : IRoomManager, IDisposable
         {
             _connectionToRoomMap[connectionId] = roomCode;
             _logger.LogInformation("Co-op room {RoomCode} created by host {HostName} ({ConnectionId})", roomCode, hostPlayer.PlayerName, connectionId);
-            return Task.FromResult(RoomActionResult.Ok(room, "Room created successfully"));
+            return RoomActionResult.Ok(room, "Room created successfully");
         }
 
-        return Task.FromResult(RoomActionResult.Fail("Failed to generate room. Please try again."));
+        return RoomActionResult.Fail("Failed to generate room. Please try again.");
     }
 
-    public Task<RoomActionResult> JoinRoomAsync(string connectionId, string playerId, JoinRoomRequest request)
+    public async Task<RoomActionResult> JoinRoomAsync(string connectionId, string playerId, JoinRoomRequest request)
     {
         var roomCode = request.RoomCode?.Trim().ToUpperInvariant() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(roomCode) || !_rooms.TryGetValue(roomCode, out var room))
         {
-            return Task.FromResult(RoomActionResult.Fail("Room not found or invalid room code."));
+            return RoomActionResult.Fail("Room not found or invalid room code.");
+        }
+
+        // If connection already has a room mapped to a different room, leave it first before locking
+        if (_connectionToRoomMap.TryGetValue(connectionId, out var prevRoomCode) && prevRoomCode != roomCode)
+        {
+            await LeaveRoomAsync(connectionId, prevRoomCode);
         }
 
         lock (room)
         {
             if (room.State != CoopRoomState.WaitingForGuest && room.State != CoopRoomState.InLobbyReady)
             {
-                return Task.FromResult(RoomActionResult.Fail("Game has already started or room is unavailable."));
+                return RoomActionResult.Fail("Game has already started or room is unavailable.");
             }
 
             if (room.IsFull)
             {
-                return Task.FromResult(RoomActionResult.Fail("Room is full (2/2 players)."));
-            }
-
-            // If connection already has a room mapped, remove old mapping
-            if (_connectionToRoomMap.TryGetValue(connectionId, out var prevRoomCode) && prevRoomCode != roomCode)
-            {
-                LeaveRoomAsync(connectionId, prevRoomCode);
+                return RoomActionResult.Fail("Room is full (2/2 players).");
             }
 
             var guestPlayer = new CoopPlayerSlot
@@ -112,7 +112,7 @@ public class InMemoryRoomManager : IRoomManager, IDisposable
             _connectionToRoomMap[connectionId] = roomCode;
 
             _logger.LogInformation("Player {GuestName} joined room {RoomCode} as Guest ({ConnectionId})", guestPlayer.PlayerName, roomCode, connectionId);
-            return Task.FromResult(RoomActionResult.Ok(room, "Joined room successfully"));
+            return RoomActionResult.Ok(room, "Joined room successfully");
         }
     }
 
@@ -311,11 +311,18 @@ public class InMemoryRoomManager : IRoomManager, IDisposable
     {
         if (string.IsNullOrWhiteSpace(roomCode)) return false;
         var normalized = roomCode.Trim().ToUpperInvariant();
-        if (_rooms.TryRemove(normalized, out var room))
+        if (_rooms.TryGetValue(normalized, out var room))
         {
-            if (room.HostPlayer != null) _connectionToRoomMap.TryRemove(room.HostPlayer.ConnectionId, out _);
-            if (room.GuestPlayer != null) _connectionToRoomMap.TryRemove(room.GuestPlayer.ConnectionId, out _);
-            return true;
+            lock (room)
+            {
+                if (_rooms.TryRemove(normalized, out _))
+                {
+                    room.State = CoopRoomState.Closed;
+                    if (room.HostPlayer != null) _connectionToRoomMap.TryRemove(room.HostPlayer.ConnectionId, out _);
+                    if (room.GuestPlayer != null) _connectionToRoomMap.TryRemove(room.GuestPlayer.ConnectionId, out _);
+                    return true;
+                }
+            }
         }
         return false;
     }
