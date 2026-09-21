@@ -1,0 +1,135 @@
+<div class="d-flex align-center justify-space-between flex-wrap gap-2 pa-2 w-100 mb-3" 
+     style="max-width: 800px; background: #0f172a; border-radius: 8px; border: 1px solid #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+    <div class="d-flex align-center gap-2 flex-wrap">
+        @if (!IsCoopSession)
+        {
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Warning" 
+                       Size="Size.Small" 
+                       OnClick="OnPrev" 
+                       Disabled="@(SelectedStage <= 1)"
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem;">
+                &lt; PREV
+            </MudButton>
+
+            <MudSelect T="int" 
+                       Value="@SelectedStage" 
+                       ValueChanged="OnStageSelected" 
+                       Dense="true" 
+                       Margin="Margin.Dense" 
+                       Style="min-width: 130px; font-family: var(--retro-font); font-size: 0.75rem;">
+                @for (int s = 1; s <= 35; s++)
+                {
+                    var stageNum = s;
+                    <MudSelectItem Value="@stageNum">STAGE @stageNum.ToString("D2")</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Warning" 
+                       Size="Size.Small" 
+                       OnClick="OnNext" 
+                       Disabled="@(SelectedStage >= 35)"
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem;">
+                NEXT &gt;
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Error" 
+                       Size="Size.Small" 
+                       OnClick="OnRestart" 
+                       StartIcon="@Icons.Material.Filled.Replay"
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem; background-color: #ef4444;">
+                RESTART [R]
+            </MudButton>
+        }
+        else
+        {
+            <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.4); border-radius: 4px; border: 1px solid #38bdf8;">
+                <MudIcon Icon="@Icons.Material.Filled.Map" Color="Color.Secondary" Size="Size.Small" Class="mr-1" />
+                <span class="pixel-text" style="color: #38bdf8; font-size: 0.75rem;">STAGE @SelectedStage.ToString("D2")</span>
+            </div>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Error"
+                       Size="Size.Small"
+                       OnClick="OnLeaveRoom"
+                       StartIcon="@Icons.Material.Filled.ExitToApp"
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem;">
+                LEAVE ROOM
+            </MudButton>
+        }
+    </div>
+
+    <div class="d-flex align-center gap-2 flex-wrap">
+        @if (!IsCoopSession)
+        {
+            <!-- Game Options (Kids/Difficulty/Speed/Armor) Modal Trigger -->
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Info" 
+                       Size="Size.Small" 
+                       OnClick="OnOpenOptions" 
+                       StartIcon="@Icons.Material.Filled.Tune"
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem; background-color: #0284c7;">
+                OPTIONS (⚙️)
+            </MudButton>
+        }
+        else
+        {
+            <!-- Emote Trigger Button in Control Bar -->
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Secondary"
+                       Size="Size.Small"
+                       OnClick="OnToggleEmote"
+                       StartIcon="@Icons.Material.Filled.ChatBubbleOutline"
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem;">
+                EMOTE [C]
+            </MudButton>
+        }
+
+        <!-- Audio Mute Toggle -->
+        <MudButton Variant="Variant.Filled" 
+                   Color="@(IsMuted ? Color.Default : Color.Success)" 
+                   Size="Size.Small" 
+                   OnClick="OnToggleMute" 
+                   Class="pixel-text"
+                   Style="font-size: 0.65rem;"
+                   StartIcon="@(IsMuted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)">
+            @(IsMuted ? "MUTED" : "SOUND ON")
+        </MudButton>
+
+        <!-- Fullscreen Mode Toggle Button -->
+        <MudTooltip Text="Toggle Fullscreen Arcade Display (Or press [F])">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Warning" 
+                       Size="Size.Small" 
+                       OnClick="OnToggleFullscreen" 
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem;"
+                       StartIcon="@Icons.Material.Filled.Fullscreen">
+                FULLSCREEN [F]
+            </MudButton>
+        </MudTooltip>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsCoopSession { get; set; }
+    [Parameter] public int SelectedStage { get; set; } = 1;
+    [Parameter] public bool IsMuted { get; set; }
+
+    [Parameter] public EventCallback OnPrev { get; set; }
+    [Parameter] public EventCallback OnNext { get; set; }
+    [Parameter] public EventCallback<int> OnStageSelected { get; set; }
+    [Parameter] public EventCallback OnRestart { get; set; }
+    [Parameter] public EventCallback OnOpenOptions { get; set; }
+    [Parameter] public EventCallback OnToggleMute { get; set; }
+    [Parameter] public EventCallback OnToggleFullscreen { get; set; }
+    [Parameter] public EventCallback OnToggleEmote { get; set; }
+    [Parameter] public EventCallback OnLeaveRoom { get; set; }
+}

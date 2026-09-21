@@ -1,0 +1,165 @@
+@using RetroTank1985.Client.Engine.Models
+
+@if (IsVisible)
+{
+    <!-- Authentic Retro Arcade Game Over Modal Overlay -->
+    <div class="game-over-overlay d-flex flex-column align-center justify-center pa-4 text-center">
+        <div class="game-over-title mb-1">GAME OVER</div>
+        
+        <div class="game-over-reason-badge mb-3">
+            @Reason
+        </div>
+
+        <!-- Stats Summary Box -->
+        <div class="game-over-score-box mb-4 w-100" style="max-width: 380px;">
+            @if (IsCoopSession)
+            {
+                <!-- 2-Player Tactical Debriefing -->
+                <div class="d-flex justify-space-around align-center">
+                    <!-- P1 Debrief -->
+                    <div class="d-flex flex-column align-center">
+                        <span class="pixel-text" style="color: #f1c40f; font-size: 0.75rem;">I-PLAYER @(IsCoopHost ? "(YOU)" : "")</span>
+                        <span class="pixel-text font-bold" style="color: #ffffff; font-size: 1rem;">@Telemetry.Score</span>
+                        <span class="pixel-text" style="color: #94a3b8; font-size: 0.6rem;">@(Telemetry.Lives > 0 ? "SURVIVED" : "KIA")</span>
+                    </div>
+
+                    <div style="width: 1px; height: 36px; background: #334155;"></div>
+
+                    <!-- P2 Debrief -->
+                    <div class="d-flex flex-column align-center">
+                        <span class="pixel-text" style="color: #2ecc71; font-size: 0.75rem;">II-PLAYER @(!IsCoopHost ? "(YOU)" : "")</span>
+                        <span class="pixel-text font-bold" style="color: #ffffff; font-size: 1rem;">@Telemetry.P2Score</span>
+                        <span class="pixel-text" style="color: #94a3b8; font-size: 0.6rem;">@(Telemetry.P2Lives > 0 ? "SURVIVED" : "KIA")</span>
+                    </div>
+                </div>
+
+                <div class="mt-2 pt-2 d-flex justify-space-between" style="border-top: 1px solid #1e293b;">
+                    <span class="pixel-text" style="color: #64748b; font-size: 0.6rem;">CO-OP TOTAL:</span>
+                    <span class="pixel-text" style="color: #38bdf8; font-size: 0.65rem;">@(Telemetry.Score + Telemetry.P2Score) PTS</span>
+                </div>
+            }
+            else
+            {
+                <!-- 1-Player Solo Debrief -->
+                <div class="d-flex justify-space-between align-center mb-1">
+                    <span class="pixel-text" style="color: #94a3b8; font-size: 0.7rem;">FINAL SCORE:</span>
+                    <span class="pixel-text font-bold" style="color: #60a5fa; font-size: 0.9rem;">@Telemetry.Score</span>
+                </div>
+                <div class="d-flex justify-space-between align-center">
+                    <span class="pixel-text" style="color: #94a3b8; font-size: 0.7rem;">HIGH SCORE:</span>
+                    <span class="pixel-text font-bold" style="color: #f59e0b; font-size: 0.9rem;">@HighScore</span>
+                </div>
+                @if (Telemetry.Score >= HighScore && Telemetry.Score > 0)
+                {
+                    <div class="mt-1">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.55rem;">
+                            🏆 NEW HIGH SCORE!
+                        </MudChip>
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- Action Buttons Cluster -->
+        <div class="d-flex flex-wrap justify-center gap-2">
+            @if (!IsCoopSession)
+            {
+                <!-- 1P Mode Actions -->
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Error" 
+                           Size="Size.Small" 
+                           OnClick="OnRetry" 
+                           StartIcon="@Icons.Material.Filled.Replay"
+                           Class="pixel-text" 
+                           Style="font-size: 0.7rem; background-color: #ef4444;">
+                    RETRY STAGE [R]
+                </MudButton>
+
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Warning" 
+                           Size="Size.Small" 
+                           OnClick="OnRestartStage1" 
+                           Class="pixel-text" 
+                           Style="font-size: 0.65rem;">
+                    STAGE 1
+                </MudButton>
+
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Default" 
+                           Size="Size.Small" 
+                           OnClick="OnReturnToMenu" 
+                           Class="pixel-text" 
+                           Style="font-size: 0.65rem; color: #94a3b8;">
+                    MENU
+                </MudButton>
+            }
+            else
+            {
+                <!-- 2P Online Co-Op Mode Actions -->
+                @if (IsCoopHost)
+                {
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Warning" 
+                               Size="Size.Small" 
+                               OnClick="OnRetry" 
+                               StartIcon="@Icons.Material.Filled.Replay"
+                               Class="pixel-text" 
+                               Style="font-size: 0.7rem; background-color: #f59e0b; color: #000;">
+                        RETRY MISSION
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Secondary" 
+                               Size="Size.Small" 
+                               OnClick="OnReturnToLobby" 
+                               StartIcon="@Icons.Material.Filled.MeetingRoom"
+                               Class="pixel-text" 
+                               Style="font-size: 0.65rem;">
+                        RETURN TO LOBBY
+                    </MudButton>
+                }
+                else
+                {
+                    <div class="w-100 mb-2">
+                        <span class="pixel-text" style="color: #94a3b8; font-size: 0.65rem;">
+                            ⏳ WAITING FOR HOST DECISION...
+                        </span>
+                    </div>
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Secondary" 
+                               Size="Size.Small" 
+                               OnClick="OnReturnToLobby" 
+                               StartIcon="@Icons.Material.Filled.MeetingRoom"
+                               Class="pixel-text" 
+                               Style="font-size: 0.65rem;">
+                        RETURN TO LOBBY
+                    </MudButton>
+                }
+
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Error" 
+                           Size="Size.Small" 
+                           OnClick="OnLeave" 
+                           Class="pixel-text" 
+                           Style="font-size: 0.65rem;">
+                    LEAVE
+                </MudButton>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public bool IsCoopSession { get; set; }
+    [Parameter] public bool IsCoopHost { get; set; }
+    [Parameter] public string Reason { get; set; } = string.Empty;
+    [Parameter] public TelemetryData Telemetry { get; set; } = new();
+    [Parameter] public int HighScore { get; set; }
+
+    [Parameter] public EventCallback OnRetry { get; set; }
+    [Parameter] public EventCallback OnRestartStage1 { get; set; }
+    [Parameter] public EventCallback OnReturnToLobby { get; set; }
+    [Parameter] public EventCallback OnReturnToMenu { get; set; }
+    [Parameter] public EventCallback OnLeave { get; set; }
+}

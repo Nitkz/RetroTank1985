@@ -31,14 +31,17 @@
                 <span class="pixel-text ml-1" id="@_modeTextId" style="font-size: 0.6rem; color: #60a5fa;">FIXED</span>
             </button>
 
-            <button class="moba-top-util-btn" 
-                    title="Tactical Emote"
-                    style="border-color: #f59e0b;"
-                    ontouchstart="window.dispatchEvent(new CustomEvent('retrotank:toggle-emote')); event.preventDefault();"
-                    onclick="window.dispatchEvent(new CustomEvent('retrotank:toggle-emote'));">
-                <MudIcon Icon="@Icons.Material.Filled.Chat" Size="Size.Small" Style="color: #f59e0b;" />
-                <span class="pixel-text ml-1" style="font-size: 0.6rem; color: #f59e0b;">EMOTE</span>
-            </button>
+            @if (ShowEmote)
+            {
+                <button class="moba-top-util-btn" 
+                        title="Tactical Emote"
+                        style="border-color: #f59e0b;"
+                        ontouchstart="window.dispatchEvent(new CustomEvent('retrotank:toggle-emote')); event.preventDefault();"
+                        onclick="window.dispatchEvent(new CustomEvent('retrotank:toggle-emote'));">
+                    <MudIcon Icon="@Icons.Material.Filled.Chat" Size="Size.Small" Style="color: #f59e0b;" />
+                    <span class="pixel-text ml-1" style="font-size: 0.6rem; color: #f59e0b;">EMOTE</span>
+                </button>
+            }
 
             <button class="moba-top-util-btn" 
                     title="Pause"
@@ -413,6 +416,7 @@
 @code {
     [Parameter] public int PlayerIndex { get; set; } = 1;
     [Parameter] public bool ShowPlayerSwitch { get; set; } = false;
+    [Parameter] public bool ShowEmote { get; set; } = false;
     [Parameter] public string Class { get; set; } = "";
     [Parameter] public string Style { get; set; } = "";
     [Parameter] public EventCallback<int> OnPlayerChanged { get; set; }

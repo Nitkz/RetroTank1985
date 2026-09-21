@@ -1,0 +1,38 @@
+<MudCard Elevation="3" Class="retro-card pa-3 w-100 d-none d-md-block" style="max-width: 800px; background: #11141c;">
+    <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.Keyboard" Color="Color.Warning" Size="Size.Small" />
+            <span class="pixel-text" style="color: #f1c40f; font-size: 0.7rem;">KEYBOARD CONTROLS</span>
+        </div>
+        <div class="d-flex align-center flex-wrap gap-2">
+            <span class="channel-tag tag-noise">
+                MOVE: <strong>ARROW KEYS</strong> / <strong>WASD</strong>
+            </span>
+            <span class="channel-tag tag-pulse">
+                FIRE: <strong>SPACE</strong> / <strong>ENTER</strong> / <strong>J</strong>
+            </span>
+            @if (IsCoopSession)
+            {
+                <span class="channel-tag tag-pulse" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border-color: #0284c7;">
+                    EMOTE: <strong>C</strong>
+                </span>
+            }
+            <span class="channel-tag tag-tri">
+                PAUSE: <strong>P</strong> / <strong>ESC</strong>
+            </span>
+            @if (!IsCoopSession)
+            {
+                <span class="channel-tag tag-pulse" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: #ef4444;">
+                    RESTART: <strong>R</strong>
+                </span>
+            }
+            <span class="channel-tag tag-noise" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: #f59e0b;">
+                FULLSCREEN: <strong>F</strong>
+            </span>
+        </div>
+    </div>
+</MudCard>
+
+@code {
+    [Parameter] public bool IsCoopSession { get; set; }
+}

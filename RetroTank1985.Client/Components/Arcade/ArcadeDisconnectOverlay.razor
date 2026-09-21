@@ -1,0 +1,43 @@
+@if (IsActive)
+{
+    <!-- Disconnection Grace Period Overlay (15s Reconnect Flow) -->
+    <div class="disconnect-grace-overlay d-flex flex-column align-center justify-center pa-4 text-center">
+        <div class="disconnect-grace-badge mb-2">⚠️ CONNECTION LOST</div>
+        <MudText Typo="Typo.h6" Class="pixel-text font-bold mb-1" Style="color: #ef4444; font-size: 0.95rem;">
+            PAUSED: RECONNECTING TO @(IsCoopHost ? "P2 (GUEST)" : "P1 (HOST)")...
+        </MudText>
+        <div class="disconnect-countdown-circle my-2">
+            <span class="pixel-text" style="font-size: 1.5rem; color: #f59e0b;">@SecondsRemaining</span>
+        </div>
+        <MudText Typo="Typo.caption" Class="pixel-text mb-3" Style="color: #cbd5e1; font-size: 0.65rem;">
+            WAITING 15s FOR TEAMMATE TO RE-ESTABLISH SIGNAL...
+        </MudText>
+
+        @if (IsCoopHost)
+        {
+            <div class="d-flex gap-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Warning" Size="Size.Small" Class="pixel-text" Style="font-size: 0.65rem;" OnClick="OnContinueSolo">
+                    CONTINUE SOLO (1P)
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" Class="pixel-text" Style="font-size: 0.65rem;" OnClick="OnAbortMission">
+                    ABORT MISSION
+                </MudButton>
+            </div>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" Class="pixel-text" Style="font-size: 0.65rem;" OnClick="OnAbortMission">
+                RETURN TO LOBBY
+            </MudButton>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsActive { get; set; }
+    [Parameter] public bool IsCoopHost { get; set; }
+    [Parameter] public int SecondsRemaining { get; set; } = 15;
+
+    [Parameter] public EventCallback OnContinueSolo { get; set; }
+    [Parameter] public EventCallback OnAbortMission { get; set; }
+}

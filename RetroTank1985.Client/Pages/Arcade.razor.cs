@@ -53,6 +53,9 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
     private System.Threading.Timer? _gracePeriodTimer;
     private DotNetObjectReference<Arcade>? _arcadeDotNetRef;
 
+    // Game Over Overlay state
+    private bool _isGameOverOverlayVisible = false;
+
     protected override async Task OnInitializedAsync()
     {
         _highScore = await StorageService.GetHighScoreAsync();
@@ -155,12 +158,65 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
         {
             _highScore = telemetry.HighScore;
         }
+
+        // Detect Game Over state transition
+        if (telemetry.IsGameOver && !_isGameOverOverlayVisible)
+        {
+            _isGameOverOverlayVisible = true;
+        }
+        else if (!telemetry.IsGameOver && _isGameOverOverlayVisible)
+        {
+            _isGameOverOverlayVisible = false;
+        }
+
         StateHasChanged();
+    }
+
+    private string GetGameOverReason()
+    {
+        if (EngineService.Engine.Map.IsEagleDestroyed)
+        {
+            return "💥 EAGLE HEADQUARTERS DESTROYED";
+        }
+        return "💀 ALL TANKS DESTROYED (0 LIVES)";
+    }
+
+    private async Task HandleCoopRetryStage()
+    {
+        if (!_isCoopSession || !_isCoopHost) return;
+        _isGameOverOverlayVisible = false;
+        await EngineService.SetStageAsync(_selectedStage);
+    }
+
+    private void HandleReturnToLobby()
+    {
+        _isGameOverOverlayVisible = false;
+        if (_isCoopSession && !string.IsNullOrWhiteSpace(_roomCode))
+        {
+            NavigationManager.NavigateTo($"/coop?room={_roomCode}");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/coop");
+        }
+    }
+
+    private async Task HandleRestartFromStage1()
+    {
+        _isGameOverOverlayVisible = false;
+        _selectedStage = 1;
+        await EngineService.SetStageAsync(1);
+    }
+
+    private void HandleReturnToMenu()
+    {
+        NavigationManager.NavigateTo("/");
     }
 
     private void HandleStageChanged(int newStage)
     {
         _selectedStage = newStage;
+        _isGameOverOverlayVisible = false;
         StateHasChanged();
     }
 
@@ -168,6 +224,7 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
     {
         if (_isCoopSession) return;
         if (stageNum < 1 || stageNum > 35) return;
+        _isGameOverOverlayVisible = false;
         _selectedStage = stageNum;
         _currentStage = await StageService.GetStageAsync(stageNum);
         if (_currentStage != null)
@@ -182,6 +239,7 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
     private async Task RestartStage()
     {
         if (_isCoopSession) return;
+        _isGameOverOverlayVisible = false;
         await EngineService.RestartCurrentStage();
     }
 
@@ -356,32 +414,6 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
 
         await JS.InvokeVoidAsync("eval", "window.location.href = '/coop';");
     }
-
-    private string GetDifficultyLabel(GameDifficultyPreset preset) => preset switch
-    {
-        GameDifficultyPreset.KidsFriendly => "🐣 KIDS EASY",
-        GameDifficultyPreset.Classic1985 => "🕹️ CLASSIC 1985",
-        GameDifficultyPreset.Veteran => "⚔️ VETERAN",
-        GameDifficultyPreset.Custom => "⚙️ CUSTOM",
-        _ => "NORMAL"
-    };
-
-    private Color GetDifficultyColor(GameDifficultyPreset preset) => preset switch
-    {
-        GameDifficultyPreset.KidsFriendly => Color.Success,
-        GameDifficultyPreset.Classic1985 => Color.Warning,
-        GameDifficultyPreset.Veteran => Color.Error,
-        GameDifficultyPreset.Custom => Color.Info,
-        _ => Color.Default
-    };
-
-    private string GetHpBorderColor(int hp) => hp switch
-    {
-        <= 1 => "#ef4444",
-        2 => "#f59e0b",
-        3 => "#10b981",
-        _ => "#06b6d4"
-    };
 
     public async ValueTask DisposeAsync()
     {

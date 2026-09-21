@@ -1,274 +1,71 @@
 @page "/arcade"
+@using RetroTank1985.Client.Components.Arcade
 @using RetroTank1985.Client.Components.Play
 @using RetroTank1985.Client.Components.Coop
 
 <PageTitle>RetroTank 1985 | @(_isCoopSession ? "Online Co-Op Mode (2-Player)" : "Arcade Mode (1P Campaign)")</PageTitle>
 
 <div class="d-flex flex-column align-center w-100 mb-6">
-    <!-- Top Arcade Marquee & Status Header -->
-    <div class="d-flex align-center justify-space-between flex-wrap gap-2 w-100 mb-3" style="max-width: 800px;">
-        <div class="d-flex align-center gap-2">
-            <MudIcon Icon="@Icons.Material.Filled.VideogameAsset" Color="@(_isCoopSession ? Color.Secondary : Color.Warning)" Size="Size.Large" />
-            <div>
-                <div class="d-flex align-center gap-2">
-                    <MudText Typo="Typo.h5" Class="pixel-text" Style="@($"color: {(_isCoopSession ? "#38bdf8" : "#f1c40f")}; font-size: 1.2rem; text-shadow: 0 0 12px {(_isCoopSession ? "rgba(56, 189, 248, 0.4)" : "rgba(241, 196, 15, 0.4)")};")">
-                        @(_isCoopSession ? "ONLINE CO-OP ARENA" : "ARCADE MODE")
-                    </MudText>
-                    @if (_isCoopSession)
-                    {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.6rem;">
-                            @(_isCoopHost ? "P1 (HOST)" : "P2 (GUEST)")
-                        </MudChip>
-                        <MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Outlined" Class="pixel-text" Style="font-size: 0.6rem; border-color: #38bdf8; color: #38bdf8;">
-                            ROOM: @_roomCode
-                        </MudChip>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Size="Size.Small" Color="@GetDifficultyColor(_settings.Preset)" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.6rem;">
-                            @GetDifficultyLabel(_settings.Preset)
-                        </MudChip>
-                    }
-                </div>
-                <span class="pixel-text" style="color: #94a3b8; font-size: 0.65rem;">
-                    @(_isCoopSession ? "2-PLAYER SIGNALR MULTIPLAYER • REAL-TIME 60HZ SYNC" : "1-PLAYER NES CAMPAIGN • STAGES 1–35")
-                </span>
-            </div>
-        </div>
+    <!-- 1. Top Arcade Marquee & Status Header -->
+    <ArcadeHeader IsCoopSession="@_isCoopSession"
+                  IsCoopHost="@_isCoopHost"
+                  RoomCode="@_roomCode"
+                  HighScore="@_highScore"
+                  Telemetry="@_telemetry"
+                  Settings="@_settings" />
 
-        <div class="d-flex align-center gap-2 flex-wrap">
-            <!-- High Score Badge -->
-            <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.5); border-radius: 4px; border: 1px solid #f59e0b;">
-                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Color="Color.Warning" Size="Size.Small" Class="mr-1" />
-                <span class="pixel-text" style="color: #f59e0b; font-size: 0.7rem;">HI: @_highScore</span>
-            </div>
+    <!-- 2. Arcade Control Bar (Stage Step, Options, Restart, Sound, Fullscreen, Emotes) -->
+    <ArcadeControlBar IsCoopSession="@_isCoopSession"
+                      SelectedStage="@_selectedStage"
+                      IsMuted="@_isMuted"
+                      OnPrev="OnPrevClicked"
+                      OnNext="OnNextClicked"
+                      OnStageSelected="OnStageSelected"
+                      OnRestart="RestartStage"
+                      OnOpenOptions="OpenOptionsDialog"
+                      OnToggleEmote="ToggleEmoteWheel"
+                      OnToggleMute="ToggleMute"
+                      OnToggleFullscreen="ToggleFullscreen"
+                      OnLeaveRoom="HandleLeaveSession" />
 
-            <!-- Current Score Badge -->
-            <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.5); border-radius: 4px; border: 1px solid #3b82f6;">
-                <span class="pixel-text" style="color: #60a5fa; font-size: 0.7rem;">SCORE: @_telemetry.Score</span>
-            </div>
-
-            <!-- Player Lives -->
-            <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.5); border-radius: 4px; border: 1px solid #ef4444;">
-                <MudIcon Icon="@Icons.Material.Filled.Favorite" Color="Color.Error" Size="Size.Small" Class="mr-1" />
-                <span class="pixel-text" style="color: #ef4444; font-size: 0.7rem;">x@_telemetry.Lives</span>
-            </div>
-
-            <!-- Player Armor HP (Hearts / Shield Indicator) -->
-            @if (_settings.PlayerArmorHp > 1 && !_isCoopSession)
-            {
-                <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.5); border-radius: 4px; border: 1px solid @GetHpBorderColor(_telemetry.Hp);">
-                    <MudIcon Icon="@Icons.Material.Filled.Shield" Style="@($"color: {GetHpBorderColor(_telemetry.Hp)};")" Size="Size.Small" Class="mr-1" />
-                    <span class="pixel-text" style="color: @GetHpBorderColor(_telemetry.Hp); font-size: 0.7rem;">
-                        HP: @_telemetry.Hp/@_settings.PlayerArmorHp
-                    </span>
-                </div>
-            }
-        </div>
-    </div>
-
-    <!-- Arcade Control Bar (Stage Step, Options, Restart, Sound, Fullscreen) -->
-    <div class="d-flex align-center justify-space-between flex-wrap gap-2 pa-2 w-100 mb-3" 
-         style="max-width: 800px; background: #0f172a; border-radius: 8px; border: 1px solid #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <div class="d-flex align-center gap-2 flex-wrap">
-            @if (!_isCoopSession)
-            {
-                <MudButton Variant="Variant.Outlined" 
-                           Color="Color.Warning" 
-                           Size="Size.Small" 
-                           OnClick="OnPrevClicked" 
-                           Disabled="@(_selectedStage <= 1)"
-                           Class="pixel-text"
-                           Style="font-size: 0.65rem;">
-                    &lt; PREV
-                </MudButton>
-
-                <MudSelect T="int" 
-                           Value="@_selectedStage" 
-                           ValueChanged="OnStageSelected" 
-                           Dense="true" 
-                           Margin="Margin.Dense" 
-                           Style="min-width: 130px; font-family: var(--retro-font); font-size: 0.75rem;">
-                    @for (int s = 1; s <= 35; s++)
-                    {
-                        var stageNum = s;
-                        <MudSelectItem Value="@stageNum">STAGE @stageNum.ToString("D2")</MudSelectItem>
-                    }
-                </MudSelect>
-
-                <MudButton Variant="Variant.Outlined" 
-                           Color="Color.Warning" 
-                           Size="Size.Small" 
-                           OnClick="OnNextClicked" 
-                           Disabled="@(_selectedStage >= 35)"
-                           Class="pixel-text"
-                           Style="font-size: 0.65rem;">
-                    NEXT &gt;
-                </MudButton>
-
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Error" 
-                           Size="Size.Small" 
-                           OnClick="RestartStage" 
-                           StartIcon="@Icons.Material.Filled.Replay"
-                           Class="pixel-text"
-                           Style="font-size: 0.65rem; background-color: #ef4444;">
-                    RESTART [R]
-                </MudButton>
-            }
-            else
-            {
-                <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.4); border-radius: 4px; border: 1px solid #38bdf8;">
-                    <MudIcon Icon="@Icons.Material.Filled.Map" Color="Color.Secondary" Size="Size.Small" Class="mr-1" />
-                    <span class="pixel-text" style="color: #38bdf8; font-size: 0.75rem;">STAGE @_selectedStage.ToString("D2")</span>
-                </div>
-                <MudButton Variant="Variant.Outlined"
-                           Color="Color.Error"
-                           Size="Size.Small"
-                           OnClick="HandleLeaveSession"
-                           StartIcon="@Icons.Material.Filled.ExitToApp"
-                           Class="pixel-text"
-                           Style="font-size: 0.65rem;">
-                    LEAVE ROOM
-                </MudButton>
-            }
-        </div>
-
-        <div class="d-flex align-center gap-2 flex-wrap">
-            @if (!_isCoopSession)
-            {
-                <!-- Game Options (Kids/Difficulty/Speed/Armor) Modal Trigger -->
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Info" 
-                           Size="Size.Small" 
-                           OnClick="OpenOptionsDialog" 
-                           StartIcon="@Icons.Material.Filled.Tune"
-                           Class="pixel-text"
-                           Style="font-size: 0.65rem; background-color: #0284c7;">
-                    OPTIONS (⚙️)
-                </MudButton>
-            }
-            else
-            {
-                <!-- Emote Trigger Button in Control Bar -->
-                <MudButton Variant="Variant.Filled"
-                           Color="Color.Secondary"
-                           Size="Size.Small"
-                           OnClick="ToggleEmoteWheel"
-                           StartIcon="@Icons.Material.Filled.ChatBubbleOutline"
-                           Class="pixel-text"
-                           Style="font-size: 0.65rem;">
-                    EMOTE [C]
-                </MudButton>
-            }
-
-            <!-- Audio Mute Toggle -->
-            <MudButton Variant="Variant.Filled" 
-                       Color="@(_isMuted ? Color.Default : Color.Success)" 
-                       Size="Size.Small" 
-                       OnClick="ToggleMute" 
-                       Class="pixel-text"
-                       Style="font-size: 0.65rem;"
-                       StartIcon="@(_isMuted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)">
-                @(_isMuted ? "MUTED" : "SOUND ON")
-            </MudButton>
-
-            <!-- Fullscreen Mode Toggle Button -->
-            <MudTooltip Text="Toggle Fullscreen Arcade Display (Or press [F])">
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Warning" 
-                           Size="Size.Small" 
-                           OnClick="ToggleFullscreen" 
-                           Class="pixel-text"
-                           Style="font-size: 0.65rem;"
-                           StartIcon="@Icons.Material.Filled.Fullscreen">
-                    FULLSCREEN [F]
-                </MudButton>
-            </MudTooltip>
-        </div>
-    </div>
-
-    <!-- Arcade Screen Container (Houses Canvas + MOBA Touch Controller in Fullscreen) -->
+    <!-- 3. Arcade Screen Container (Houses Canvas + Overlays + MOBA Touch Controller) -->
     <div id="arcadeBezelContainer" class="arcade-bezel mb-3" style="position: relative; width: 536px; max-width: 100%; display: flex; flex-direction: column; align-items: stretch;">
         <canvas id="arcadeGameCanvas" class="game-canvas" width="512" height="480"></canvas>
 
-        @if (_isDisconnectGraceActive)
-        {
-            <!-- Disconnection Grace Period Overlay (15s Reconnect Flow) -->
-            <div class="disconnect-grace-overlay d-flex flex-column align-center justify-center pa-4 text-center">
-                <div class="disconnect-grace-badge mb-2">⚠️ CONNECTION LOST</div>
-                <MudText Typo="Typo.h6" Class="pixel-text font-bold mb-1" Style="color: #ef4444; font-size: 0.95rem;">
-                    PAUSED: RECONNECTING TO @(_isCoopHost ? "P2 (GUEST)" : "P1 (HOST)")...
-                </MudText>
-                <div class="disconnect-countdown-circle my-2">
-                    <span class="pixel-text" style="font-size: 1.5rem; color: #f59e0b;">@_disconnectGraceSeconds</span>
-                </div>
-                <MudText Typo="Typo.caption" Class="pixel-text mb-3" Style="color: #cbd5e1; font-size: 0.65rem;">
-                    WAITING 15s FOR TEAMMATE TO RE-ESTABLISH SIGNAL...
-                </MudText>
+        <!-- Disconnection Grace Period Overlay (15s Reconnect Flow) -->
+        <ArcadeDisconnectOverlay IsActive="@_isDisconnectGraceActive"
+                                 IsCoopHost="@_isCoopHost"
+                                 SecondsRemaining="@_disconnectGraceSeconds"
+                                 OnContinueSolo="HandleConvertToSinglePlayer"
+                                 OnAbortMission="HandleLeaveSession" />
 
-                @if (_isCoopHost)
-                {
-                    <div class="d-flex gap-2">
-                        <MudButton Variant="Variant.Filled" Color="Color.Warning" Size="Size.Small" Class="pixel-text" Style="font-size: 0.65rem;" OnClick="HandleConvertToSinglePlayer">
-                            CONTINUE SOLO (1P)
-                        </MudButton>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" Class="pixel-text" Style="font-size: 0.65rem;" OnClick="HandleLeaveSession">
-                            ABORT MISSION
-                        </MudButton>
-                    </div>
-                }
-                else
-                {
-                    <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" Class="pixel-text" Style="font-size: 0.65rem;" OnClick="HandleLeaveSession">
-                        RETURN TO LOBBY
-                    </MudButton>
-                }
-            </div>
-        }
+        <!-- Retro Arcade Game Over Modal Overlay -->
+        <ArcadeGameOverOverlay IsVisible="@_isGameOverOverlayVisible"
+                               IsCoopSession="@_isCoopSession"
+                               IsCoopHost="@_isCoopHost"
+                               Reason="@(GetGameOverReason())"
+                               Telemetry="@_telemetry"
+                               HighScore="@_highScore"
+                               OnRetry="@(_isCoopSession ? HandleCoopRetryStage : RestartStage)"
+                               OnRestartStage1="HandleRestartFromStage1"
+                               OnReturnToLobby="HandleReturnToLobby"
+                               OnReturnToMenu="HandleReturnToMenu"
+                               OnLeave="HandleLeaveSession" />
         
-        <!-- MOBA-Style Virtual Touch Controller (Inline on normal view, Transformed to Overlay on Fullscreen) -->
+        <!-- MOBA-Style Virtual Touch Controller (Inline on normal view, Overlay on Fullscreen) -->
         <div class="w-100 mt-2" style="padding: 0;">
-            <MobaTouchController PlayerIndex="@(_isCoopSession ? (_isCoopHost ? 1 : 2) : 1)" ShowPlayerSwitch="@(!_isCoopSession)" />
+            <MobaTouchController PlayerIndex="@(_isCoopSession ? (_isCoopHost ? 1 : 2) : 1)" 
+                                ShowPlayerSwitch="false" 
+                                ShowEmote="@_isCoopSession" />
         </div>
     </div>
 
-    <!-- Tactical Emote Wheel Modal -->
-    <RetroTank1985.Client.Components.Coop.EmoteWheel @bind-IsOpen="_isEmoteWheelOpen" OnEmoteSelected="HandleEmoteSelected" />
+    <!-- 4. Tactical Emote Wheel Modal (Only in Co-Op Session) -->
+    @if (_isCoopSession)
+    {
+        <EmoteWheel @bind-IsOpen="_isEmoteWheelOpen" OnEmoteSelected="HandleEmoteSelected" />
+    }
 
-    <!-- Keyboard-Only Instructions & Legend Badge (Desktop hint) -->
-    <MudCard Elevation="3" Class="retro-card pa-3 w-100 d-none d-md-block" style="max-width: 800px; background: #11141c;">
-        <div class="d-flex align-center justify-space-between flex-wrap gap-2">
-            <div class="d-flex align-center gap-2">
-                <MudIcon Icon="@Icons.Material.Filled.Keyboard" Color="Color.Warning" Size="Size.Small" />
-                <span class="pixel-text" style="color: #f1c40f; font-size: 0.7rem;">KEYBOARD CONTROLS</span>
-            </div>
-            <div class="d-flex align-center flex-wrap gap-2">
-                <span class="channel-tag tag-noise">
-                    MOVE: <strong>ARROW KEYS</strong> / <strong>WASD</strong>
-                </span>
-                <span class="channel-tag tag-pulse">
-                    FIRE: <strong>SPACE</strong> / <strong>ENTER</strong> / <strong>J</strong>
-                </span>
-                @if (_isCoopSession)
-                {
-                    <span class="channel-tag tag-pulse" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border-color: #0284c7;">
-                        EMOTE: <strong>C</strong>
-                    </span>
-                }
-                <span class="channel-tag tag-tri">
-                    PAUSE: <strong>P</strong> / <strong>ESC</strong>
-                </span>
-                @if (!_isCoopSession)
-                {
-                    <span class="channel-tag tag-pulse" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: #ef4444;">
-                        RESTART: <strong>R</strong>
-                    </span>
-                }
-                <span class="channel-tag tag-noise" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: #f59e0b;">
-                    FULLSCREEN: <strong>F</strong>
-                </span>
-            </div>
-        </div>
-    </MudCard>
+    <!-- 5. Keyboard-Only Instructions & Legend Badge (Desktop hint) -->
+    <ArcadeControlsLegend IsCoopSession="@_isCoopSession" />
 </div>
