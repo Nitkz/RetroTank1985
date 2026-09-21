@@ -1,6 +1,7 @@
 using RetroTank1985.Shared.Enums;
 using RetroTank1985.Client.Engine.Models;
 using RetroTank1985.Shared.Models;
+using RetroTank1985.Shared.Models.Network;
 
 namespace RetroTank1985.Client.Engine.Core;
 
@@ -20,6 +21,7 @@ public interface IEnemySystem
     int FireIntervalFrames { get; set; }
 
     void InitializeWave(StageModel? stage);
+    void SyncFromNetwork(EnemyNetworkSnapshot[] snapshots, int remainingWaveCount);
     void Update(IReadOnlyList<PlayerTank> players, IDestructibleMap map, IBulletSystem bullets, IAudioEventQueue audioQueue, Action<EnemyTank, int>? onEnemyKilled = null);
     void Clear();
     void RecordKill(EnemyType type, int playerIndex = 1);
@@ -113,6 +115,31 @@ public class EnemySystem : IEnemySystem
         while (_waveQueue.Count < TotalWaveEnemies)
         {
             _waveQueue.Add(EnemyType.Basic);
+        }
+    }
+
+    public void SyncFromNetwork(EnemyNetworkSnapshot[] snapshots, int remainingWaveCount)
+    {
+        for (int i = 0; i < MaxConcurrentEnemies; i++) _enemyPool[i].IsActive = false;
+        _enemies.Clear();
+
+        if (snapshots == null || snapshots.Length == 0) return;
+
+        for (int i = 0; i < snapshots.Length && i < MaxConcurrentEnemies; i++)
+        {
+            var s = snapshots[i];
+            var e = _enemyPool[i];
+            e.Id = s.Id;
+            e.Type = (EnemyType)s.TankType;
+            e.X = s.X;
+            e.Y = s.Y;
+            e.Direction = (Direction)s.Direction;
+            e.Hp = s.Health;
+            e.IsFlashing = s.IsFlashing;
+            e.IsSpawning = s.IsSpawning;
+            e.SpawnTimer = (int)s.SpawnAnimProgress;
+            e.IsActive = true;
+            _enemies.Add(e);
         }
     }
 

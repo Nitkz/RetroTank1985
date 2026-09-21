@@ -10,6 +10,7 @@ public interface IPowerUpSystem
 
     void DropRandomPowerUp(float x, float y, IAudioEventQueue audioQueue);
     void SpawnPowerUpDebug(PowerUpType type, float? x = null, float? y = null, IAudioEventQueue? audioQueue = null);
+    void SyncFromNetwork(byte? powerUpType, float x, float y);
     void Update(
         IReadOnlyList<PlayerTank> players,
         IEnemySystem enemies,
@@ -120,6 +121,24 @@ public class PowerUpSystem : IPowerUpSystem
         }
 
         audioQueue?.Enqueue(AudioSoundEffect.BonusAppear);
+    }
+
+    public void SyncFromNetwork(byte? powerUpType, float x, float y)
+    {
+        for (int i = 0; i < MaxPowerUps; i++) _powerUpPool[i].IsActive = false;
+        _powerUps.Clear();
+
+        if (powerUpType.HasValue)
+        {
+            var p = _powerUpPool[0];
+            p.Id = 1;
+            p.Type = (PowerUpType)powerUpType.Value;
+            p.X = x;
+            p.Y = y;
+            p.IsActive = true;
+            p.IsVisible = true;
+            _powerUps.Add(p);
+        }
     }
 
     public void Update(

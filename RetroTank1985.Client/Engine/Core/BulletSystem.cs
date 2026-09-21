@@ -1,6 +1,7 @@
 using RetroTank1985.Shared.Enums;
 using RetroTank1985.Client.Engine.Models;
 using RetroTank1985.Shared.Models;
+using RetroTank1985.Shared.Models.Network;
 
 namespace RetroTank1985.Client.Engine.Core;
 
@@ -12,6 +13,7 @@ public interface IBulletSystem
 
     bool TryFirePlayerBullet(PlayerTank player, IAudioEventQueue audioQueue);
     bool TryFireEnemyBullet(EnemyTank enemy, IAudioEventQueue audioQueue);
+    void SyncFromNetwork(BulletNetworkSnapshot[] snapshots);
     void Update(
         IReadOnlyList<PlayerTank> players,
         IReadOnlyList<EnemyTank> enemies,
@@ -127,6 +129,28 @@ public class BulletSystem : IBulletSystem
 
         audioQueue.Enqueue(AudioSoundEffect.Shot);
         return true;
+    }
+
+    public void SyncFromNetwork(BulletNetworkSnapshot[] snapshots)
+    {
+        for (int i = 0; i < MaxBullets; i++) _bulletPool[i].IsActive = false;
+        _bullets.Clear();
+
+        if (snapshots == null || snapshots.Length == 0) return;
+
+        for (int i = 0; i < snapshots.Length && i < MaxBullets; i++)
+        {
+            var s = snapshots[i];
+            var b = _bulletPool[i];
+            b.Id = s.Id;
+            b.OwnerPlayer = s.Owner == 0 ? 1 : (s.Owner == 1 ? 2 : 0);
+            b.IsPlayerBullet = s.Owner <= 1;
+            b.X = s.X;
+            b.Y = s.Y;
+            b.Direction = (Direction)s.Direction;
+            b.IsActive = s.IsActive;
+            _bullets.Add(b);
+        }
     }
 
     public bool TryFireEnemyBullet(EnemyTank enemy, IAudioEventQueue audioQueue)

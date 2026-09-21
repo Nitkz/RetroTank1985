@@ -1,6 +1,7 @@
 using RetroTank1985.Shared.Enums;
 using RetroTank1985.Client.Engine.Models;
 using RetroTank1985.Shared.Models;
+using RetroTank1985.Shared.Models.Network;
 
 namespace RetroTank1985.Client.Engine.Core;
 
@@ -28,6 +29,10 @@ public interface IBattleCityEngine
     void TogglePause();
     void SetPause(bool paused);
     void SetInput(InputState input);
+    void SetP1Input(bool up, bool down, bool left, bool right, bool fire, bool pause);
+    void ApplyRemoteP2Input(PlayerInputPacket input);
+    CoopSyncSnapshotDto CreateNetworkSnapshot(uint frameIndex, uint ackP2Seq = 0);
+    void ApplyNetworkSnapshot(CoopSyncSnapshotDto snapshot);
     RenderFrameDto Tick(double timestampMs);
     TelemetryData GetTelemetry(int fps);
 
@@ -284,6 +289,163 @@ public class BattleCityEngine : IBattleCityEngine
     public void SetInput(InputState input)
     {
         _currentInput = input;
+    }
+
+    public void SetP1Input(bool up, bool down, bool left, bool right, bool fire, bool pause)
+    {
+        _currentInput.Up = up;
+        _currentInput.Down = down;
+        _currentInput.Left = left;
+        _currentInput.Right = right;
+        _currentInput.Fire = fire;
+        _currentInput.Pause = pause;
+    }
+
+    public void ApplyRemoteP2Input(PlayerInputPacket input)
+    {
+        _currentInput.P2Up = input.Direction == 1;
+        _currentInput.P2Right = input.Direction == 2;
+        _currentInput.P2Down = input.Direction == 3;
+        _currentInput.P2Left = input.Direction == 4;
+        _currentInput.P2Fire = input.IsFiring;
+
+        if (input.BorrowLifeReq && Player2.Lives <= 0 && Player.Lives >= 2)
+        {
+            Player.Lives--;
+            Player2.Lives = 1;
+            Player2.Reset(8 * 16f, 12 * 16f);
+            Audio.Enqueue(AudioSoundEffect.Life);
+        }
+    }
+
+    public CoopSyncSnapshotDto CreateNetworkSnapshot(uint frameIndex, uint ackP2Seq = 0)
+    {
+        var snapshot = new CoopSyncSnapshotDto
+        {
+            FrameIndex = frameIndex,
+            AckP2Sequence = ackP2Seq,
+            RemainingEnemyWaveCount = Enemies.EnemiesRemaining,
+            IsEagleDestroyed = Map.IsEagleDestroyed
+        };
+
+        // P1 Snapshot
+        snapshot.Player1 = new TankNetworkSnapshot
+        {
+            X = Player.X,
+            Y = Player.Y,
+            Direction = (byte)Player.Direction,
+            IsMoving = Player.IsMoving,
+            Lives = Player.Lives,
+            StarTier = Player.StarPower,
+            ShieldTimeRemaining = Player.ShieldTimer,
+            IsDestroyed = Player.Lives <= 0
+        };
+
+        // P2 Snapshot
+        snapshot.Player2 = new TankNetworkSnapshot
+        {
+            X = Player2.X,
+            Y = Player2.Y,
+            Direction = (byte)Player2.Direction,
+            IsMoving = Player2.IsMoving,
+            Lives = Player2.Lives,
+            StarTier = Player2.StarPower,
+            ShieldTimeRemaining = Player2.ShieldTimer,
+            IsDestroyed = Player2.Lives <= 0
+        };
+
+        // Enemies Snapshot
+        var activeEnemies = Enemies.ActiveEnemies;
+        var enemiesList = new List<EnemyNetworkSnapshot>(activeEnemies.Count);
+        foreach (var enemy in activeEnemies)
+        {
+            enemiesList.Add(new EnemyNetworkSnapshot
+            {
+                Id = enemy.Id,
+                TankType = (byte)enemy.Type,
+                X = enemy.X,
+                Y = enemy.Y,
+                Direction = (byte)enemy.Direction,
+                Health = enemy.Hp,
+                IsFlashing = enemy.IsFlashing,
+                IsSpawning = enemy.IsSpawning,
+                SpawnAnimProgress = enemy.SpawnTimer
+            });
+        }
+        snapshot.Enemies = enemiesList.ToArray();
+
+        // Bullets Snapshot
+        var activeBullets = Bullets.ActiveBullets;
+        var bulletsList = new List<BulletNetworkSnapshot>(activeBullets.Count);
+        int bId = 0;
+        foreach (var b in activeBullets)
+        {
+            if (b.IsActive)
+            {
+                bulletsList.Add(new BulletNetworkSnapshot
+                {
+                    Id = bId++,
+                    Owner = (byte)(b.OwnerPlayer == 1 ? 0 : (b.OwnerPlayer == 2 ? 1 : 2)),
+                    X = b.X,
+                    Y = b.Y,
+                    Direction = (byte)b.Direction,
+                    IsActive = b.IsActive
+                });
+            }
+        }
+        snapshot.Bullets = bulletsList.ToArray();
+
+        // PowerUp
+        var activePowerUps = PowerUps.ActivePowerUps;
+        if (activePowerUps.Count > 0)
+        {
+            var p = activePowerUps[0];
+            if (p.IsActive)
+            {
+                snapshot.ActivePowerUpType = (byte)p.Type;
+                snapshot.PowerUpX = p.X;
+                snapshot.PowerUpY = p.Y;
+            }
+        }
+
+        return snapshot;
+    }
+
+    public void ApplyNetworkSnapshot(CoopSyncSnapshotDto snapshot)
+    {
+        // Apply Host Simulation to Guest
+        Player.X = snapshot.Player1.X;
+        Player.Y = snapshot.Player1.Y;
+        Player.Direction = (Direction)snapshot.Player1.Direction;
+        Player.IsMoving = snapshot.Player1.IsMoving;
+        Player.Lives = snapshot.Player1.Lives;
+        Player.StarPower = snapshot.Player1.StarTier;
+        Player.ShieldTimer = (int)snapshot.Player1.ShieldTimeRemaining;
+        Player.ShieldActive = snapshot.Player1.ShieldTimeRemaining > 0;
+
+        Player2.X = snapshot.Player2.X;
+        Player2.Y = snapshot.Player2.Y;
+        Player2.Direction = (Direction)snapshot.Player2.Direction;
+        Player2.IsMoving = snapshot.Player2.IsMoving;
+        Player2.Lives = snapshot.Player2.Lives;
+        Player2.StarPower = snapshot.Player2.StarTier;
+        Player2.ShieldTimer = (int)snapshot.Player2.ShieldTimeRemaining;
+        Player2.ShieldActive = snapshot.Player2.ShieldTimeRemaining > 0;
+        Player2.IsActive = true;
+        IsTwoPlayerMode = true;
+
+        // Sync Bullets and Enemies to Guest Engine
+        if (snapshot.Bullets != null)
+        {
+            Bullets.SyncFromNetwork(snapshot.Bullets);
+        }
+        if (snapshot.Enemies != null)
+        {
+            Enemies.SyncFromNetwork(snapshot.Enemies, snapshot.RemainingEnemyWaveCount);
+        }
+
+        // Sync Active Power-Up Item to Guest Engine
+        PowerUps.SyncFromNetwork(snapshot.ActivePowerUpType, snapshot.PowerUpX, snapshot.PowerUpY);
     }
 
     public bool SpawnEnemyDebug(EnemyType type, int spawnPoint = -1, bool isFlashing = false)

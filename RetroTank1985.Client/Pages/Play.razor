@@ -42,7 +42,7 @@
 
             <!-- MOBA-Style Virtual Touch Controller (Floating Dynamic Joystick + Action Cluster) -->
             <div class="w-100 mt-2">
-                <MobaTouchController PlayerIndex="1" ShowPlayerSwitch="true" />
+                <MobaTouchController PlayerIndex="@(_isCoopSession ? (_isCoopHost ? 1 : 2) : 1)" ShowPlayerSwitch="@(!_isCoopSession)" />
             </div>
         </div>
     </MudItem>

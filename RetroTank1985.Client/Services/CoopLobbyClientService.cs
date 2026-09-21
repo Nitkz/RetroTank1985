@@ -31,6 +31,8 @@ public class CoopLobbyClientService : IAsyncDisposable
     public event Action<string>? OnPlayerLeftEvent;
     public event Action<CoopRoomInfo>? OnGameStartingEvent;
     public event Action<WebRtcSignalMessage>? OnSignalReceivedEvent;
+    public event Action<CoopSyncSnapshotDto>? OnGameSnapshotReceivedEvent;
+    public event Action<PlayerInputPacket>? OnPlayerInputReceivedEvent;
     public event Action<string>? OnErrorOccurred;
     public event Action<HubConnectionState>? OnConnectionStateChanged;
 
@@ -128,6 +130,16 @@ public class CoopLobbyClientService : IAsyncDisposable
         _hubConnection.On<WebRtcSignalMessage>(nameof(ICoopLobbyClient.OnReceiveSignal), signal =>
         {
             OnSignalReceivedEvent?.Invoke(signal);
+        });
+
+        _hubConnection.On<CoopSyncSnapshotDto>(nameof(ICoopLobbyClient.OnReceiveGameSnapshot), snapshot =>
+        {
+            OnGameSnapshotReceivedEvent?.Invoke(snapshot);
+        });
+
+        _hubConnection.On<PlayerInputPacket>(nameof(ICoopLobbyClient.OnReceivePlayerInput), input =>
+        {
+            OnPlayerInputReceivedEvent?.Invoke(input);
         });
 
         _hubConnection.On<string>(nameof(ICoopLobbyClient.OnErrorMessage), msg =>
@@ -231,6 +243,24 @@ public class CoopLobbyClientService : IAsyncDisposable
         if (_hubConnection == null) return;
         signal.RoomCode = CurrentRoom?.RoomCode ?? signal.RoomCode;
         await _hubConnection.InvokeAsync(nameof(ICoopLobbyHub.SendSignal), signal);
+    }
+
+    /// <summary>
+    /// ส่ง Game State Snapshot (Host -> Guest)
+    /// </summary>
+    public async Task SendGameSnapshotAsync(string roomCode, CoopSyncSnapshotDto snapshot)
+    {
+        if (_hubConnection == null || _hubConnection.State != HubConnectionState.Connected) return;
+        await _hubConnection.InvokeAsync(nameof(ICoopLobbyHub.SendGameSnapshot), roomCode, snapshot);
+    }
+
+    /// <summary>
+    /// ส่ง Player Input (Guest -> Host)
+    /// </summary>
+    public async Task SendPlayerInputAsync(string roomCode, PlayerInputPacket input)
+    {
+        if (_hubConnection == null || _hubConnection.State != HubConnectionState.Connected) return;
+        await _hubConnection.InvokeAsync(nameof(ICoopLobbyHub.SendPlayerInput), roomCode, input);
     }
 
     private void StartHeartbeat()

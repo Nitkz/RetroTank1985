@@ -16,6 +16,13 @@ public class GameEngineService : IAsyncDisposable
     public IBattleCityEngine Engine => _engine;
     public event Action<TelemetryData>? OnTelemetryUpdated;
     public event Action<int>? OnStageChanged;
+    public event Func<CoopSyncSnapshotDto, Task>? OnCoopSnapshotGenerated;
+    public event Func<PlayerInputPacket, Task>? OnGuestInputGenerated;
+
+    public bool IsCoopSession { get; set; } = false;
+    public bool IsCoopHost { get; set; } = false;
+    private uint _networkFrameCounter = 0;
+    private uint _guestInputSequence = 0;
 
     public GameEngineService(
         IBattleCityEngine engine,
@@ -142,23 +149,61 @@ public class GameEngineService : IAsyncDisposable
         bool pause,
         int fps)
     {
-        _engine.SetInput(new InputState
+        if (IsCoopSession && !IsCoopHost && OnGuestInputGenerated != null)
         {
-            Up = up,
-            Down = down,
-            Left = left,
-            Right = right,
-            Fire = fire,
-            P2Up = p2Up,
-            P2Down = p2Down,
-            P2Left = p2Left,
-            P2Right = p2Right,
-            P2Fire = p2Fire,
-            Pause = pause
-        });
+            byte dir = 0;
+            if (up || p2Up) dir = 1;
+            else if (right || p2Right) dir = 2;
+            else if (down || p2Down) dir = 3;
+            else if (left || p2Left) dir = 4;
+
+            bool isFiring = fire || p2Fire;
+            _guestInputSequence++;
+
+            var inputPacket = new PlayerInputPacket
+            {
+                Sequence = _guestInputSequence,
+                Direction = dir,
+                IsFiring = isFiring,
+                ClientTimestamp = (ushort)(timestamp % 65535)
+            };
+
+            _ = OnGuestInputGenerated.Invoke(inputPacket);
+        }
+
+        if (IsCoopSession && IsCoopHost)
+        {
+            _engine.SetP1Input(up, down, left, right, fire, pause);
+        }
+        else if (!IsCoopSession)
+        {
+            _engine.SetInput(new InputState
+            {
+                Up = up,
+                Down = down,
+                Left = left,
+                Right = right,
+                Fire = fire,
+                P2Up = p2Up,
+                P2Down = p2Down,
+                P2Left = p2Left,
+                P2Right = p2Right,
+                P2Fire = p2Fire,
+                Pause = pause
+            });
+        }
 
         var frame = _engine.Tick(timestamp);
         frame.Fps = fps;
+
+        // Broadcast Snapshot to Guest if Host in Co-Op Session
+        if (IsCoopSession && IsCoopHost && OnCoopSnapshotGenerated != null)
+        {
+            _networkFrameCounter++;
+            // Send Snapshot at 30-60Hz (every frame or alternate frame)
+            var snapshot = _engine.CreateNetworkSnapshot(_networkFrameCounter);
+            _ = OnCoopSnapshotGenerated.Invoke(snapshot);
+        }
 
         // Auto-save High Score when broken
         if (_engine.HighScore > _lastSavedHighScore)

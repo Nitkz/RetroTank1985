@@ -136,6 +136,36 @@ public class CoopLobbyHub : Hub<ICoopLobbyClient>, ICoopLobbyHub
         }
     }
 
+    public async Task SendGameSnapshot(string roomCode, CoopSyncSnapshotDto snapshot)
+    {
+        if (string.IsNullOrWhiteSpace(roomCode)) return;
+        var opponentId = _roomManager.GetOpponentConnectionId(Context.ConnectionId, roomCode);
+        if (!string.IsNullOrWhiteSpace(opponentId))
+        {
+            await Clients.Client(opponentId).OnReceiveGameSnapshot(snapshot);
+        }
+        else
+        {
+            var groupName = GetRoomGroupName(roomCode);
+            await Clients.OthersInGroup(groupName).OnReceiveGameSnapshot(snapshot);
+        }
+    }
+
+    public async Task SendPlayerInput(string roomCode, PlayerInputPacket input)
+    {
+        if (string.IsNullOrWhiteSpace(roomCode)) return;
+        var opponentId = _roomManager.GetOpponentConnectionId(Context.ConnectionId, roomCode);
+        if (!string.IsNullOrWhiteSpace(opponentId))
+        {
+            await Clients.Client(opponentId).OnReceivePlayerInput(input);
+        }
+        else
+        {
+            var groupName = GetRoomGroupName(roomCode);
+            await Clients.OthersInGroup(groupName).OnReceivePlayerInput(input);
+        }
+    }
+
     public async Task SendHeartbeat(string roomCode, int pingMs)
     {
         await _roomManager.UpdateHeartbeatAsync(Context.ConnectionId, roomCode, pingMs);

@@ -12,6 +12,8 @@ public interface ICoopLobbyClient
     Task OnPlayerLeft(string playerId);
     Task OnGameStarting(CoopRoomInfo room);
     Task OnReceiveSignal(WebRtcSignalMessage signal);
+    Task OnReceiveGameSnapshot(CoopSyncSnapshotDto snapshot);
+    Task OnReceivePlayerInput(PlayerInputPacket input);
     Task OnErrorMessage(string message);
 }
 
@@ -27,5 +29,7 @@ public interface ICoopLobbyHub
     Task<RoomActionResult> ChangeStage(string roomCode, int stageNumber);
     Task<RoomActionResult> StartGame(string roomCode);
     Task SendSignal(WebRtcSignalMessage signal);
+    Task SendGameSnapshot(string roomCode, CoopSyncSnapshotDto snapshot);
+    Task SendPlayerInput(string roomCode, PlayerInputPacket input);
     Task SendHeartbeat(string roomCode, int pingMs);
 }
