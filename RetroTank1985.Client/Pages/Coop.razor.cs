@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
 using RetroTank1985.Client.Components.Coop;
+using RetroTank1985.Client.Helpers;
 using RetroTank1985.Client.Services;
 using RetroTank1985.Shared.Models.Network;
 
@@ -10,6 +11,8 @@ namespace RetroTank1985.Client.Pages;
 public partial class Coop : IAsyncDisposable
 {
     [Inject] private CoopLobbyClientService LobbyService { get; set; } = default!;
+    [Inject] private GameStorageService StorageService { get; set; } = default!;
+    [Inject] private GameEngineService EngineService { get; set; } = default!;
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
     [Inject] private IDialogService DialogService { get; set; } = default!;
@@ -22,9 +25,11 @@ public partial class Coop : IAsyncDisposable
     private string InputRoomCode { get; set; } = string.Empty;
     private int SelectedInitialStage { get; set; } = 1;
     private bool IsLoading { get; set; }
+    private GameSettings _settings = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        _settings = await StorageService.GetGameSettingsAsync();
         LobbyService.OnRoomStateChanged += OnRoomUpdated;
         LobbyService.OnErrorOccurred += OnError;
         LobbyService.OnGameStartingEvent += OnGameStarting;
@@ -155,6 +160,33 @@ public partial class Coop : IAsyncDisposable
         if (!result.Success)
         {
             Snackbar.Add(result.Message ?? "Cannot start game", Severity.Warning);
+        }
+    }
+
+    private async Task OpenOptionsDialog()
+    {
+        var parameters = new DialogParameters<RetroTank1985.Client.Components.Arcade.GameOptionsDialog>
+        {
+            { x => x.InitialSettings, _settings }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<RetroTank1985.Client.Components.Arcade.GameOptionsDialog>("CO-OP GAME OPTIONS", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data is GameSettings newSettings)
+        {
+            _settings = newSettings;
+            await StorageService.SaveGameSettingsAsync(newSettings);
+            await EngineService.ApplySettingsAsync(newSettings);
+            Snackbar.Add($"Difficulty preset updated: {GameUiHelper.GetDifficultyLabel(newSettings.Preset)}", Severity.Info);
+            StateHasChanged();
         }
     }
 

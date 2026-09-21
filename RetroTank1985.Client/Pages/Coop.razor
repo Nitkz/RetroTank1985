@@ -117,7 +117,18 @@
         <!-- In Lobby Room Screen -->
         <MudGrid Justify="Justify.Center">
             <MudItem xs="12" md="10" lg="8">
-                <RetroTank1985.Client.Components.Coop.CoopLobbyCard Room="@LobbyService.CurrentRoom" IsHost="@LobbyService.IsHost" IsGuest="@LobbyService.IsGuest" OnCopyCode="CopyRoomCode" OnShareInvite="ShareInviteLink" OnShowQr="ShowQrDialog" OnStageChanged="ChangeStage" OnToggleReady="ToggleReady" OnStartGame="StartGame" OnLeaveRoom="LeaveRoom" />
+                <RetroTank1985.Client.Components.Coop.CoopLobbyCard Room="@LobbyService.CurrentRoom" 
+                                                                     IsHost="@LobbyService.IsHost" 
+                                                                     IsGuest="@LobbyService.IsGuest" 
+                                                                     GameSettings="@_settings"
+                                                                     OnOpenOptions="OpenOptionsDialog"
+                                                                     OnCopyCode="CopyRoomCode" 
+                                                                     OnShareInvite="ShareInviteLink" 
+                                                                     OnShowQr="ShowQrDialog" 
+                                                                     OnStageChanged="ChangeStage" 
+                                                                     OnToggleReady="ToggleReady" 
+                                                                     OnStartGame="StartGame" 
+                                                                     OnLeaveRoom="LeaveRoom" />
             </MudItem>
         </MudGrid>
     }

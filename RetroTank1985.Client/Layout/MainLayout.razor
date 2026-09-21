@@ -23,15 +23,18 @@
         <MudButton Variant="Variant.Text" Color="Color.Warning" Href="arcade" StartIcon="@Icons.Material.Filled.VideogameAsset">
             Arcade (1P)
         </MudButton>
-        <MudButton Variant="Variant.Text" Color="Color.Error" Href="play" StartIcon="@Icons.Material.Filled.SportsEsports">
-            Dev Sandbox
+        <MudButton Variant="Variant.Text" Color="Color.Success" Href="coop" StartIcon="@Icons.Material.Filled.Groups">
+            Online Co-Op (2P)
         </MudButton>
-        <MudButton Variant="Variant.Text" Color="Color.Warning" Href="stage-inspector" StartIcon="@Icons.Material.Filled.Map">
-            Stage &amp; Tiles
-        </MudButton>
-        <MudButton Variant="Variant.Text" Color="Color.Warning" Href="sound-bgm" StartIcon="@Icons.Material.Filled.GraphicEq">
-            Sound &amp; BGM
-        </MudButton>
+
+        <!-- Dev Tools Dropdown Menu -->
+        <MudMenu Label="Dev Tools" Color="Color.Error" StartIcon="@Icons.Material.Filled.Build" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Dense="true">
+            <MudMenuItem Href="dev" Icon="@Icons.Material.Filled.Dashboard">Dev Portal</MudMenuItem>
+            <MudMenuItem Href="sandbox" Icon="@Icons.Material.Filled.Terminal">Engine Sandbox</MudMenuItem>
+            <MudMenuItem Href="sound-bgm" Icon="@Icons.Material.Filled.GraphicEq">Sound APU Synth</MudMenuItem>
+            <MudMenuItem Href="stage-inspector" Icon="@Icons.Material.Filled.Map">Stage Inspector</MudMenuItem>
+        </MudMenu>
+
         <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/Nitkz/RetroTank1985" Target="_blank" />
     </MudAppBar>
 

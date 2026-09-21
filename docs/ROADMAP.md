@@ -140,8 +140,30 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 
 ---
 
-### 🚀 Phase 8: 🌐 Real-Time Online 2-Player Co-Op (Next Feature)
+### 🚀 Phase 8: 🌐 Real-Time Online 2-Player Co-Op & Modern UX (In Progress)
 > 📄 **Detailed Design Document:** [ONLINE_COOP_DESIGN_SPEC.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/ONLINE_COOP_DESIGN_SPEC.md)
+
+- [x] **Frictionless Onboarding & Mode Selection Hub (`/`)**:
+  - Direct 1P Single Campaign launcher with interactive Stage Selector (1–35) and instant `START MISSION`.
+  - Fast Game Options dialog (Kids Friendly, Classic, Veteran; Armor & Lives setup).
+  - 2P Co-Op direct lobby onboarding card with live room status.
+  - Dedicated Developer Suite portal bar.
+- [x] **Streamlined Arcade Arena (`/arcade`)**:
+  - Pure gameplay HUD (removed mid-game stage skip cheats and accidental restart buttons).
+  - Dedicated `STAGE XX` badge, sound toggle, fullscreen mode, and safe exit.
+  - Single-player automatic hiding of P2 controller switch and emote wheel.
+- [x] **Lobby Options & Matchmaking (`/coop`)**:
+  - Host pre-game Options configuration dialog.
+  - Real-time Difficulty & Armor preset badge broadcast to lobby players.
+  - 6-character memorable Room Codes (e.g. `TANK85`).
+  - One-click invite link sharing (`https://.../coop?room=TANK85`).
+  - Built-in QR Code generator for instant Mobile-to-Desktop pairing.
+  - Real-time RTT / Ping latency HUD monitor.
+- [x] **Retro 8-Bit Emote Wheel**:
+  - Radial quick-chat messages ("DEFEND HQ!", "TAKE STAR!", "NICE SHOT!").
+- [x] **Developer Suite & Sandbox Rebrand (`/dev`, `/sandbox`)**:
+  - Engine Sandbox & Physics Lab (`/sandbox`, `/dev/sandbox`).
+  - Unified Developer Portal (`/dev`) linking Sandbox, Audio Synth, and Stage Inspector.
 - [ ] **Dual-Mode Networking Architecture**:
   - **WebRTC DataChannels (P2P)**: Direct browser-to-browser UDP channel for static Cloudflare Pages / Standalone WASM deployment.
   - **SignalR Binary WebSockets Hub**: High-performance fallback and dedicated server multiplayer backend for ASP.NET Core host.
@@ -152,16 +174,7 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
   - Local prediction for P2 tank steering and shooting for instant 0ms control feedback.
   - Smooth Hermite interpolation for enemy tanks and projectile trajectories.
   - Soft-snap desync reconciliation.
-- [ ] **Frictionless Lobby & Room Matchmaking (`/coop`)**:
-  - 6-character memorable Room Codes (e.g. `TANK85`).
-  - One-click invite link sharing (`https://.../coop?room=TANK85`).
-  - Built-in QR Code generator for instant Mobile-to-Desktop pairing.
-  - Real-time RTT / Ping latency HUD monitor.
-- [ ] **Authentic Co-Op Gameplay Features**:
-  - **Borrow Life Mechanic**: Dead players can borrow extra lives from teammates by pressing Fire at respawn.
-  - **Friendly Fire Tuning**: Classic clink & stun lock vs Kids Safe pass-through mode.
-  - **Retro 8-Bit Emote Wheel**: Radial quick-chat messages ("DEFEND HQ!", "TAKE STAR!", "NICE SHOT!").
-  - **Disconnection Handling**: 15s reconnect grace period with automatic state resumption.
+- [ ] **Borrow Life Mechanic**: Dead players can borrow extra lives from teammates by pressing Fire at respawn.
 - [ ] **Dual-Player End-of-Stage Tally & MVP System**:
   - Synchronized tally screen displaying individual kill stats, point breakdown, and match MVP awards.
 

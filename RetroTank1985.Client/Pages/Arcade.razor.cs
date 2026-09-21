@@ -208,6 +208,18 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
         await EngineService.SetStageAsync(1);
     }
 
+    private async Task HandleExitAsync()
+    {
+        if (_isCoopSession)
+        {
+            await HandleLeaveSession();
+        }
+        else
+        {
+            HandleReturnToMenu();
+        }
+    }
+
     private void HandleReturnToMenu()
     {
         NavigationManager.NavigateTo("/");

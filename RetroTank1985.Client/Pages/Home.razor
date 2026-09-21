@@ -1,4 +1,9 @@
 @page "/"
+@using RetroTank1985.Client.Components.Arcade
+@using RetroTank1985.Client.Services
+@using RetroTank1985.Shared.Models
+@using RetroTank1985.Client.Helpers
+
 <PageTitle>RetroTank 1985 | Hub</PageTitle>
 
 <div class="mb-8 text-center">
@@ -9,141 +14,206 @@
         NES TECHNICAL REMAKE &amp; RE-ENGINEERING HUB (.NET 9 WASM)
     </MudText>
     <MudText Typo="Typo.caption" Class="pixel-text mt-2" Style="color: #64748b; display: block; font-size: 0.65rem;">
-        ORIGINAL GAME IP BELONGS TO BANDAI NAMCO • BUILT FOR EDUCATIONAL &amp; ARCHIVAL PURPOSES
+        CHOOSE GAME MODE &bull; DIRECT CAMPAIGN LAUNCH OR ONLINE CO-OP
     </MudText>
 </div>
 
-<MudGrid Justify="Justify.Center" Spacing="4">
-    <!-- Featured 1: Full Arcade Mode (1P Offline Campaign) -->
+<!-- Main Game Mode Selection: 1P Single Campaign vs 2P Online Co-Op -->
+<MudGrid Justify="Justify.Center" Spacing="4" Class="mb-8">
+    <!-- Mode 1: Single Player (1P Campaign with In-Card Setup) -->
     <MudItem xs="12" md="6">
-        <a href="arcade" class="hub-card">
-            <MudCard Elevation="6" Class="retro-card pa-5 h-100" Style="background: linear-gradient(145deg, #1f1b2e 0%, #11141c 100%); border-color: #f59e0b;">
+        <MudCard Elevation="8" Class="retro-card pa-5 h-100 d-flex flex-column justify-space-between" Style="background: linear-gradient(145deg, #1f1b2e 0%, #11141c 100%); border: 2px solid #f59e0b;">
+            <div>
                 <div class="d-flex align-center justify-space-between mb-3">
                     <div class="d-flex align-center">
-                        <MudIcon Icon="@Icons.Material.Filled.VideogameAsset" Color="Color.Warning" Size="Size.Large" Class="mr-3" />
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Warning" Size="Size.Large" Class="mr-3" />
                         <div>
-                            <MudText Typo="Typo.h5" Class="pixel-text font-bold" Style="color: #f1c40f; font-size: 1.1rem;">
-                                ARCADE MODE
+                            <MudText Typo="Typo.h5" Class="pixel-text font-bold" Style="color: #f1c40f; font-size: 1.15rem;">
+                                SINGLE PLAYER
                             </MudText>
-                            <span style="font-size: 0.75rem; color: #94a3b8;">1P Offline Campaign &bull; Stages 1–35 &bull; Fullscreen</span>
+                            <span style="font-size: 0.75rem; color: #94a3b8;">1P Offline Campaign &bull; Stages 1–35</span>
                         </div>
                     </div>
                     <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
-                        PLAYABLE (1P)
+                        1-PLAYER SOLO
                     </MudChip>
                 </div>
+
                 <MudText Typo="Typo.body2" Style="color: #cbd5e1; line-height: 1.6;" Class="mb-4">
-                    ประสบการณ์การเล่นเกม Battle City 1985 โหมดแคมเปญ 1P Solo แบบออฟไลน์สมบูรณ์: ควบคุมด้วยคีย์บอร์ดแท้ 100%, โหมด Fullscreen เต็มจอ, ศัตรู AI Wave 20 คัน, ทำลายกำแพงอิฐ Sub-tile, พาวเวอร์อัป 6 แบบ, และหน้าสรุปคะแนน Stage Tally
+                    ลุยภารกิจเดี่ยวเต็มรูปแบบ: ปกป้องฐานนกอินทรี, บุกตะลุยศัตรู 20 คัน, ทำลายกำแพงอิฐ Sub-tile, ควบคุมด้วยคีย์บอร์ดหรือทัชสกรีน และแข่งขันทำ High Score
                 </MudText>
-                <div class="d-flex justify-space-between align-center pt-2" style="border-top: 1px solid #232938;">
-                    <span class="pixel-text" style="font-size: 0.7rem; color: #f59e0b;">LAUNCH ARCADE CAMPAIGN &rarr;</span>
-                    <MudIcon Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Warning" />
+
+                <!-- In-Card Setup: Stage & Difficulty Config -->
+                <div class="pa-3 mb-4" style="background: rgba(0, 0, 0, 0.4); border: 1px solid #334155; border-radius: 8px;">
+                    <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-2">
+                        <span class="pixel-text" style="color: #94a3b8; font-size: 0.65rem;">MISSION PARAMETERS:</span>
+                        <MudChip T="string" Size="Size.Small" Color="@GameUiHelper.GetDifficultyColor(_settings.Preset)" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.6rem;">
+                            @GameUiHelper.GetDifficultyLabel(_settings.Preset)
+                        </MudChip>
+                    </div>
+
+                    <div class="d-flex align-center gap-2 flex-wrap">
+                        <div style="flex: 1; min-width: 140px;">
+                            <MudSelect T="int" 
+                                       @bind-Value="_selectedStage" 
+                                       Label="Starting Stage" 
+                                       Dense="true" 
+                                       Margin="Margin.Dense" 
+                                       Variant="Variant.Outlined" 
+                                       Style="font-family: var(--retro-font); font-size: 0.75rem;">
+                                @for (int i = 1; i <= 35; i++)
+                                {
+                                    var stageNum = i;
+                                    <MudSelectItem Value="@stageNum">STAGE @stageNum.ToString("D2")</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </div>
+
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Info" 
+                                   Size="Size.Medium" 
+                                   StartIcon="@Icons.Material.Filled.Tune"
+                                   OnClick="OpenOptionsDialog"
+                                   Class="pixel-text"
+                                   Style="font-size: 0.7rem; background-color: #0284c7; height: 40px;">
+                            OPTIONS (⚙️)
+                        </MudButton>
+                    </div>
                 </div>
-            </MudCard>
-        </a>
+            </div>
+
+            <!-- Big Action Button -->
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Warning" 
+                       FullWidth="true" 
+                       OnClick="StartSinglePlayer"
+                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                       Class="pixel-text py-3" 
+                       Style="font-size: 0.95rem; background-color: #f59e0b; color: #000; font-weight: bold; box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);">
+                START MISSION (STAGE @_selectedStage.ToString("D2")) &rarr;
+            </MudButton>
+        </MudCard>
     </MudItem>
 
-    <!-- Featured 2: Online 2-Player Co-Op -->
+    <!-- Mode 2: Online 2-Player Co-Op -->
     <MudItem xs="12" md="6">
-        <a href="coop" class="hub-card">
-            <MudCard Elevation="6" Class="retro-card pa-5 h-100" Style="background: linear-gradient(145deg, #13241d 0%, #11141c 100%); border-color: #2ecc71;">
+        <MudCard Elevation="8" Class="retro-card pa-5 h-100 d-flex flex-column justify-space-between" Style="background: linear-gradient(145deg, #13241d 0%, #11141c 100%); border: 2px solid #2ecc71;">
+            <div>
                 <div class="d-flex align-center justify-space-between mb-3">
                     <div class="d-flex align-center">
-                        <MudIcon Icon="@Icons.Material.Filled.Public" Color="Color.Success" Size="Size.Large" Class="mr-3" />
+                        <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Success" Size="Size.Large" Class="mr-3" />
                         <div>
-                            <MudText Typo="Typo.h5" Class="pixel-text font-bold" Style="color: #2ecc71; font-size: 1.1rem;">
-                                ONLINE 2P CO-OP
+                            <MudText Typo="Typo.h5" Class="pixel-text font-bold" Style="color: #2ecc71; font-size: 1.15rem;">
+                                2-PLAYER CO-OP
                             </MudText>
-                            <span style="font-size: 0.75rem; color: #94a3b8;">Real-Time Multiplayer &bull; WebRTC/SignalR &bull; QR Code</span>
+                            <span style="font-size: 0.75rem; color: #94a3b8;">Real-Time SignalR Multiplayer &bull; WebRTC &bull; QR Code</span>
                         </div>
                     </div>
                     <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
                         ONLINE (2P)
                     </MudChip>
                 </div>
+
                 <MudText Typo="Typo.body2" Style="color: #cbd5e1; line-height: 1.6;" Class="mb-4">
-                    เล่นออนไลน์ 2 คนแบบเรียลไทม์: สร้างห้องด้วยรหัส 6 หลัก, สแกน QR Code หรือแชร์ลิงก์ให้เพื่อนเข้าร่วมได้ทันทีจากมือถือ/คอมพิวเตอร์, ช่วยกันปกป้องฐานนกอินทรี และร่วมยืมชีวิต (Borrow Life) ลุย 35 ด่าน
+                    ต่อสู้ร่วมกับเพื่อนแบบออนไลน์เรียลไทม์ 60Hz: สร้างห้องด้วยรหัส 6 หลัก, สแกน QR Code เพื่อให้เพื่อนเข้าจากมือถือ/คอมพิวเตอร์, ช่วยกันปกป้องฐาน, ส่งสัญญาณ Emote และยืมชีวิต (Borrow Life)
                 </MudText>
-                <div class="d-flex justify-space-between align-center pt-2" style="border-top: 1px solid #232938;">
-                    <span class="pixel-text" style="font-size: 0.7rem; color: #2ecc71;">ENTER CO-OP LOBBY &rarr;</span>
-                    <MudIcon Icon="@Icons.Material.Filled.Wifi" Color="Color.Success" />
-                </div>
-            </MudCard>
-        </a>
-    </MudItem>
 
-    <!-- Active Section: Stage Arena (Dev Sandbox & Physics Lab) -->
-    <MudItem xs="12" sm="6" md="4">
-        <a href="play" class="hub-card">
-            <MudCard Elevation="4" Class="retro-card pa-4 h-100" Style="background: linear-gradient(145deg, #181e2e 0%, #11141c 100%);">
-                <div class="d-flex align-center justify-space-between mb-3">
-                    <div class="d-flex align-center">
-                        <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Error" Size="Size.Medium" Class="mr-2" />
-                        <div>
-                            <MudText Typo="Typo.h6" Class="pixel-text font-bold" Style="color: #ef4444; font-size: 0.95rem;">
-                                DEV SANDBOX
-                            </MudText>
-                            <span style="font-size: 0.7rem; color: #94a3b8;">Cheat Tools &bull; Touch D-Pad</span>
-                        </div>
+                <div class="pa-3 mb-4" style="background: rgba(0, 0, 0, 0.4); border: 1px solid #1e293b; border-radius: 8px;">
+                    <div class="d-flex align-center gap-2 mb-1">
+                        <MudIcon Icon="@Icons.Material.Filled.Wifi" Color="Color.Success" Size="Size.Small" />
+                        <span class="pixel-text" style="color: #2ecc71; font-size: 0.7rem;">MULTIPLAYER FEATURES:</span>
+                    </div>
+                    <div class="pixel-text" style="font-size: 0.6rem; color: #94a3b8; line-height: 1.6;">
+                        &bull; Zero-Install Web Link / QR Code Share<br />
+                        &bull; Host Sets Stage &amp; Difficulty Preset in Lobby<br />
+                        &bull; 8-Bit Tactical Emote Wheel (Key C / Touch UI)
                     </div>
                 </div>
-                <MudText Typo="Typo.body2" Style="color: #cbd5e1;" Class="mb-3">
-                    ห้องทดลองโกงเกมเสกศัตรู/ไอเทม, Nuke ล้างจอ, Star Power, และตรวจวัด Telemetry
-                </MudText>
-                <div class="d-flex justify-space-between align-center">
-                    <span class="pixel-text" style="font-size: 0.65rem; color: #ef4444;">OPEN SANDBOX &rarr;</span>
-                    <MudIcon Icon="@Icons.Material.Filled.Terminal" Color="Color.Error" Size="Size.Small" />
-                </div>
-            </MudCard>
-        </a>
-    </MudItem>
+            </div>
 
-    <!-- Sub Section 1: Sound & BGM Synthesizer -->
-    <MudItem xs="12" sm="6" md="4">
-        <a href="sound-bgm" class="hub-card">
-            <MudCard Elevation="3" Class="retro-card pa-4 h-100">
-                <div class="d-flex align-center mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.GraphicEq" Color="Color.Warning" Size="Size.Medium" Class="mr-2" />
-                    <div>
-                        <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.95rem;">
-                            SOUND &amp; BGM
-                        </MudText>
-                        <span style="font-size: 0.7rem; color: #94a3b8;">Web Audio APU Synth</span>
-                    </div>
-                </div>
-                <MudText Typo="Typo.body2" Style="color: #cbd5e1;" Class="mb-3">
-                    จำลอง NES APU Synth (Pulse 1/2, Triangle, Noise) สำหรับ SFX และ BGM ดั้งเดิม
-                </MudText>
-                <div class="d-flex justify-space-between align-center">
-                    <span class="pixel-text" style="font-size: 0.65rem; color: #f1c40f;">EXPLORE SYNTH &rarr;</span>
-                    <MudIcon Icon="@Icons.Material.Filled.PlayCircleOutline" Color="Color.Warning" Size="Size.Small" />
-                </div>
-            </MudCard>
-        </a>
-    </MudItem>
-
-    <!-- Sub Section 2: ROM & Tilemap Inspector -->
-    <MudItem xs="12" sm="6" md="4">
-        <a href="stage-inspector" class="hub-card">
-            <MudCard Elevation="3" Class="retro-card pa-4 h-100">
-                <div class="d-flex align-center mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.Map" Color="Color.Warning" Size="Size.Medium" Class="mr-2" />
-                    <div>
-                        <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.95rem;">
-                            STAGE INSPECTOR
-                        </MudText>
-                        <span style="font-size: 0.7rem; color: #94a3b8;">35 Stages &bull; CHR Tiles</span>
-                    </div>
-                </div>
-                <MudText Typo="Typo.body2" Style="color: #cbd5e1;" Class="mb-3">
-                    ตรวจสอบแผนที่ด่าน 1 - 35, ตารางเกิดศัตรู, และสไปรต์ CHR-ROM 512 ไทล์
-                </MudText>
-                <div class="d-flex justify-space-between align-center">
-                    <span class="pixel-text" style="font-size: 0.65rem; color: #f1c40f;">OPEN INSPECTOR &rarr;</span>
-                    <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Color="Color.Warning" Size="Size.Small" />
-                </div>
-            </MudCard>
-        </a>
+            <!-- Big Action Button -->
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Success" 
+                       FullWidth="true" 
+                       Href="/coop"
+                       StartIcon="@Icons.Material.Filled.MeetingRoom"
+                       Class="pixel-text py-3" 
+                       Style="font-size: 0.95rem; font-weight: bold; box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);">
+                ENTER CO-OP LOBBY &rarr;
+            </MudButton>
+        </MudCard>
     </MudItem>
 </MudGrid>
 
+<!-- Developer & Diagnostics Sub-bar (Discreet entry to technical tools) -->
+<div class="pa-4 d-flex justify-space-between align-center flex-wrap gap-3 w-100" 
+     style="background: #0f141f; border: 1px solid #1e293b; border-radius: 8px;">
+    <div class="d-flex align-center gap-2">
+        <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Error" Size="Size.Small" />
+        <span class="pixel-text" style="font-size: 0.7rem; color: #ef4444;">DEVELOPER &amp; TECHNICAL TOOLS:</span>
+        <span class="pixel-text d-none d-md-inline" style="font-size: 0.6rem; color: #64748b;">
+            ENGINE LAB &bull; NES APU SYNTH &bull; CHR-ROM INSPECTOR
+        </span>
+    </div>
+
+    <div class="d-flex align-center gap-2 flex-wrap">
+        <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" Href="/sandbox" Class="pixel-text" Style="font-size: 0.65rem;">
+            SANDBOX LAB
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" Href="/sound-bgm" Class="pixel-text" Style="font-size: 0.65rem;">
+            SOUND SYNTH
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" Href="/stage-inspector" Class="pixel-text" Style="font-size: 0.65rem;">
+            STAGE INSPECTOR
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Default" Size="Size.Small" Href="/dev" Class="pixel-text" Style="font-size: 0.65rem;">
+            DEV PORTAL &rarr;
+        </MudButton>
+    </div>
+</div>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] private GameStorageService StorageService { get; set; } = default!;
+    [Inject] private GameEngineService EngineService { get; set; } = default!;
+    [Inject] private IDialogService DialogService { get; set; } = default!;
+
+    private int _selectedStage = 1;
+    private GameSettings _settings = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _settings = await StorageService.GetGameSettingsAsync();
+    }
+
+    private async Task OpenOptionsDialog()
+    {
+        var parameters = new DialogParameters<GameOptionsDialog>
+        {
+            { x => x.InitialSettings, _settings }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<GameOptionsDialog>("CAMPAIGN OPTIONS", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data is GameSettings newSettings)
+        {
+            _settings = newSettings;
+            await StorageService.SaveGameSettingsAsync(newSettings);
+            await EngineService.ApplySettingsAsync(newSettings);
+            StateHasChanged();
+        }
+    }
+
+    private void StartSinglePlayer()
+    {
+        NavigationManager.NavigateTo($"/arcade?stage={_selectedStage}");
+    }
+}

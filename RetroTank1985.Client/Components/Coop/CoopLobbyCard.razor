@@ -122,8 +122,18 @@
 
             @if (IsHost)
             {
-                <div class="d-flex align-center gap-2">
-                    <MudSelect T="int" Value="@Room.SelectedStage" ValueChanged="@OnStageChanged" Label="Choose Stage" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width: 140px;">
+                <div class="d-flex align-center gap-2 flex-wrap">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Info" 
+                               Size="Size.Small" 
+                               StartIcon="@Icons.Material.Filled.Tune"
+                               OnClick="OnOpenOptions"
+                               Class="pixel-text"
+                               Style="font-size: 0.65rem; background-color: #0284c7;">
+                        OPTIONS (⚙️)
+                    </MudButton>
+
+                    <MudSelect T="int" Value="@Room.SelectedStage" ValueChanged="@OnStageChanged" Label="Choose Stage" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width: 130px;">
                         @for (int i = 1; i <= 35; i++)
                         {
                             var stageNum = i;
@@ -134,9 +144,14 @@
             }
             else
             {
-                <MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Outlined" Class="pixel-text" Style="font-size: 0.65rem;">
-                    HOST CONTROLS STAGE
-                </MudChip>
+                <div class="d-flex align-center gap-2">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
+                        @(GameSettings?.Preset != null ? GameUiHelper.GetDifficultyLabel(GameSettings.Preset) : "CLASSIC 1985")
+                    </MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Outlined" Class="pixel-text" Style="font-size: 0.65rem;">
+                        HOST CONTROLS STAGE &amp; RULES
+                    </MudChip>
+                </div>
             }
         </div>
     </div>
@@ -209,6 +224,12 @@
 
     [Parameter]
     public bool IsGuest { get; set; }
+
+    [Parameter]
+    public GameSettings? GameSettings { get; set; }
+
+    [Parameter]
+    public EventCallback OnOpenOptions { get; set; }
 
     [Parameter]
     public EventCallback OnCopyCode { get; set; }

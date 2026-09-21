@@ -1,0 +1,113 @@
+@page "/dev"
+@page "/dev-tools"
+
+<PageTitle>RetroTank 1985 | Developer &amp; Technical Suite</PageTitle>
+
+<div class="retro-container py-6">
+    <div class="mb-6 text-center">
+        <div class="d-flex align-center justify-center gap-2 mb-2">
+            <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Error" Size="Size.Large" />
+            <MudText Typo="Typo.h4" Class="pixel-text font-bold" Style="color: #ef4444; text-shadow: 0 0 16px rgba(239, 68, 68, 0.4);">
+                DEVELOPER &amp; TECHNICAL SUITE
+            </MudText>
+        </div>
+        <MudText Typo="Typo.subtitle1" Style="color: #94a3b8; letter-spacing: 1px;">
+            INTERNAL ENGINEERING BENCH, TELEMETRY LAB &amp; NES APU ARCHIVES
+        </MudText>
+    </div>
+
+    <MudGrid Spacing="4" Justify="Justify.Center">
+        <!-- 1. Engine Sandbox & Physics Lab -->
+        <MudItem xs="12" md="4">
+            <a href="sandbox" class="hub-card">
+                <MudCard Elevation="6" Class="retro-card pa-5 h-100 d-flex flex-column justify-space-between" Style="background: linear-gradient(145deg, #241619 0%, #11141c 100%); border-color: #ef4444;">
+                    <div>
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <div class="d-flex align-center gap-2">
+                                <MudIcon Icon="@Icons.Material.Filled.SportsEsports" Color="Color.Error" Size="Size.Large" />
+                                <MudText Typo="Typo.h6" Class="pixel-text font-bold" Style="color: #ef4444; font-size: 1rem;">
+                                    ENGINE SANDBOX
+                                </MudText>
+                            </div>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.6rem;">
+                                LAB
+                            </MudChip>
+                        </div>
+                        <MudText Typo="Typo.body2" Style="color: #cbd5e1; line-height: 1.6;" Class="mb-4">
+                            ห้องทดลองฟิสิกส์และระบบโกงเกม (Physics Lab &amp; Cheat Tools): เสกศัตรูทุกระดับ, Nuke ล้างจอ, ปรับระดับดาว Star Power, กางโล่ป้องกัน, ป้อมอินทรีเหล็ก, และอ่าน Telemetry HUD สด
+                        </MudText>
+                    </div>
+
+                    <div class="d-flex justify-space-between align-center pt-3" style="border-top: 1px solid #232938;">
+                        <span class="pixel-text" style="font-size: 0.7rem; color: #ef4444;">LAUNCH SANDBOX &rarr;</span>
+                        <MudIcon Icon="@Icons.Material.Filled.Terminal" Color="Color.Error" />
+                    </div>
+                </MudCard>
+            </a>
+        </MudItem>
+
+        <!-- 2. Sound & BGM Synthesizer -->
+        <MudItem xs="12" md="4">
+            <a href="sound-bgm" class="hub-card">
+                <MudCard Elevation="6" Class="retro-card pa-5 h-100 d-flex flex-column justify-space-between" Style="background: linear-gradient(145deg, #261f14 0%, #11141c 100%); border-color: #f59e0b;">
+                    <div>
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <div class="d-flex align-center gap-2">
+                                <MudIcon Icon="@Icons.Material.Filled.GraphicEq" Color="Color.Warning" Size="Size.Large" />
+                                <MudText Typo="Typo.h6" Class="pixel-text font-bold" Style="color: #f59e0b; font-size: 1rem;">
+                                    APU SOUND SYNTH
+                                </MudText>
+                            </div>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.6rem;">
+                                AUDIO
+                            </MudChip>
+                        </div>
+                        <MudText Typo="Typo.body2" Style="color: #cbd5e1; line-height: 1.6;" Class="mb-4">
+                            ระบบจำลองชิปเสียง NES 2A03 APU (Web Audio Synthesizer): ทดสอบ Pulse 1/2 Square Waves, Triangle Bass, Noise Explosions, และเล่นเพลง Intro / Stage Clear / Game Over BGM
+                        </MudText>
+                    </div>
+
+                    <div class="d-flex justify-space-between align-center pt-3" style="border-top: 1px solid #232938;">
+                        <span class="pixel-text" style="font-size: 0.7rem; color: #f59e0b;">EXPLORE SYNTH &rarr;</span>
+                        <MudIcon Icon="@Icons.Material.Filled.PlayCircleOutline" Color="Color.Warning" />
+                    </div>
+                </MudCard>
+            </a>
+        </MudItem>
+
+        <!-- 3. Stage & CHR ROM Inspector -->
+        <MudItem xs="12" md="4">
+            <a href="stage-inspector" class="hub-card">
+                <MudCard Elevation="6" Class="retro-card pa-5 h-100 d-flex flex-column justify-space-between" Style="background: linear-gradient(145deg, #132128 0%, #11141c 100%); border-color: #0284c7;">
+                    <div>
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <div class="d-flex align-center gap-2">
+                                <MudIcon Icon="@Icons.Material.Filled.Map" Color="Color.Info" Size="Size.Large" />
+                                <MudText Typo="Typo.h6" Class="pixel-text font-bold" Style="color: #38bdf8; font-size: 1rem;">
+                                    STAGE INSPECTOR
+                                </MudText>
+                            </div>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.6rem;">
+                                ROM DATA
+                            </MudChip>
+                        </div>
+                        <MudText Typo="Typo.body2" Style="color: #cbd5e1; line-height: 1.6;" Class="mb-4">
+                            เครื่องมือตรวจสอบแผนที่ด่าน 1–35 จาก ROM ดั้งเดิม: โครงสร้างตาราง Brick/Steel/Water/Forest, ลำดับการเกิดของศัตรู 20 คัน, และตารางสไปรต์ CHR-ROM 512 ไทล์
+                        </MudText>
+                    </div>
+
+                    <div class="d-flex justify-space-between align-center pt-3" style="border-top: 1px solid #232938;">
+                        <span class="pixel-text" style="font-size: 0.7rem; color: #38bdf8;">OPEN INSPECTOR &rarr;</span>
+                        <MudIcon Icon="@Icons.Material.Filled.Layers" Color="Color.Info" />
+                    </div>
+                </MudCard>
+            </a>
+        </MudItem>
+    </MudGrid>
+
+    <div class="text-center mt-8">
+        <MudButton Variant="Variant.Outlined" Color="Color.Default" Href="/" StartIcon="@Icons.Material.Filled.ArrowBack" Class="pixel-text" Style="font-size: 0.75rem;">
+            RETURN TO GAME HUB
+        </MudButton>
+    </div>
+</div>

@@ -151,8 +151,16 @@ public class CoopSyncSnapshotDto
 ```
 
 ### 4.1 หน้าจอ Lobby Room UI (`/coop`)
-- **Host Room Card**: แสดงข้อมูลผู้เล่น 1 (สีเหลือง), สิทธิ์ในการเลือก Stage 01–35, สิทธิ์ในการเลือกระดับความยาก (Original 1985 / Tactical Armor / Kids Safe)
-- **Guest Room Card**: แสดงข้อมูลผู้เล่น 2 (สีเขียว), ปุ่มกดยืนยันความพร้อม `[ READY ]`
+- **Host Room Card**:
+  - แสดงข้อมูลผู้เล่น 1 (สีเหลือง)
+  - สิทธิ์ในการเลือก Stage 01–35
+  - **ปุ่มตั้งค่าเกมก่อนเริ่ม `[ ⚙️ OPTIONS ]`**: กำหนดระดับความยาก (Kids Friendly / Classic 1985 / Veteran), Starting Lives, Starting Armor HP และฐานทัพอินทรีเหล็ก
+  - **Badge แสดงโหมดความยากแบบเรียลไทม์**: ส่งสัญญาณให้ทั้ง Host และ Guest เห็นระดับความยากและจำนวนชีวิตตรงกันทันที
+  - ปุ่ม `[ 🚀 START GAME ]` เมื่อทั้งสองฝ่ายพร้อม
+- **Guest Room Card**:
+  - แสดงข้อมูลผู้เล่น 2 (สีเขียว)
+  - Badge แสดงโหมดความยากที่ Host เลือกไว้
+  - ปุ่มกดยืนยันความพร้อม `[ READY ]`
 - **Ping / Connection Quality Indicator**:
   - 🟢 **Excellent**: Ping $< 50\text{ ms}$ (Jitter $< 5\text{ ms}$)
   - 🟡 **Good**: Ping $50 - 120\text{ ms}$

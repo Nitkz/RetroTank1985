@@ -14,19 +14,14 @@
                   Telemetry="@_telemetry"
                   Settings="@_settings" />
 
-    <!-- 2. Arcade Control Bar (Stage Step, Options, Restart, Sound, Fullscreen, Emotes) -->
+    <!-- 2. Arcade Control Bar (Stage Indicator, Exit, Sound, Fullscreen, Emotes) -->
     <ArcadeControlBar IsCoopSession="@_isCoopSession"
                       SelectedStage="@_selectedStage"
                       IsMuted="@_isMuted"
-                      OnPrev="OnPrevClicked"
-                      OnNext="OnNextClicked"
-                      OnStageSelected="OnStageSelected"
-                      OnRestart="RestartStage"
-                      OnOpenOptions="OpenOptionsDialog"
+                      OnExit="HandleExitAsync"
                       OnToggleEmote="ToggleEmoteWheel"
                       OnToggleMute="ToggleMute"
-                      OnToggleFullscreen="ToggleFullscreen"
-                      OnLeaveRoom="HandleLeaveSession" />
+                      OnToggleFullscreen="ToggleFullscreen" />
 
     <!-- 3. Arcade Screen Container (Houses Canvas + Overlays + MOBA Touch Controller) -->
     <div id="arcadeBezelContainer" class="arcade-bezel mb-3" style="position: relative; width: 536px; max-width: 100%; display: flex; flex-direction: column; align-items: stretch;">

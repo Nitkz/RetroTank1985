@@ -95,140 +95,50 @@ publish-wasm.bat
 
 ## 🕹 Features & Architecture
 
-### 1. Retro Hub (Main Dashboard)
-- Central access point for all reverse-engineered game modules.
-- Responsive arcade cabinet aesthetic with authentic 1985 color grading.
+### 1. Game Launch Hub (`/`)
+- **Frictionless Onboarding**: Central launchpad designed to get players into the action immediately.
+- **1-Player Single Campaign**:
+  - Direct stage selector (Stages 1–35) with quick-pick grid and stepper buttons.
+  - Quick game options dialog (Difficulty presets: Kids Friendly, Classic 1985, Veteran; Starting Lives & Armor).
+  - One-click `START MISSION` button launching directly into `/arcade?stage=XX`.
+- **2-Player Online Co-Op**:
+  - Instant link to multiplayer lobby with live room codes and QR pairing.
+- **Dev Tools Quick Access**: Direct links to technical sandboxes, audio synthesizer, and ROM inspector.
 
-### 2. Arcade Mode (`/arcade`) — Authentic 1-Player Offline Campaign
-- **Pure Retro Arcade Experience**:
-  - Focuses entirely on single-player 1P campaign progression across all 35 original NES stages.
-  - **Seamless Cross-Platform Play**: Full support for Desktop keyboard controls and Mobile Touch with an ergonomic virtual joystick.
-- **Keyboard Control Scheme (Desktop)**:
-  - **Move**: `Arrow Keys` or `W, A, S, D` (with Famicom 8px grid snapping)
-  - **Fire**: `Enter`, `Space`, or `J`
-  - **Pause**: `P` or `Escape`
-  - **Restart Current Stage**: `R`
-- **Fullscreen Cabinet Mode**:
-  - Dedicated **FULLSCREEN [F]** toggle button and `F` keyboard shortcut.
-  - Integration with browser Fullscreen API and CSS aspect-ratio lock (`:fullscreen`), maintaining sharp NES pixel scaling on any display resolution.
-  - **Mobile HUD Overlay**: Transparent on-screen joystick and fire buttons seamlessly overlay in Fullscreen mode with safe-area notch awareness.
-- **Ergonomic MOBA Virtual Joystick**:
-  - Floating dynamic joystick base spawning and centering directly where the left thumb touches.
-  - Smooth radial clamping with deadzone and 4-way angle snapping (-45°..45° Right, 45°..135° Down, etc.) tailored for authentic Famicom 8px grid alignment.
-  - Cardinal glow directional arrows lighting up dynamically based on active heading.
-  - Prominent right-hand Fire button with tactile press feedback and quick Pause/Fullscreen toggles.
-- **Campaign Flow**:
-  - Live HUD displaying Score, High Score, and Lives.
-  - Quick Stage Jump selector (`< PREV`, `STAGE 01-35`, `NEXT >`).
-  - Automatic stage-to-stage advancement after the Stage Tally chime sequence.
+### 2. Arcade Mode (`/arcade`) — Focused 1P & Co-Op Arena
+- **Pure Gameplay Arena**:
+  - Streamlined HUD focused strictly on gameplay — stage skip cheats and mid-game restart buttons removed to maintain retro immersion and prevent accidental resets.
+  - Live HUD displays active Stage number (`STAGE XX`), Score, High Score, Player Lives, and remaining enemy wave counter.
+  - Safe exit options: `EXIT [ESC]` back to Home Hub or `LEAVE ROOM` in co-op sessions.
+- **Cross-Platform Controls**:
+  - **Desktop**: `WASD` / `Arrow Keys` (Move with Famicom 8px grid snapping), `Enter` / `Space` / `J` (Fire), `P` / `Esc` (Pause), `F` (Fullscreen).
+  - **Mobile MOBA Touch Controller**: Floating dynamic joystick base, cardinal glow arrows, dedicated fire button, and safe-area fullscreen overlay.
+  - Single-player mode automatically hides Player 2 switcher and emote buttons for a clean interface.
 
-### 3. Dev Sandbox & Physics Lab (`/play`) — Engine Testing & 2P Co-Op Lab
-- **Interactive Developer & Testing Lab**:
-  - **Dedicated Cheat & Debug Drawer (`GameDebugSandboxPanel`)**:
-    - Instant Enemy Spawner: Basic, Fast, Power, and Armor tanks + Flashing Red item carrier toggle.
-    - Power-Up Laboratory: Directly spawn any of the 6 classic power-up crates onto the battlefield.
-    - Instant Cheats: `Nuke All Enemies`, `Fortify Eagle with Steel`, `Star Power Upgrades (Tiers 0–3)`, and `Force Shield Toggle`.
-    - Simulation Triggers: Instantly trigger Stage Curtain wipe, simulate Stage Clear Tally, or simulate Game Over flow.
-  - **Live Telemetry & Diagnostics HUD**: Real-time monitor tracking FPS, player coordinates, heading angle, remaining wave queue, and active field tank counts.
-  - **Interactive Mission Briefing**: Map preview, sub-tile terrain statistics (Brick/Steel/Water/Trees/Ice), and 20-tank wave queue breakdown.
-  - **MOBA Touch Controller**: Ergonomic floating joystick with P1 (Yellow) / P2 (Green) tank switcher.
-- **2-Player Co-Op Arena**:
-  - Split-keyboard cooperative play: Player 1 (`WASD + Space/J`) & Player 2 (`Arrow Keys + Enter/K/L/Numpad0`).
-  - SP1 Green Palette Tank, mutual friendly-fire clink cancellation, and dual side HUD.
-- **60 FPS Fixed Timestep**: Deterministic physics simulation decoupled from display refresh rates.
-- **Zero-Allocation 60 FPS Pipeline**:
-  - Reused `RenderFrameDto` snapshot instance and pre-allocated Bullet/Explosion/Enemy pools.
-  - Double-buffered audio queue (`AudioEventQueue`) eliminating GC allocations.
-  - Offscreen Canvas sub-tile terrain buffering with pre-filtered foreground tree list (`treeSubTiles`).
-- **Famicom 8px Grid Snapping & Mutual Tank Collision**:
-  - Authentic turning mechanics allowing smooth navigation into 1-tile corridors.
-  - Mutual Tank-vs-Tank collision (Player vs Enemy & Enemy vs Enemy) preventing tanks from passing through one another, coupled with anti-lock un-stick physics.
-- **26×26 Sub-Tile Destructible Terrain**: Multi-subtile leading-edge bounding box detection carving 16px slices on direct hits and 8px slices on half-hits.
-- **20-Tank Enemy Wave & 3-Point Spawner**:
-  - 4 archetypes (Basic, Fast, Power, and 4-HP Armor tank with 4-tier NES palette color shifts & metallic hit SFX).
-  - Obstruction-safe spawner preventing tanks from spawning on top of occupied points.
-  - Red flashing carrier tanks dropping droppable power-ups upon defeat.
-- **Full Droppable Power-Up System (6 Classic Items)**:
-  - 🌟 **Star**: 3-tier weapon upgrades (fast projectile &rarr; dual concurrent shells &rarr; steel destruction).
-  - 🛡️ **Helmet**: 10-second forcefield barrier.
-  - ⏱️ **Timer**: 10-second universal enemy freeze.
-  - 💣 **Grenade**: Instant screen-wide enemy demolition with full point awards.
-  - 🔨 **Shovel**: 20-second Eagle base steel fortification with 3s pre-expiration warning blinking.
-  - 🚗 **1-UP Tank**: Extra player life award with authentic NES life chime.
-  - Floating `+500 PTS` score popup upon item pickup.
-- **Phoenix Eagle HQ Base & Game Over Flow**:
-  - Intact vs Destroyed sprite states (`0xC8..0xCB` &rarr; `0xCC..0xCF`), `EagleHit` SFX, and authentic 120-frame (~2.0s) post-game delay allowing explosions and destruction to finish before arcade Game Over overlay.
-- **Authentic 5-Phase Explosion Sequence**:
-  - Small Bullet Impact: 3-frame 16×16 spark animation (`0xF0..0xFB` from PT0 palette SP3).
-  - Tank & Eagle Explosion: 5-phase expanding blast (16×16 Spark, Burst, Blast &rarr; 32×32 Giant Wave Base `$D0` &rarr; 32×32 Smoke Plume Base `$E0`).
-- **15-Step Triangle Wave Spawn Star Animation**: Authentic Famicom sparkle sequence cycling `$A0, $A4, $A8, $AC` metasprites before tank emergence.
-- **Stage Transitions & Score Tally Screen (Phase 6)**:
-  - Classic NES grey shutter curtain wipe with Stage banner.
-  - End-of-stage tank tally counting destroyed Basic, Fast, Power, and Armor tanks with authentic audio chimes.
-  - Right-side NES HUD tracking 20 remaining enemy tank icons, player lives, and stage flag number.
-- **Two-Player Co-Op & LocalStorage Persistence (Phase 7)**:
-  - 🎮 **Local 2-Player Co-Op Mode**:
-    - Split keyboard input: Player 1 (`WASD + Space/J`) & Player 2 (`Arrow Keys + Enter/K/L/Numpad0`) + Mobile touch controller.
-    - Authentic Player 2 Green Tank rendering with NES SP1 Palette (`#2ecc71` / `#4cd020`).
-    - Mutual player/enemy separation physics with anti-lock unsticking.
-    - Friendly fire clink/cancellation physics without reducing teammate lives.
-    - Dual Side HUD tracking independent `IP` and `IIP` life meters and active mini tank icons.
-    - 2-Player End-of-Stage Tally screen with dual-column kill breakdowns, dynamic winner victory banner (`👑 I-PLAYER WINS!`, `👑 II-PLAYER WINS!`, `🤝 CO-OP DRAW!`), and reading delay (~5s).
-  - 💾 **Browser LocalStorage Persistence (`GameStorageService.cs`)**:
-    - Real-time High Score tracking (starts at 20,000 pts, auto-saves when beaten).
-    - Session-to-session persistence of highest unlocked stage and audio preferences (volume & mute states).
-- **Dedicated Modular Debug & Sandbox Panel**: Live spawner lab, Star Power tier upgrades (0-3), Eagle fortification, Nuke all, and instant 6-item Power-Up lab.
-- **Dual Controller Support**: Full keyboard (WASD / Arrows + Space/J) and on-screen Touch D-Pad with Fire button.
-- **Live Telemetry HUD**: Throttled 500ms status monitor reporting real-time FPS, coordinate position, direction, remaining wave enemies, and active field enemies.
+### 3. Online Co-Op Lobby & Arena (`/coop`)
+- **Real-Time Multiplayer**: Dual-mode networking via WebRTC DataChannels (P2P for static WASM) and SignalR WebSockets Hub.
+- **Pre-Game Lobby Customization**:
+  - Host can configure Game Options (Difficulty, Starting Lives, Armor, Base Defense) before launching.
+  - Real-time difficulty preset badge visible to both Host and Guest.
+- **Multiplayer Mechanics**:
+  - Borrow Life mechanic (`FIRE` on death to borrow from teammate).
+  - Tactical Emote Wheel (radial quick chat).
+  - Mutual bullet cancellation clink (friendly fire safe).
+  - Synchronized dual-column end-of-stage tally screen with MVP medals.
 
-### 4. NES Sound & BGM Synthesizer (`/sound-bgm`)
-Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behavior:
-
-| Effect / Music | NES APU Channel | Technique |
-| :--- | :--- | :--- |
-| **Tank Fire** | Pulse 1 (Square) | Fast downward pitch drop (980Hz &rarr; 110Hz, 0.12s decay) |
-| **Hit Brick** | Noise | Bandpass filtered pseudo-random noise burst (0.08s) |
-| **Steel Ricochet** | Pulse 2 (Square) | Crisp dual-pitch metallic square wave (1480Hz & 1760Hz) |
-| **Explosion** | Noise | Lowpass swept decaying noise (Normal & Large variations) |
-| **Bonus Pickup** | Pulse 1/2 | Rapid rising 6-note arpeggio (C5 to G6) |
-| **Tank Engine** | Pulse + Gain Modulation | Looping engine hum with dynamic Idle (55Hz) vs Moving (95Hz) states |
-| **Stage Start BGM** | Pulse 1 + Triangle | 2-track lead and bass transcription calibrated from ROM `$ED36` |
-| **Stage Clear Jingle** | Pulse 1 + Pulse 2 + Tri | 3-track jingle decoded from ROM `$EEC1` |
-| **Victory Fanfare** | Pulse 1 + Pulse 2 + Tri | Full victory fanfare sequence decoded from ROM `$EF3C` |
-| **Game Over BGM** | Pulse 1 | Chromatic step-down game over sequence |
-
-### 5. Stage, CHR & Item Inspector (`/stage-inspector`)
-- **Stage Arena Viewer (`StageArenaTab`)**: Decoded 35 stages from ROM `$F07A` with live canvas rendering, display toggles (Grid, Spawns, Coords), Enemy Recon ($E4EC / $E578), sequential spawn queue, terrain distribution stats, and JSON viewer.
-- **CHR-ROM Tile Catalog (`ChrTileCatalogTab`)**: 512 8×8 tilemap viewer with full NES palette switching (BG0–BG3, SP0–SP3) and interactive 4-direction Tank Metasprite live inspector.
-- **Power-ups & Specials Gallery (`PowerUpsSpecialsTab`)**: Interactive 16×16 metasprite catalog for 6 classic droppable items (Helmet, Timer, Shovel, Star, Grenade, 1-UP) with instant bonus SFX testing, along with Phoenix HQ intact/destroyed and Force Shield badges.
-
-### 6. Next: 🌐 Real-Time Online 2-Player Co-Op (Phase 8)
-- **Dual-Mode Networking Architecture**:
-  - **WebRTC DataChannels (P2P)**: Direct browser-to-browser UDP channel for standalone WASM on Cloudflare Pages without server cost.
-  - **SignalR Binary WebSockets Hub**: Ultra-reliable multiplayer backend for self-hosted ASP.NET Core deployments.
-- **Host-Authoritative & Client-Side Prediction**:
-  - Host runs deterministic physics, enemy AI, destructible map, and power-up systems.
-  - Guest (P2) features 0ms local input prediction and smooth entity interpolation.
-- **Instant Matchmaking & QR Pairing**:
-  - 6-character room codes (`TANK85`), one-click URL invite links, and live QR code generator for seamless Mobile vs PC cross-play.
-- **Authentic NES Co-Op Gameplay**:
-  - **Borrow Life Mechanic**: Respawn life borrowing from teammate when at 0 lives.
-  - **Retro 8-Bit Emote Wheel**: Fast radial tactical messaging ("DEFEND HQ!", "TAKE STAR!", "NICE SHOT!").
-  - **Dual-Column Stage Tally & MVP**: Synchronized post-stage score and kill breakdown with victory fanfare.
-
-### 7. Upcoming: 👑 Epic Boss Battles & Tactical Munitions (Phase 9)
-- **Mega Boss Tank Encounters (บอสใหญ่ท้ายฉาก)**: Giant multi-tile armored Boss Mechs with multi-phase HP bars.
-- **Minion Swarm Deployment (Boss ปล่อยลูกน้อง)**: Boss actively summons support tank drones.
-- **Dual Arm Artillery (ยิงกระสุนจากแขนสองข้าง)**: Simultaneous twin-cannon firing with spread/cross-fire projectile mechanics.
-- **Multi-Tile Jump Maneuver (กระโดดข้ามสิ่งกีดขวางได้หลายช่อง)**: Boss leaps airborne across brick, steel, and water obstacles.
-- **Tactical Weapon Crates (หีบกระสุนแรงพิเศษ)**: Crates dropping Laser Rails, AOE Plasma Bombs, and Heavy AP Shells.
-
-### 8. Upcoming: 🛠️ Stage Editor & Custom Campaign Builder (Phase 10)
-- **Interactive Visual Tile Painter**: 13×13 tile / 26×26 sub-tile drag-and-drop grid editor for Brick, Steel, Water, Trees, Ice, and Eagle HQ.
-- **Wave & Spawner Configurator**: Custom 20-tank queue composition designer (configure Basic, Fast, Power, Armor + Flashing carriers).
-- **Campaign Slots & LocalStorage**: Multi-slot save/load system for user-created custom maps.
-- **JSON Import / Export Pipeline**: One-click export to official JSON stage format and import from clipboard/file.
-- **Instant Test-Play Arena**: Test-drive custom maps directly in the arena without leaving the editor.
+### 4. Developer Suite & Labs (`/dev`)
+Centralized technical portal providing access to diagnostic and testing environments:
+- **Engine Sandbox & Physics Lab (`/sandbox`, `/dev/sandbox`, `/play`)**:
+  - Interactive testbed with cheat drawer: live enemy spawner, droppable power-up laboratory, invincibility and Star Power upgrades.
+  - Real-time telemetry: FPS, coordinates, heading, and wave queue breakdown.
+  - Dual-tank controller testing (P1 Yellow / P2 Green).
+- **NES APU Sound Synthesizer (`/sound-bgm`)**:
+  - Real-time Web Audio API Ricoh 2A03 hardware emulation (Pulse 1, Pulse 2, Triangle, and Noise channels).
+  - Interactive soundboard and ROM-accurate BGM player (Stage Start, Clear, Victory Fanfare, Game Over).
+- **Stage & CHR Inspector (`/stage-inspector`)**:
+  - Decoded 35 NES stage maps from ROM `$F07A` with enemy battalion recon.
+  - 512 8×8 CHR-ROM tile catalog with master palette switching (`$D44A`).
+  - Metasprite studio and Boss Mech preview.
 
 ---
 
@@ -259,48 +169,50 @@ RetroTank1985/
 │
 ├── RetroTank1985.Client/        # Pure WebAssembly Client (Runs locally & in Cloudflare)
 │   ├── Components/
-│   │   ├── Play/                # Play Arena Sub-Components
-│   │   │   ├── GameControlBar.razor       # Top stage picker & action controls
-│   │   │   ├── GameDebugSandboxPanel.razor# Live debug & entity sandbox panel
-│   │   │   ├── MissionBriefingCard.razor  # Enemy battalion breakdown & key guide
-│   │   │   ├── TelemetryHud.razor         # Real-time HUD status strip
-│   │   │   └── VirtualDPad.razor          # Mobile on-screen touch controller
+│   │   ├── Arcade/              # Dedicated Arcade Mode Components
+│   │   │   ├── ArcadeControlBar.razor   # Streamlined HUD & safe exit controls
+│   │   │   ├── ArcadeHeader.razor       # Live score, high score, lives, armor HUD
+│   │   │   └── ArcadeDisconnectOverlay.razor # Network reconnect overlay
+│   │   ├── Coop/                # Online Co-Op Lobby & Gameplay Components
+│   │   │   ├── CoopLobbyCard.razor      # Room pairing, options dialog & ready state
+│   │   │   └── EmoteWheel.razor         # 8-direction radial quick chat
+│   │   ├── Play/                # Engine Sandbox Sub-Components
+│   │   │   ├── GameDebugSandboxPanel.razor # Live spawner, power-up lab & cheats
+│   │   │   ├── MissionBriefingCard.razor   # Enemy battalion breakdown & key guide
+│   │   │   ├── MobaTouchController.razor   # Ergonomic floating joystick controller
+│   │   │   └── TelemetryHud.razor          # Real-time engine telemetry strip
 │   │   └── Inspector/           # Stage & CHR Inspector Sub-Components
-│   │       ├── StageArenaTab.razor        # 35-Stage map canvas & Recon UI
-│   │       ├── StageArenaTab.razor.cs     # StageArenaTab Code-Behind
-│   │       ├── ChrTileCatalogTab.razor    # 512 CHR Sheet & Tank metasprites UI
-│   │       ├── ChrTileCatalogTab.razor.cs # ChrTileCatalogTab Code-Behind
-│   │       ├── PowerUpsSpecialsTab.razor  # Power-ups & Specials metasprites UI
-│   │       └── PowerUpsSpecialsTab.razor.cs # PowerUpsSpecialsTab Code-Behind
+│   │       ├── StageArenaTab.razor         # 35-Stage map canvas & Recon UI
+│   │       ├── ChrTileCatalogTab.razor     # 512 CHR Sheet & Tank metasprites UI
+│   │       └── PowerUpsSpecialsTab.razor   # Power-ups & Specials metasprites UI
+│   ├── Helpers/
+│   │   └── GameUiHelper.cs      # Reusable UI styling for difficulty & armor badges
 │   ├── Engine/                  # C# Game Core Layer (Brain)
 │   │   ├── Core/                # Physics, DestructibleMap, EnemySystem, PowerUpSystem, Bullets, Engine
 │   │   └── Models/              # PlayerTank, EnemyTank, PowerUp, GameEntities, RenderFrameDto, InputState
 │   ├── Layout/
-│   │   └── MainLayout.razor     # Retro arcade layout & MudBlazor theme
+│   │   └── MainLayout.razor     # Retro arcade layout, navbar & Dev Tools menu
 │   ├── Pages/
-│   │   ├── Home.razor           # Navigation Hub
-│   │   ├── Play.razor           # Stage Arena Razor Template
-│   │   ├── Play.razor.cs        # Stage Arena Code-Behind
-│   │   ├── SoundBgm.razor       # Sound & BGM Synthesizer Razor Template
-│   │   ├── SoundBgm.razor.cs    # Sound & BGM Synthesizer Code-Behind
-│   │   ├── StageInspector.razor # Stage & CHR Inspector Razor Template
-│   │   └── StageInspector.razor.cs # Stage & CHR Inspector Code-Behind
+│   │   ├── Home.razor           # Game Launch Hub (1P stage picker + 2P Co-op)
+│   │   ├── Arcade.razor         # Focused Single-Player & Co-Op Arena
+│   │   ├── Coop.razor           # Online Co-Op Matchmaking & Lobby
+│   │   ├── DevPortal.razor      # Central Developer Suite (/dev)
+│   │   ├── Play.razor           # Engine Sandbox & Physics Lab (/sandbox)
+│   │   ├── SoundBgm.razor       # Sound & BGM Synthesizer
+│   │   └── StageInspector.razor # Stage & CHR Inspector
 │   ├── Services/
 │   │   ├── GameEngineService.cs # Blazor JS Interop & Session lifecycle service
 │   │   ├── GameStorageService.cs# LocalStorage persistence service (HI-Score, Max Stage, Audio)
 │   │   └── StageService.cs      # Stage JSON loader with in-memory caching
 │   ├── wwwroot/
-│   │   ├── app.css              # Pixel font and CRT styling
-│   │   ├── favicon.png          # 64x64 ROM-extracted retro tank icon
+│   │   ├── app.css              # Pixel font, responsive layout & retro styling
 │   │   ├── assets/sprites/      # CHR tile sheets (chr_all.png)
 │   │   ├── data/stages/         # 35 individual stage JSONs + manifest.json
-│   │   ├── index.html           # Standalone entry point for Cloudflare Pages
 │   │   └── js/
 │   │       ├── game-bundle.js   # Single Source of Truth JS module bundler
 │   │       ├── nes-chr.js       # Core NES CHR tile & palette decoding engine
 │   │       ├── nes-synth.js     # NES APU sound synthesizer engine
 │   │       ├── stage-renderer.js# Fast 60 FPS In-Game Canvas 2D Blitter
-│   │       ├── stage-inspector.js# DevTools for /stage-inspector page
 │   │       └── game-bridge.js   # Fast JS RAF ticker, input listener & audio dispatcher
 │   ├── Program.cs               # Dynamic client bootstrapper
 │   └── RetroTank1985.Client.csproj
