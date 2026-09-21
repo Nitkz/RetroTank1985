@@ -821,6 +821,27 @@ window.nesSynth = {
     playIntroBGM: function() { this.init(); stopAllSounds(); startBGM(); },
     playStageClearBGM: function() { this.init(); stopAllSounds(); sfxStageClear(); },
     playVictoryBGM: function() { this.init(); stopAllSounds(); sfxVictory(); },
+    playRadioChirp: function() {
+        this.init();
+        if (!soundEnabled || !audioCtx) return;
+        try {
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            // Rapid double-beep military radio chirp (1760Hz -> 2200Hz)
+            osc.frequency.setValueAtTime(1760, now);
+            osc.frequency.setValueAtTime(2200, now + 0.04);
+            osc.frequency.setValueAtTime(1760, now + 0.08);
+            osc.frequency.setValueAtTime(2640, now + 0.12);
+            gain.gain.setValueAtTime(0.20, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+            osc.connect(gain);
+            gain.connect(masterGain || audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.22);
+        } catch(e) {}
+    },
     playGameOverBGM: function() { this.init(); stopAllSounds(); sfxGameOver(); },
     stopBGM: function() { stopBGM(); stopAllSounds(); }
 };

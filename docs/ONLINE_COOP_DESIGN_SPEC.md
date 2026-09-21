@@ -235,11 +235,11 @@ public class CoopSyncSnapshotDto
 | :--- | :--- | :--- | :---: |
 | **M1: Signaling & Matchmaking** | ระบบสร้างรหัสห้อง (Room Code), SignalR Hub / Fallback, WebRTC Signaling SDP Exchange | `Hubs/CoopLobbyHub.cs`, `Services/CoopLobbyClientService.cs`, `Contracts/ICoopLobbyContracts.cs` | 🟢 **เสร็จสมบูรณ์** |
 | **M2: C# Engine Network Sync** | ออกแบบ Snapshot DTO, Engine State Serialization, Tick Snapshot Broadcast & Remote Guest Input | `Engine/Core/BattleCityEngine.cs`, `Services/GameEngineService.cs`, `Pages/Play.razor.cs` | 🟢 **เสร็จสมบูรณ์** |
-| **M3: Client-Side Prediction** | เพิ่มการทำนายตำแหน่ง P2 ในเครื่อง Client, Entity Interpolation สำหรับลดอาการกระตุกของเครือข่าย | `Engine/Core/TankPhysics.cs`, `Engine/Network/ClientPredictor.cs` | 🟡 *รอดำเนินการ* |
+| **M3: Client-Side Prediction & Interpolation** | เพิ่มระบบ Entity Interpolation (Smooth Lerp + Snapping) สำหรับลดอาการกระตุกของเครือข่าย | `Engine/Network/NetworkEntityState.cs`, `Engine/Core/BattleCityEngine.cs` | 🟢 **เสร็จสมบูรณ์** |
 | **M4: Co-Op UI & Room Lobby** | พัฒนาหน้า `/coop`, การ์ดจัดการห้อง, ระบบ Ready, In-App QR Code Share, Stage Selector | `Pages/Coop.razor`, `Components/Coop/CoopLobbyCard.razor`, `Components/Coop/QrCodeDialog.razor` | 🟢 **เสร็จสมบูรณ์** |
-| **M5: In-Game Co-Op Features** | ระบบยืมชีวิต (Life Borrowing Logic พร้อมแล้ว), In-Game Emote Wheel, Disconnect Grace Period | `Components/Coop/EmoteWheel.razor`, `Engine/Core/BattleCityEngine.cs` | 🟡 *กำลังดำเนินการ* |
+| **M5: In-Game Co-Op Features** | ระบบยืมชีวิต (Life Borrowing Logic พร้อมแล้ว), In-Game Emote Wheel, Disconnect Grace Period | `Components/Coop/EmoteWheel.razor`, `Engine/Core/BattleCityEngine.cs`, `Pages/Play.razor` | 🟢 **เสร็จสมบูรณ์** |
 | **M6: Testing & Optimization** | ทดสอบข้ามเครือข่าย (Mobile 4G/5G vs Desktop WiFi), ปรับแต่งค่า Latency & Desync | Stress Testing & Packet Loss Simulation | ⚪ *รอดำเนินการ* |
 
 ---
 
-*Last Updated: 2026-09-21 (Updated: M1, M2, M4 Completed & Synced) • RetroTank 1985 Multiplayer Core Team*
+*Last Updated: 2026-09-21 (Updated: M1, M2, M3, M4, M5 Completed & Synced) • RetroTank 1985 Multiplayer Core Team*

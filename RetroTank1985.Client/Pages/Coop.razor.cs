@@ -54,8 +54,8 @@ public partial class Coop : IAsyncDisposable
     private void OnGameStarting(CoopRoomInfo room)
     {
         Snackbar.Add("Mission starting! Loading arena...", Severity.Success);
-        // Navigate to play/arcade coop session
-        NavigationManager.NavigateTo($"/play?coop=1&stage={room.SelectedStage}&role={(LobbyService.IsHost ? "p1" : "p2")}&room={room.RoomCode}");
+        // Navigate to arcade coop session
+        NavigationManager.NavigateTo($"/arcade?coop=1&stage={room.SelectedStage}&role={(LobbyService.IsHost ? "p1" : "p2")}&room={room.RoomCode}");
     }
 
     private async Task HandleCreateRoom()

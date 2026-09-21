@@ -24,9 +24,12 @@ public struct TankNetworkSnapshot
     public float Y { get; set; }
     public byte Direction { get; set; }
     public bool IsMoving { get; set; }
+    public bool IsActive { get; set; }
     public int Lives { get; set; }
+    public int Hp { get; set; }
     public int StarTier { get; set; }
     public float ShieldTimeRemaining { get; set; }
+    public int InvulnerableTimer { get; set; }
     public bool IsDestroyed { get; set; }
     public RetroEmoteType ActiveEmote { get; set; }
 }
@@ -83,6 +86,7 @@ public class CoopSyncSnapshotDto
     public EnemyNetworkSnapshot[] Enemies { get; set; } = [];
     public BulletNetworkSnapshot[] Bullets { get; set; } = [];
     public MapDeltaMutation[]? MapMutations { get; set; }
+    public byte[]? SubTiles { get; set; }
 
     public byte? ActivePowerUpType { get; set; }
     public float PowerUpX { get; set; }

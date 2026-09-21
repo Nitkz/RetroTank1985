@@ -22,7 +22,8 @@ public enum AudioSoundEffect : byte
     TallyTick = 14,
     TallyDone = 15,
     StageClear = 16,
-    GameOver = 17
+    GameOver = 17,
+    RadioChirp = 18
 }
 
 /// <summary>

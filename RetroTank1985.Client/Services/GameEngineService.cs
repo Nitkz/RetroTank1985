@@ -23,6 +23,27 @@ public class GameEngineService : IAsyncDisposable
     public bool IsCoopHost { get; set; } = false;
     private uint _networkFrameCounter = 0;
     private uint _guestInputSequence = 0;
+    private RetroEmoteType _pendingGuestEmote = RetroEmoteType.None;
+
+    public void TriggerEmote(RetroEmoteType emote)
+    {
+        if (IsCoopSession)
+        {
+            if (IsCoopHost)
+            {
+                _engine.TriggerEmote(emote, 1);
+            }
+            else
+            {
+                _pendingGuestEmote = emote;
+                _engine.TriggerEmote(emote, 2);
+            }
+        }
+        else
+        {
+            _engine.TriggerEmote(emote, 1);
+        }
+    }
 
     public GameEngineService(
         IBattleCityEngine engine,
@@ -160,11 +181,15 @@ public class GameEngineService : IAsyncDisposable
             bool isFiring = fire || p2Fire;
             _guestInputSequence++;
 
+            var emoteToSend = _pendingGuestEmote;
+            _pendingGuestEmote = RetroEmoteType.None;
+
             var inputPacket = new PlayerInputPacket
             {
                 Sequence = _guestInputSequence,
                 Direction = dir,
                 IsFiring = isFiring,
+                Emote = emoteToSend,
                 ClientTimestamp = (ushort)(timestamp % 65535)
             };
 

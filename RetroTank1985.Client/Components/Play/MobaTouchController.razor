@@ -32,6 +32,15 @@
             </button>
 
             <button class="moba-top-util-btn" 
+                    title="Tactical Emote"
+                    style="border-color: #f59e0b;"
+                    ontouchstart="window.dispatchEvent(new CustomEvent('retrotank:toggle-emote')); event.preventDefault();"
+                    onclick="window.dispatchEvent(new CustomEvent('retrotank:toggle-emote'));">
+                <MudIcon Icon="@Icons.Material.Filled.Chat" Size="Size.Small" Style="color: #f59e0b;" />
+                <span class="pixel-text ml-1" style="font-size: 0.6rem; color: #f59e0b;">EMOTE</span>
+            </button>
+
+            <button class="moba-top-util-btn" 
                     title="Pause"
                     ontouchstart="window.GameBridge && window.GameBridge.setVirtualInput('pause', true); event.preventDefault();"
                     onclick="window.GameBridge && window.GameBridge.setVirtualInput('pause', true);">

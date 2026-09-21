@@ -1,5 +1,6 @@
 using RetroTank1985.Shared.Enums;
 using RetroTank1985.Client.Engine.Models;
+using RetroTank1985.Client.Engine.Network;
 using RetroTank1985.Shared.Models;
 using RetroTank1985.Shared.Models.Network;
 
@@ -42,6 +43,8 @@ public interface IBattleCityEngine
     void SimulateClearStage();
     void ClearEnemies();
     void SetPlayerStarPower(int starLevel, int playerIndex = 1);
+    void TriggerEmote(RetroEmoteType emote, int playerIndex = 1);
+    void SetDisconnectGracePeriod(bool active, float secondsRemaining = 15f, string disconnectedRole = "P2");
     void TogglePlayerShield(int playerIndex = 1);
     void ToggleEagleSteel(bool fortified);
     void SpawnPowerUpDebug(PowerUpType type);
@@ -100,6 +103,15 @@ public class BattleCityEngine : IBattleCityEngine
     public bool IsTwoPlayerMode { get; set; } = false;
     public int HighScore { get; set; } = 20000;
     public GameSettings Settings { get; private set; } = new();
+
+    // Client-side Entity Interpolation states
+    private NetworkEntityState _netStateP1 = new();
+    private NetworkEntityState _netStateP2 = new();
+
+    // Disconnect Grace Period State
+    public bool IsDisconnectGracePeriodActive { get; private set; } = false;
+    public float DisconnectGraceSecondsRemaining { get; private set; } = 15f;
+    public string DisconnectedPeerRole { get; private set; } = "P2";
 
     public IDestructibleMap Map { get; }
     public ITankPhysics Physics { get; }
@@ -219,6 +231,9 @@ public class BattleCityEngine : IBattleCityEngine
         Player2.Reset(8 * 16f, 12 * 16f);
         Player2.IsActive = IsTwoPlayerMode;
 
+        _netStateP1.Reset();
+        _netStateP2.Reset();
+
         _curtainTimer = CurtainDurationFrames;
         State = GameState.StageCurtain;
         _accumulator = 0;
@@ -256,6 +271,8 @@ public class BattleCityEngine : IBattleCityEngine
             Player2.Reset(8 * 16f, 12 * 16f);
         }
 
+        _netStateP1.Reset();
+        _netStateP2.Reset();
         Bullets.Clear();
     }
 
@@ -309,6 +326,12 @@ public class BattleCityEngine : IBattleCityEngine
         _currentInput.P2Left = input.Direction == 4;
         _currentInput.P2Fire = input.IsFiring;
 
+        if (input.Emote != RetroEmoteType.None)
+        {
+            Player2.TriggerEmote(input.Emote);
+            Audio.Enqueue(AudioSoundEffect.RadioChirp);
+        }
+
         if (input.BorrowLifeReq && Player2.Lives <= 0 && Player.Lives >= 2)
         {
             Player.Lives--;
@@ -335,10 +358,14 @@ public class BattleCityEngine : IBattleCityEngine
             Y = Player.Y,
             Direction = (byte)Player.Direction,
             IsMoving = Player.IsMoving,
+            IsActive = Player.IsActive,
             Lives = Player.Lives,
+            Hp = Player.Hp,
             StarTier = Player.StarPower,
             ShieldTimeRemaining = Player.ShieldTimer,
-            IsDestroyed = Player.Lives <= 0
+            InvulnerableTimer = Player.InvulnerableTimer,
+            IsDestroyed = !Player.IsActive || Player.Lives <= 0,
+            ActiveEmote = Player.EmoteTimer > 0 ? Player.ActiveEmote : RetroEmoteType.None
         };
 
         // P2 Snapshot
@@ -348,10 +375,14 @@ public class BattleCityEngine : IBattleCityEngine
             Y = Player2.Y,
             Direction = (byte)Player2.Direction,
             IsMoving = Player2.IsMoving,
+            IsActive = Player2.IsActive,
             Lives = Player2.Lives,
+            Hp = Player2.Hp,
             StarTier = Player2.StarPower,
             ShieldTimeRemaining = Player2.ShieldTimer,
-            IsDestroyed = Player2.Lives <= 0
+            InvulnerableTimer = Player2.InvulnerableTimer,
+            IsDestroyed = !Player2.IsActive || Player2.Lives <= 0,
+            ActiveEmote = Player2.EmoteTimer > 0 ? Player2.ActiveEmote : RetroEmoteType.None
         };
 
         // Enemies Snapshot
@@ -408,31 +439,68 @@ public class BattleCityEngine : IBattleCityEngine
             }
         }
 
+        // Destructible Map Sync
+        if (Map.IsDirty || frameIndex % 30 == 0)
+        {
+            snapshot.SubTiles = Map.GetSubTileBytes();
+        }
+
         return snapshot;
     }
 
     public void ApplyNetworkSnapshot(CoopSyncSnapshotDto snapshot)
     {
-        // Apply Host Simulation to Guest
-        Player.X = snapshot.Player1.X;
-        Player.Y = snapshot.Player1.Y;
+        // Check if player died on this frame to trigger explosion locally on Guest
+        if (Player.IsActive && !snapshot.Player1.IsActive)
+        {
+            Bullets.SpawnExplosion(Player.X, Player.Y, true);
+            Audio.Enqueue(AudioSoundEffect.Explosion);
+        }
+        if (Player2.IsActive && !snapshot.Player2.IsActive)
+        {
+            Bullets.SpawnExplosion(Player2.X, Player2.Y, true);
+            Audio.Enqueue(AudioSoundEffect.Explosion);
+        }
+
+        // Apply Host Simulation to Guest with Smooth Interpolation Target
+        _netStateP1.UpdateTarget(snapshot.Player1.X, snapshot.Player1.Y);
+        Player.X = _netStateP1.CurrentX;
+        Player.Y = _netStateP1.CurrentY;
         Player.Direction = (Direction)snapshot.Player1.Direction;
         Player.IsMoving = snapshot.Player1.IsMoving;
+        Player.IsActive = snapshot.Player1.IsActive;
         Player.Lives = snapshot.Player1.Lives;
+        Player.Hp = snapshot.Player1.Hp;
         Player.StarPower = snapshot.Player1.StarTier;
         Player.ShieldTimer = (int)snapshot.Player1.ShieldTimeRemaining;
         Player.ShieldActive = snapshot.Player1.ShieldTimeRemaining > 0;
+        Player.InvulnerableTimer = snapshot.Player1.InvulnerableTimer;
 
-        Player2.X = snapshot.Player2.X;
-        Player2.Y = snapshot.Player2.Y;
+        _netStateP2.UpdateTarget(snapshot.Player2.X, snapshot.Player2.Y);
+        Player2.X = _netStateP2.CurrentX;
+        Player2.Y = _netStateP2.CurrentY;
         Player2.Direction = (Direction)snapshot.Player2.Direction;
         Player2.IsMoving = snapshot.Player2.IsMoving;
+        Player2.IsActive = snapshot.Player2.IsActive;
         Player2.Lives = snapshot.Player2.Lives;
+        Player2.Hp = snapshot.Player2.Hp;
         Player2.StarPower = snapshot.Player2.StarTier;
         Player2.ShieldTimer = (int)snapshot.Player2.ShieldTimeRemaining;
         Player2.ShieldActive = snapshot.Player2.ShieldTimeRemaining > 0;
-        Player2.IsActive = true;
+        Player2.InvulnerableTimer = snapshot.Player2.InvulnerableTimer;
         IsTwoPlayerMode = true;
+
+        // Sync Emotes from Snapshot (Guest side)
+        if (snapshot.Player1.ActiveEmote != RetroEmoteType.None && Player.ActiveEmote != snapshot.Player1.ActiveEmote)
+        {
+            Player.TriggerEmote(snapshot.Player1.ActiveEmote);
+            Audio.Enqueue(AudioSoundEffect.RadioChirp);
+        }
+        if (snapshot.Player2.ActiveEmote != RetroEmoteType.None && Player2.ActiveEmote != snapshot.Player2.ActiveEmote)
+        {
+            Player2.TriggerEmote(snapshot.Player2.ActiveEmote);
+            Audio.Enqueue(AudioSoundEffect.RadioChirp);
+        }
 
         // Sync Bullets and Enemies to Guest Engine
         if (snapshot.Bullets != null)
@@ -446,6 +514,12 @@ public class BattleCityEngine : IBattleCityEngine
 
         // Sync Active Power-Up Item to Guest Engine
         PowerUps.SyncFromNetwork(snapshot.ActivePowerUpType, snapshot.PowerUpX, snapshot.PowerUpY);
+
+        // Sync Destructible Map SubTiles from Host
+        if (snapshot.SubTiles != null)
+        {
+            Map.LoadSubTileBytes(snapshot.SubTiles);
+        }
     }
 
     public bool SpawnEnemyDebug(EnemyType type, int spawnPoint = -1, bool isFlashing = false)
@@ -477,6 +551,39 @@ public class BattleCityEngine : IBattleCityEngine
         else
         {
             Player.StarPower = Math.Clamp(starLevel, 0, 3);
+        }
+    }
+
+    public void TriggerEmote(RetroEmoteType emote, int playerIndex = 1)
+    {
+        if (emote == RetroEmoteType.None) return;
+        var target = playerIndex == 2 ? Player2 : Player;
+        target.TriggerEmote(emote);
+        Audio.Enqueue(AudioSoundEffect.RadioChirp);
+    }
+
+    public void SetDisconnectGracePeriod(bool active, float secondsRemaining = 15f, string disconnectedRole = "P2")
+    {
+        IsDisconnectGracePeriodActive = active;
+        DisconnectGraceSecondsRemaining = secondsRemaining;
+        DisconnectedPeerRole = disconnectedRole;
+
+        if (active)
+        {
+            if (State == GameState.Playing)
+            {
+                State = GameState.Paused;
+                Audio.Enqueue(AudioSoundEffect.Pause);
+                Audio.Enqueue(AudioSoundEffect.EngineStop);
+            }
+        }
+        else
+        {
+            if (State == GameState.Paused)
+            {
+                State = GameState.Playing;
+                Audio.Enqueue(AudioSoundEffect.Pause);
+            }
         }
     }
 
@@ -842,6 +949,18 @@ public class BattleCityEngine : IBattleCityEngine
                     }
                 }
 
+                // 6b. Player Emote Timers countdown
+                if (Player.EmoteTimer > 0)
+                {
+                    Player.EmoteTimer--;
+                    if (Player.EmoteTimer <= 0) Player.ActiveEmote = RetroEmoteType.None;
+                }
+                if (Player2.EmoteTimer > 0)
+                {
+                    Player2.EmoteTimer--;
+                    if (Player2.EmoteTimer <= 0) Player2.ActiveEmote = RetroEmoteType.None;
+                }
+
                 // 7. Check Stage Cleared Condition
                 if (Enemies.IsWaveCleared)
                 {
@@ -889,6 +1008,20 @@ public class BattleCityEngine : IBattleCityEngine
             _accumulator -= MsPerFrame;
         }
 
+        // Apply smooth lerp interpolation for remote network replication
+        if (_netStateP1.Initialized)
+        {
+            _netStateP1.Interpolate(0.40f);
+            Player.X = _netStateP1.CurrentX;
+            Player.Y = _netStateP1.CurrentY;
+        }
+        if (_netStateP2.Initialized)
+        {
+            _netStateP2.Interpolate(0.40f);
+            Player2.X = _netStateP2.CurrentX;
+            Player2.Y = _netStateP2.CurrentY;
+        }
+
         // Live High Score Update
         if (Score > HighScore)
         {
@@ -907,6 +1040,7 @@ public class BattleCityEngine : IBattleCityEngine
         _cachedFrame.PlayerHp = Player.Hp;
         _cachedFrame.PlayerMaxHp = Player.MaxHp;
         _cachedFrame.PlayerInvulnerable = Player.InvulnerableTimer > 0;
+        _cachedFrame.PlayerEmote = (byte)(Player.EmoteTimer > 0 ? Player.ActiveEmote : RetroEmoteType.None);
         _cachedFrame.Lives = Player.Lives;
         _cachedFrame.Score = Player.Score;
 
@@ -923,6 +1057,7 @@ public class BattleCityEngine : IBattleCityEngine
         _cachedFrame.Player2Hp = Player2.Hp;
         _cachedFrame.Player2MaxHp = Player2.MaxHp;
         _cachedFrame.Player2Invulnerable = Player2.InvulnerableTimer > 0;
+        _cachedFrame.Player2Emote = (byte)(Player2.EmoteTimer > 0 ? Player2.ActiveEmote : RetroEmoteType.None);
         _cachedFrame.Player2Lives = Player2.Lives;
         _cachedFrame.Player2Score = Player2.Score;
 

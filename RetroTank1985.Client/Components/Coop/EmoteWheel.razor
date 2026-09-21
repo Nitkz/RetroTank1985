@@ -1,0 +1,233 @@
+@using Microsoft.JSInterop
+@using RetroTank1985.Shared.Enums
+@inject IJSRuntime JS
+
+@if (IsOpen)
+{
+    <!-- Retro 8-Bit Emote Wheel Overlay -->
+    <div class="emote-wheel-backdrop" @onclick="Close" @onkeydown="HandleKeyDown" tabindex="0" @ref="_overlayRef">
+        <div class="emote-wheel-modal" @onclick:stopPropagation="true">
+            <div class="emote-wheel-header d-flex justify-space-between align-center mb-2 pb-1">
+                <div class="d-flex align-center gap-2">
+                    <span class="pixel-text" style="color: #f1c40f; font-size: 0.75rem;">💬 TACTICAL COMMS</span>
+                    <span class="pixel-text" style="color: #64748b; font-size: 0.6rem;">(PRESS 1-6 OR TAP)</span>
+                </div>
+                <button class="pixel-close-btn" @onclick="Close">✕</button>
+            </div>
+
+            <!-- 6-Grid Tactical Emotes -->
+            <div class="emote-grid">
+                @foreach (var item in _emotes)
+                {
+                    var emote = item;
+                    <button class="emote-item-btn @(emote.KeyNumber == 1 ? "primary" : "")"
+                            @onclick="() => SelectEmote(emote.Type)"
+                            title="@emote.Title">
+                        <div class="emote-key-badge">@emote.KeyNumber</div>
+                        <div class="emote-icon">@emote.Icon</div>
+                        <div class="emote-text pixel-text">@emote.Text</div>
+                    </button>
+                }
+            </div>
+
+            <div class="emote-wheel-footer mt-2 pt-1 text-center">
+                <span class="pixel-text" style="color: #94a3b8; font-size: 0.55rem;">
+                    KEYBOARD SHORTCUT: [C] &bull; 2.5s RADIO BEACON
+                </span>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+.emote-wheel-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 2500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    animation: emoteFadeIn 0.15s ease-out;
+}
+
+@@keyframes emoteFadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.emote-wheel-modal {
+    width: 380px;
+    max-width: 92vw;
+    background: #0f172a;
+    border: 3px solid #f59e0b;
+    border-radius: 8px;
+    box-shadow: 0 0 24px rgba(245, 158, 11, 0.35), inset 0 0 12px rgba(0, 0, 0, 0.8);
+    padding: 14px;
+    color: #fff;
+    user-select: none;
+}
+
+.emote-wheel-header {
+    border-bottom: 1px dashed #334155;
+}
+
+.pixel-close-btn {
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
+}
+.pixel-close-btn:hover {
+    color: #f87171;
+}
+
+.emote-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.emote-item-btn {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 6px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.12s ease-in-out;
+    text-align: left;
+}
+
+.emote-item-btn:hover, .emote-item-btn:focus {
+    background: #334155;
+    border-color: #f59e0b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+}
+
+.emote-item-btn:active {
+    transform: translateY(0);
+}
+
+.emote-key-badge {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    font-family: var(--retro-font), monospace;
+    font-size: 0.55rem;
+    color: #64748b;
+    font-weight: bold;
+}
+
+.emote-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.emote-text {
+    font-size: 0.65rem;
+    color: #f8fafc;
+    letter-spacing: 0.5px;
+    font-weight: bold;
+}
+
+.emote-wheel-footer {
+    border-top: 1px dashed #1e293b;
+}
+</style>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; } = false;
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EventCallback<RetroEmoteType> OnEmoteSelected { get; set; }
+
+    private ElementReference _overlayRef;
+
+    private record EmoteOption(int KeyNumber, RetroEmoteType Type, string Icon, string Text, string Title);
+
+    private readonly List<EmoteOption> _emotes = new()
+    {
+        new(1, RetroEmoteType.DefendEagle, "🛡️", "DEFEND HQ!", "กลับไปกันฐานอินทรี!"),
+        new(2, RetroEmoteType.TakeStar, "⭐", "TAKE STAR!", "ให้นายเก็บดาว/ไอเทม!"),
+        new(3, RetroEmoteType.AttackFlank, "🚀", "ATTACK FLANK!", "บุกขนาบข้าง!"),
+        new(4, RetroEmoteType.NukeBomb, "💣", "NUKE BOMB!", "เก็บระเบิดบอมบ์!"),
+        new(5, RetroEmoteType.NiceShot, "🤝", "NICE SHOT!", "ยิงสวยมากเพื่อน!"),
+        new(6, RetroEmoteType.Sorry, "😅", "SORRY!", "ขอโทษทีเพื่อน!")
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsOpen)
+        {
+            try
+            {
+                await _overlayRef.FocusAsync();
+            }
+            catch {}
+        }
+    }
+
+    public async Task Open()
+    {
+        IsOpen = true;
+        await IsOpenChanged.InvokeAsync(true);
+        StateHasChanged();
+    }
+
+    public async Task Close()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+        StateHasChanged();
+    }
+
+    private async Task SelectEmote(RetroEmoteType emote)
+    {
+        await OnEmoteSelected.InvokeAsync(emote);
+        await Close();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "1":
+                await SelectEmote(RetroEmoteType.DefendEagle);
+                break;
+            case "2":
+                await SelectEmote(RetroEmoteType.TakeStar);
+                break;
+            case "3":
+                await SelectEmote(RetroEmoteType.AttackFlank);
+                break;
+            case "4":
+                await SelectEmote(RetroEmoteType.NukeBomb);
+                break;
+            case "5":
+                await SelectEmote(RetroEmoteType.NiceShot);
+                break;
+            case "6":
+                await SelectEmote(RetroEmoteType.Sorry);
+                break;
+            case "Escape":
+            case "c":
+            case "C":
+                await Close();
+                break;
+        }
+    }
+}

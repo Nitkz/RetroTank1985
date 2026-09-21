@@ -40,6 +40,9 @@ public class RenderFrameDto
     [JsonPropertyName("pInvuln")]
     public bool PlayerInvulnerable { get; set; }
 
+    [JsonPropertyName("pEmote")]
+    public byte PlayerEmote { get; set; }
+
     // Player 2 Properties (Green Tank)
     [JsonPropertyName("isTwoPlayer")]
     public bool IsTwoPlayer { get; set; }
@@ -76,6 +79,9 @@ public class RenderFrameDto
 
     [JsonPropertyName("p2Invuln")]
     public bool Player2Invulnerable { get; set; }
+
+    [JsonPropertyName("p2Emote")]
+    public byte Player2Emote { get; set; }
 
     [JsonPropertyName("p2Lives")]
     public int Player2Lives { get; set; }

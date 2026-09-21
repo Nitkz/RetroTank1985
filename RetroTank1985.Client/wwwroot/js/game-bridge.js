@@ -83,6 +83,10 @@ window.GameBridge = (function () {
           dotNetRef.invokeMethodAsync('RestartCurrentStage');
         }
         break;
+      case 'KeyC':
+        // Trigger Emote Wheel Toggle event
+        window.dispatchEvent(new CustomEvent('retrotank:toggle-emote'));
+        break;
       case 'KeyF':
         if (!e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) {
           const arcadeElem = document.getElementById('arcadeBezelContainer') || canvas;
@@ -194,6 +198,11 @@ window.GameBridge = (function () {
           break;
         case 17: // GameOver
           window.nesSynth.playGameOverBGM();
+          break;
+        case 18: // RadioChirp
+          if (window.nesSynth.playRadioChirp) {
+            window.nesSynth.playRadioChirp();
+          }
           break;
       }
     }
@@ -371,6 +380,22 @@ window.GameBridge = (function () {
         }
         elem.classList.remove('is-pseudo-fullscreen');
       }
+    },
+
+    registerPlayComponent(playDotNetRef) {
+      window.__playRef = playDotNetRef;
+      if (!window.__playEmoteHandlerInstalled) {
+        window.__playEmoteHandlerInstalled = true;
+        window.addEventListener('retrotank:toggle-emote', () => {
+          if (window.__playRef) {
+            window.__playRef.invokeMethodAsync('ToggleEmoteWheel');
+          }
+        });
+      }
+    },
+
+    unregisterPlayComponent() {
+      window.__playRef = null;
     }
   };
 })();

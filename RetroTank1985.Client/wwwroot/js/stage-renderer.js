@@ -48,6 +48,74 @@ window.StageRenderer = (function () {
     lastSubTiles = subTiles;
   }
 
+  const EMOTE_PRESETS = {
+    1: { icon: '🛡️', text: 'DEFEND HQ!', bg: '#1e293b', border: '#f59e0b', textColor: '#fef08a' },
+    2: { icon: '⭐', text: 'TAKE STAR!', bg: '#1e293b', border: '#eab308', textColor: '#fde047' },
+    3: { icon: '🚀', text: 'ATTACK FLANK!', bg: '#1e293b', border: '#ef4444', textColor: '#fca5a5' },
+    4: { icon: '💣', text: 'NUKE BOMB!', bg: '#1e293b', border: '#f97316', textColor: '#fdba74' },
+    5: { icon: '🤝', text: 'NICE SHOT!', bg: '#1e293b', border: '#10b981', textColor: '#86efac' },
+    6: { icon: '😅', text: 'SORRY!', bg: '#1e293b', border: '#38bdf8', textColor: '#bae6fd' }
+  };
+
+  function drawEmoteBalloon(ctx, tankCenterX, tankTopY, emoteId, isP1) {
+    const emote = EMOTE_PRESETS[emoteId];
+    if (!emote) return;
+
+    ctx.save();
+    ctx.font = 'bold 8px "Press Start 2P", monospace';
+    const label = `${emote.icon} ${emote.text}`;
+    const textMetrics = ctx.measureText(label);
+    const textWidth = textMetrics.width;
+
+    const padX = 6;
+    const padY = 4;
+    const bubbleWidth = textWidth + padX * 2;
+    const bubbleHeight = 16;
+    
+    // Position bubble centered horizontally over the tank, floating above it
+    let bubbleX = tankCenterX - bubbleWidth / 2;
+    // Clamp to playfield boundary
+    bubbleX = Math.max(BORDER + 2, Math.min(BORDER + PLAYFIELD - bubbleWidth - 2, bubbleX));
+    const bubbleY = tankTopY - bubbleHeight - 8;
+
+    // Outer shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    ctx.fillRect(bubbleX + 2, bubbleY + 2, bubbleWidth, bubbleHeight);
+
+    // Bubble Body
+    ctx.fillStyle = emote.bg;
+    ctx.fillRect(bubbleX, bubbleY, bubbleWidth, bubbleHeight);
+
+    // Retro 8-bit border
+    ctx.strokeStyle = isP1 ? '#f1c40f' : '#2ecc71';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(bubbleX, bubbleY, bubbleWidth, bubbleHeight);
+
+    // Small speech pointer tick pointing down to tank
+    const pointerX = tankCenterX;
+    const pointerY = bubbleY + bubbleHeight;
+    ctx.fillStyle = emote.bg;
+    ctx.beginPath();
+    ctx.moveTo(pointerX - 4, pointerY);
+    ctx.lineTo(pointerX + 4, pointerY);
+    ctx.lineTo(pointerX, pointerY + 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = isP1 ? '#f1c40f' : '#2ecc71';
+    ctx.beginPath();
+    ctx.moveTo(pointerX - 4, pointerY);
+    ctx.lineTo(pointerX, pointerY + 5);
+    ctx.lineTo(pointerX + 4, pointerY);
+    ctx.stroke();
+
+    // Text label
+    ctx.fillStyle = emote.textColor;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, bubbleX + padX, bubbleY + bubbleHeight / 2);
+    ctx.restore();
+  }
+
   function drawSideHud(ctx, frameData, canvasWidth, canvasHeight) {
     // HUD is placed in the right border area (width = 512px, Playfield ends at 448px, Margin = 64px)
     const hudX = BORDER + PLAYFIELD + 14;
@@ -631,6 +699,18 @@ window.StageRenderer = (function () {
           const t = treeSubTiles[i];
           window.NesCHR.drawCHRTile(ctx, 0x22, 2, BORDER + t.dx, BORDER + t.dy, true, SCALE);
         }
+      }
+
+      // 9b. Active 8-Bit Emote Speech Balloons (rendered above foreground trees)
+      if (frameData.pActive && frameData.pEmote && frameData.pEmote > 0) {
+        const pCenterX = BORDER + Math.round(frameData.pX) * SCALE + 8 * SCALE;
+        const pTopY = BORDER + Math.round(frameData.pY) * SCALE;
+        drawEmoteBalloon(ctx, pCenterX, pTopY, frameData.pEmote, true);
+      }
+      if (frameData.isTwoPlayer && frameData.p2Active && frameData.p2Emote && frameData.p2Emote > 0) {
+        const p2CenterX = BORDER + Math.round(frameData.p2X) * SCALE + 8 * SCALE;
+        const p2TopY = BORDER + Math.round(frameData.p2Y) * SCALE;
+        drawEmoteBalloon(ctx, p2CenterX, p2TopY, frameData.p2Emote, false);
       }
 
       // 10. Flow Overlays

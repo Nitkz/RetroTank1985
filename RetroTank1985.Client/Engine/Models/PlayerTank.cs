@@ -30,6 +30,16 @@ public class PlayerTank
     public int Score { get; set; } = 0;
     public bool IsActive { get; set; } = true;
 
+    // Active Emote Balloon (2.5s = 150 frames at 60Hz)
+    public RetroEmoteType ActiveEmote { get; set; } = RetroEmoteType.None;
+    public int EmoteTimer { get; set; } = 0;
+
+    public void TriggerEmote(RetroEmoteType emote)
+    {
+        ActiveEmote = emote;
+        EmoteTimer = 150; // 2.5 seconds at 60Hz
+    }
+
     public void Reset(float? spawnX = null, float? spawnY = null)
     {
         X = spawnX ?? (PlayerIndex == 2 ? 8 * 16f : 4 * 16f);

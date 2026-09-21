@@ -19,6 +19,7 @@ public interface IDestructibleMap
     void SetSubTile(int row, int col, SubTileType type);
     bool HandleBulletHit(Bullet bullet, out AudioSoundEffect soundEffect, out bool hitEagle);
     byte[] GetSubTileBytes();
+    void LoadSubTileBytes(byte[] subTileBytes);
     void FortifyEagleWithSteel(bool steel, int durationFrames = 0);
     void UpdateShovelTimer();
 }
@@ -351,5 +352,31 @@ public class DestructibleMap : IDestructibleMap
             }
         }
         return _flatBytes;
+    }
+
+    public void LoadSubTileBytes(byte[] subTileBytes)
+    {
+        if (subTileBytes == null || subTileBytes.Length < IDestructibleMap.GridDimension * IDestructibleMap.GridDimension)
+            return;
+
+        int idx = 0;
+        bool changed = false;
+        for (int r = 0; r < IDestructibleMap.GridDimension; r++)
+        {
+            for (int c = 0; c < IDestructibleMap.GridDimension; c++)
+            {
+                var newType = (SubTileType)subTileBytes[idx++];
+                if (_grid[r, c] != newType)
+                {
+                    _grid[r, c] = newType;
+                    changed = true;
+                }
+            }
+        }
+
+        if (changed)
+        {
+            IsDirty = true;
+        }
     }
 }
