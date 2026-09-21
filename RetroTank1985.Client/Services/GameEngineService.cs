@@ -225,8 +225,8 @@ public class GameEngineService : IAsyncDisposable
         if (IsCoopSession && IsCoopHost && OnCoopSnapshotGenerated != null)
         {
             _networkFrameCounter++;
-            // Throttle snapshot to 30Hz on SignalR (send on even frames only)
-            if (_networkFrameCounter % 2 == 0)
+            // Throttle snapshot to 20Hz on SignalR (send every 3 frames: ~50ms interval)
+            if (_networkFrameCounter % 3 == 0)
             {
                 var snapshot = _engine.CreateNetworkSnapshot(_networkFrameCounter);
                 _ = OnCoopSnapshotGenerated.Invoke(snapshot);
