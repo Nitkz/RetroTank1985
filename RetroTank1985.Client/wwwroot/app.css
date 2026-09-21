@@ -78,9 +78,23 @@ body.retro-body {
     display: inline-block;
 }
 
-.tag-pulse { background: rgba(231, 76, 60, 0.2); color: #ff7979; border: 1px solid #e74c3c; }
-.tag-noise { background: rgba(241, 196, 15, 0.2); color: #f9ca24; border: 1px solid #f1c40f; }
-.tag-tri { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
+.tag-pulse {
+    background: rgba(231, 76, 60, 0.2);
+    color: #ff7979;
+    border: 1px solid #e74c3c;
+}
+
+.tag-noise {
+    background: rgba(241, 196, 15, 0.2);
+    color: #f9ca24;
+    border: 1px solid #f1c40f;
+}
+
+.tag-tri {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    border: 1px solid #2ecc71;
+}
 
 /* Arcade Canvas Screen & Frame */
 .arcade-bezel {
@@ -186,8 +200,11 @@ body.retro-body {
 }
 
 .arcade-bezel:fullscreen .moba-touch-panel .moba-attack-btn,
+.arcade-bezel:fullscreen .moba-touch-panel .moba-emote-btn,
 .arcade-bezel:-webkit-full-screen .moba-touch-panel .moba-attack-btn,
-.arcade-bezel.is-pseudo-fullscreen .moba-touch-panel .moba-attack-btn {
+.arcade-bezel:-webkit-full-screen .moba-touch-panel .moba-emote-btn,
+.arcade-bezel.is-pseudo-fullscreen .moba-touch-panel .moba-attack-btn,
+.arcade-bezel.is-pseudo-fullscreen .moba-touch-panel .moba-emote-btn {
     opacity: 0.9;
     pointer-events: auto !important;
 }
@@ -210,7 +227,8 @@ body.retro-body {
     margin: 0 !important;
     padding: 0 !important;
 }
-.arcade-bezel.is-pseudo-fullscreen .moba-panel-header > div:first-child {
+
+.arcade-bezel.is-pseudo-fullscreen .moba-panel-header>div:first-child {
     display: none !important;
 }
 
@@ -250,7 +268,8 @@ body.retro-body {
     box-shadow: 0 4px 0 #0f172a;
 }
 
-.dpad-btn:active, .dpad-btn.active {
+.dpad-btn:active,
+.dpad-btn.active {
     background: #334155;
     transform: translateY(2px);
     box-shadow: 0 2px 0 #0f172a;
@@ -277,7 +296,8 @@ body.retro-body {
     transition: all 0.1s ease;
 }
 
-.fire-btn:active, .fire-btn.active {
+.fire-btn:active,
+.fire-btn.active {
     transform: translateY(4px);
     box-shadow: 0 2px 0 #7f1d1d, 0 0 25px rgba(231, 76, 60, 0.8);
     background: radial-gradient(circle, #ff6b6b 0%, #e74c3c 100%);
@@ -361,7 +381,7 @@ body.retro-body {
     position: absolute;
     background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
     border: 1.5px solid #475569;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.1);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -503,9 +523,41 @@ body.retro-body {
     letter-spacing: 1px;
 }
 
-.moba-attack-btn:active, .moba-attack-btn.pressed {
+.moba-attack-btn:active,
+.moba-attack-btn.pressed {
     transform: scale(0.92);
     box-shadow: 0 2px 10px rgba(220, 38, 38, 0.8), inset 0 4px 8px rgba(0, 0, 0, 0.5);
+    filter: brightness(1.2);
+}
+
+/* Secondary MOBA Tactical Emote Button */
+.moba-emote-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #f59e0b 0%, #d97706 60%, #78350f 100%);
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+    font-family: var(--retro-font);
+    font-size: 0.55rem;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    margin-right: 18px;
+    letter-spacing: 0.5px;
+}
+
+.moba-emote-btn:active,
+.moba-emote-btn.pressed {
+    transform: scale(0.92);
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.5);
     filter: brightness(1.2);
 }
 
@@ -563,8 +615,17 @@ body.retro-body {
 }
 
 @@keyframes gracePulse {
-    0%, 100% { border-color: #ef4444; box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); }
-    50% { border-color: #f59e0b; box-shadow: 0 0 35px rgba(245, 158, 11, 0.6); }
+
+    0%,
+    100% {
+        border-color: #ef4444;
+        box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
+    }
+
+    50% {
+        border-color: #f59e0b;
+        box-shadow: 0 0 35px rgba(245, 158, 11, 0.6);
+    }
 }
 
 .disconnect-grace-badge {
@@ -607,8 +668,15 @@ body.retro-body {
 }
 
 @keyframes gameOverFadeIn {
-    from { opacity: 0; transform: scale(0.96); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .game-over-title {
@@ -636,6 +704,3 @@ body.retro-body {
     border-radius: 6px;
     padding: 8px 12px;
 }
-
-
-

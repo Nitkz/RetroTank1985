@@ -88,8 +88,19 @@
             </div>
         </div>
 
-        <!-- 2. Right Action Cluster (Spacious Giant Fire Button) -->
+        <!-- 2. Right Action Cluster (Spacious Giant Fire Button & Emote Button) -->
         <div class="moba-action-zone">
+            @if (ShowEmote)
+            {
+                <button class="moba-emote-btn" 
+                        title="Tactical Emote Wheel [C]"
+                        ontouchstart="window.dispatchEvent(new CustomEvent('retrotank:toggle-emote')); event.preventDefault();"
+                        onclick="window.dispatchEvent(new CustomEvent('retrotank:toggle-emote'));">
+                    <MudIcon Icon="@Icons.Material.Filled.Chat" Size="Size.Small" Style="color: #f1c40f;" />
+                    <span>EMOTE</span>
+                </button>
+            }
+
             <button class="moba-attack-btn" id="@_fireBtnId"
                     ontouchstart="window.__mobaFire && window.__mobaFire(@PlayerIndex, true); event.preventDefault();"
                     ontouchend="window.__mobaFire && window.__mobaFire(@PlayerIndex, false); event.preventDefault();"
