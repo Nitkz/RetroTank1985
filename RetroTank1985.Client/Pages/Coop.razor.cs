@@ -44,9 +44,18 @@ public partial class Coop : IAsyncDisposable
         }
     }
 
-    private void OnRoomUpdated(CoopRoomInfo room)
+    private async void OnRoomUpdated(CoopRoomInfo room)
     {
-        InvokeAsync(StateHasChanged);
+        // หากเป็น Guest หรือมีการอัปเดต Settings จาก Host ให้ sync settings กับ Engine และ UI
+        if (room.Settings != null)
+        {
+            _settings = room.Settings;
+            if (LobbyService.IsGuest)
+            {
+                await EngineService.ApplySettingsAsync(room.Settings);
+            }
+        }
+        await InvokeAsync(StateHasChanged);
     }
 
     private void OnError(string message)
@@ -68,7 +77,7 @@ public partial class Coop : IAsyncDisposable
         IsLoading = true;
         try
         {
-            var result = await LobbyService.CreateRoomAsync(PlayerName, SelectedInitialStage);
+            var result = await LobbyService.CreateRoomAsync(PlayerName, SelectedInitialStage, _settings.Preset.ToString(), _settings);
             if (!result.Success)
             {
                 Snackbar.Add(result.Message ?? "Failed to create room", Severity.Error);
@@ -185,6 +194,12 @@ public partial class Coop : IAsyncDisposable
             _settings = newSettings;
             await StorageService.SaveGameSettingsAsync(newSettings);
             await EngineService.ApplySettingsAsync(newSettings);
+
+            if (LobbyService.IsHost && LobbyService.CurrentRoom != null)
+            {
+                await LobbyService.ChangeGameSettingsAsync(newSettings);
+            }
+
             Snackbar.Add($"Difficulty preset updated: {GameUiHelper.GetDifficultyLabel(newSettings.Preset)}", Severity.Info);
             StateHasChanged();
         }

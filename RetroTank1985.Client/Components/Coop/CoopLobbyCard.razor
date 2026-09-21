@@ -144,13 +144,22 @@
             }
             else
             {
-                <div class="d-flex align-center gap-2">
-                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
-                        @(GameSettings?.Preset != null ? GameUiHelper.GetDifficultyLabel(GameSettings.Preset) : "CLASSIC 1985")
+                var currentPreset = Room.Settings?.Preset ?? GameSettings?.Preset ?? RetroTank1985.Shared.Models.GameDifficultyPreset.Classic1985;
+                <div class="d-flex align-center gap-2 flex-wrap">
+                    <MudChip T="string" 
+                             Size="Size.Small" 
+                             Color="@GameUiHelper.GetDifficultyColor(currentPreset)" 
+                             Variant="Variant.Filled" 
+                             Class="pixel-text" 
+                             Style="font-size: 0.65rem; font-weight: bold; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                        @GameUiHelper.GetDifficultyLabel(currentPreset)
                     </MudChip>
-                    <MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Outlined" Class="pixel-text" Style="font-size: 0.65rem;">
-                        HOST CONTROLS STAGE &amp; RULES
-                    </MudChip>
+                    <span class="d-inline-flex align-center px-2 py-1 host-controls-badge">
+                        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Class="mr-1" Style="font-size: 0.8rem; color: #cbd5e1;" />
+                        <span class="pixel-text" style="font-size: 0.65rem; color: #f1f5f9; letter-spacing: 0.5px;">
+                            HOST CONTROLS STAGE &amp; RULES
+                        </span>
+                    </span>
                 </div>
             }
         </div>
@@ -212,6 +221,12 @@
     .led-red {
         background-color: #e74c3c;
         box-shadow: 0 0 8px #e74c3c;
+    }
+    .host-controls-badge {
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid #475569;
+        border-radius: 16px;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 </style>
 

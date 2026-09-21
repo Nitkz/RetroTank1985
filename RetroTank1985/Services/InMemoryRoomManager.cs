@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using RetroTank1985.Shared.Enums;
+using RetroTank1985.Shared.Models;
 using RetroTank1985.Shared.Models.Network;
 
 namespace RetroTank1985.Services;
@@ -53,7 +54,8 @@ public class InMemoryRoomManager : IRoomManager, IDisposable
             RoomCode = roomCode,
             State = CoopRoomState.WaitingForGuest,
             SelectedStage = Math.Clamp(request.InitialStage, 1, 35),
-            DifficultyMode = request.DifficultyMode ?? "Classic1985",
+            DifficultyMode = request.DifficultyMode ?? (request.Settings != null ? request.Settings.Preset.ToString() : "Classic1985"),
+            Settings = request.Settings ?? new GameSettings(),
             FriendlyFireStun = true,
             CreatedAt = DateTime.UtcNow,
             HostPlayer = hostPlayer,
@@ -203,6 +205,27 @@ public class InMemoryRoomManager : IRoomManager, IDisposable
             }
 
             room.SelectedStage = Math.Clamp(stageNumber, 1, 35);
+            return Task.FromResult(RoomActionResult.Ok(room));
+        }
+    }
+
+    public Task<RoomActionResult> ChangeGameSettingsAsync(string connectionId, string roomCode, GameSettings settings)
+    {
+        if (!_rooms.TryGetValue(roomCode, out var room))
+        {
+            return Task.FromResult(RoomActionResult.Fail("Room not found."));
+        }
+
+        lock (room)
+        {
+            if (room.HostPlayer?.ConnectionId != connectionId)
+            {
+                return Task.FromResult(RoomActionResult.Fail("Only host can change game settings."));
+            }
+
+            room.Settings = settings ?? new GameSettings();
+            room.DifficultyMode = room.Settings.Preset.ToString();
+            _logger.LogInformation("Host updated room {RoomCode} game settings to Preset {Preset}", roomCode, room.Settings.Preset);
             return Task.FromResult(RoomActionResult.Ok(room));
         }
     }

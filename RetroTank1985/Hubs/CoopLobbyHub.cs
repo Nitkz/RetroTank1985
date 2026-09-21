@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using RetroTank1985.Services;
 using RetroTank1985.Shared.Contracts;
 using RetroTank1985.Shared.Enums;
+using RetroTank1985.Shared.Models;
 using RetroTank1985.Shared.Models.Network;
 
 namespace RetroTank1985.Hubs;
@@ -87,6 +88,17 @@ public class CoopLobbyHub : Hub<ICoopLobbyClient>, ICoopLobbyHub
     public async Task<RoomActionResult> ChangeStage(string roomCode, int stageNumber)
     {
         var result = await _roomManager.ChangeStageAsync(Context.ConnectionId, roomCode, stageNumber);
+        if (result.Success && result.Room != null)
+        {
+            var groupName = GetRoomGroupName(roomCode);
+            await Clients.Group(groupName).OnRoomUpdated(result.Room);
+        }
+        return result;
+    }
+
+    public async Task<RoomActionResult> ChangeGameSettings(string roomCode, GameSettings settings)
+    {
+        var result = await _roomManager.ChangeGameSettingsAsync(Context.ConnectionId, roomCode, settings);
         if (result.Success && result.Room != null)
         {
             var groupName = GetRoomGroupName(roomCode);

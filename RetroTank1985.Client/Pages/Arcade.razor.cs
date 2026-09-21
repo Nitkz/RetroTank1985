@@ -74,6 +74,13 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
             _roomCode = QueryRoom ?? LobbyService.CurrentRoom?.RoomCode ?? string.Empty;
             _selectedStage = QueryStage ?? 1;
 
+            // In Co-Op, prioritize room settings synced from Host over local storage
+            if (LobbyService.CurrentRoom?.Settings != null)
+            {
+                _settings = LobbyService.CurrentRoom.Settings;
+                await EngineService.ApplySettingsAsync(_settings);
+            }
+
             _wasCoopSession = _isCoopSession;
             _wasCoopHost = _isCoopHost;
 

@@ -1,4 +1,5 @@
 using RetroTank1985.Shared.Enums;
+using RetroTank1985.Shared.Models;
 using RetroTank1985.Shared.Models.Network;
 
 namespace RetroTank1985.Services;
@@ -32,6 +33,11 @@ public interface IRoomManager
     /// Host เปลี่ยน Stage ที่เลือกเล่น
     /// </summary>
     Task<RoomActionResult> ChangeStageAsync(string connectionId, string roomCode, int stageNumber);
+
+    /// <summary>
+    /// Host ปรับเปลี่ยน Game Settings (Difficulty, Lives, Speed, etc.)
+    /// </summary>
+    Task<RoomActionResult> ChangeGameSettingsAsync(string connectionId, string roomCode, GameSettings settings);
 
     /// <summary>
     /// Host สั่งเริ่มเล่นเกม (เมื่อทั้งสองฝ่าย Ready)

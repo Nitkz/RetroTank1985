@@ -1,4 +1,5 @@
 using RetroTank1985.Shared.Enums;
+using RetroTank1985.Shared.Models;
 
 namespace RetroTank1985.Shared.Models.Network;
 
@@ -32,6 +33,11 @@ public class CoopRoomInfo
     public CoopPlayerSlot? HostPlayer { get; set; }
     public CoopPlayerSlot? GuestPlayer { get; set; }
 
+    /// <summary>
+    /// การตั้งค่ากติกาของห้องที่ Host กำหนด
+    /// </summary>
+    public GameSettings Settings { get; set; } = new();
+
     public bool IsFull => HostPlayer != null && GuestPlayer != null;
     public bool CanStartGame => IsFull && HostPlayer?.IsReady == true && GuestPlayer?.IsReady == true;
 }
@@ -44,6 +50,7 @@ public class CreateRoomRequest
     public string PlayerName { get; set; } = "Player 1";
     public int InitialStage { get; set; } = 1;
     public string DifficultyMode { get; set; } = "Classic1985";
+    public GameSettings? Settings { get; set; }
 }
 
 /// <summary>

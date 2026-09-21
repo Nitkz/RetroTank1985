@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using RetroTank1985.Shared.Contracts;
 using RetroTank1985.Shared.Enums;
+using RetroTank1985.Shared.Models;
 using RetroTank1985.Shared.Models.Network;
 
 namespace RetroTank1985.Client.Services;
@@ -152,7 +153,7 @@ public class CoopLobbyClientService : IAsyncDisposable
     /// <summary>
     /// ขอสร้างห้องใหม่
     /// </summary>
-    public async Task<RoomActionResult> CreateRoomAsync(string playerName, int stage = 1, string difficulty = "Classic1985")
+    public async Task<RoomActionResult> CreateRoomAsync(string playerName, int stage = 1, string difficulty = "Classic1985", GameSettings? settings = null)
     {
         await EnsureConnectedAsync();
         if (_hubConnection == null) return RoomActionResult.Fail("Not connected");
@@ -161,7 +162,8 @@ public class CoopLobbyClientService : IAsyncDisposable
         {
             PlayerName = playerName,
             InitialStage = stage,
-            DifficultyMode = difficulty
+            DifficultyMode = difficulty,
+            Settings = settings
         };
 
         var result = await _hubConnection.InvokeAsync<RoomActionResult>(nameof(ICoopLobbyHub.CreateRoom), request);
@@ -225,6 +227,15 @@ public class CoopLobbyClientService : IAsyncDisposable
     {
         if (_hubConnection == null || CurrentRoom == null) return RoomActionResult.Fail("Not in room");
         return await _hubConnection.InvokeAsync<RoomActionResult>(nameof(ICoopLobbyHub.ChangeStage), CurrentRoom.RoomCode, stageNumber);
+    }
+
+    /// <summary>
+    /// Host ปรับแต่ง Game Settings (Difficulty, Lives, Speed, etc.) แล้วซิงค์ไปยังผู้เล่นทุกคนในห้อง
+    /// </summary>
+    public async Task<RoomActionResult> ChangeGameSettingsAsync(GameSettings settings)
+    {
+        if (_hubConnection == null || CurrentRoom == null) return RoomActionResult.Fail("Not in room");
+        return await _hubConnection.InvokeAsync<RoomActionResult>(nameof(ICoopLobbyHub.ChangeGameSettings), CurrentRoom.RoomCode, settings);
     }
 
     /// <summary>
