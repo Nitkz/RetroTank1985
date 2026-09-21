@@ -64,6 +64,17 @@ public struct BulletNetworkSnapshot
 }
 
 /// <summary>
+/// Snapshot ของเอฟเฟกต์การระเบิด
+/// </summary>
+public struct ExplosionNetworkSnapshot
+{
+    public float X { get; set; }
+    public float Y { get; set; }
+    public int Frame { get; set; }
+    public bool IsBig { get; set; }
+}
+
+/// <summary>
 /// เหตุการณ์การเปลี่ยนแปลงก้อนอิฐในแผนที่ (Delta Event)
 /// </summary>
 public struct MapDeltaMutation
@@ -85,6 +96,7 @@ public class CoopSyncSnapshotDto
 
     public EnemyNetworkSnapshot[] Enemies { get; set; } = [];
     public BulletNetworkSnapshot[] Bullets { get; set; } = [];
+    public ExplosionNetworkSnapshot[]? Explosions { get; set; }
     public MapDeltaMutation[]? MapMutations { get; set; }
     public byte[]? SubTiles { get; set; }
 

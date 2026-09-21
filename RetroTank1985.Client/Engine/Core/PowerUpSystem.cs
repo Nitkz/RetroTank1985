@@ -11,6 +11,8 @@ public interface IPowerUpSystem
     void DropRandomPowerUp(float x, float y, IAudioEventQueue audioQueue);
     void SpawnPowerUpDebug(PowerUpType type, float? x = null, float? y = null, IAudioEventQueue? audioQueue = null);
     void SyncFromNetwork(byte? powerUpType, float x, float y);
+    void UpdateVisuals();
+    void SpawnScorePopup(float x, float y, int score);
     void Update(
         IReadOnlyList<PlayerTank> players,
         IEnemySystem enemies,
@@ -203,6 +205,29 @@ public class PowerUpSystem : IPowerUpSystem
             if (collected) continue;
         }
 
+        // 2. Update Floating Score Popups and Power-Up Blinking Visuals
+        UpdateVisuals();
+    }
+
+    public void UpdateVisuals()
+    {
+        // 1. Update Power-Up Blinking Animation
+        for (int i = 0; i < _powerUps.Count; i++)
+        {
+            var p = _powerUps[i];
+            if (!p.IsActive) continue;
+
+            p.BlinkCounter++;
+            if (p.Lifetime < 180)
+            {
+                p.IsVisible = (p.BlinkCounter / 8) % 2 == 0;
+            }
+            else
+            {
+                p.IsVisible = true;
+            }
+        }
+
         // 2. Update Floating Score Popups
         for (int i = _scorePopups.Count - 1; i >= 0; i--)
         {
@@ -272,7 +297,7 @@ public class PowerUpSystem : IPowerUpSystem
         }
     }
 
-    private void SpawnScorePopup(float x, float y, int score)
+    public void SpawnScorePopup(float x, float y, int score)
     {
         var sp = AcquireScorePopup();
         if (sp == null) return;

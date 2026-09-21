@@ -112,6 +112,11 @@ public partial class Coop : IAsyncDisposable
             else
             {
                 Snackbar.Add($"Joined room {result.Room?.RoomCode} as Player 2!", Severity.Success);
+                if (result.Room != null && result.Room.State == RetroTank1985.Shared.Enums.CoopRoomState.InGame)
+                {
+                    Snackbar.Add("Resuming ongoing mission...", Severity.Info);
+                    NavigationManager.NavigateTo($"/arcade?coop=1&stage={result.Room.SelectedStage}&role=p2&room={result.Room.RoomCode}");
+                }
             }
         }
         catch (Exception ex)

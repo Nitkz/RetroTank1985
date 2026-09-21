@@ -434,6 +434,27 @@ public class BattleCityEngine : IBattleCityEngine
         }
         snapshot.Bullets = bulletsList.ToArray();
 
+        // Explosions Snapshot
+        var activeExplosions = Bullets.ActiveExplosions;
+        if (activeExplosions.Count > 0)
+        {
+            var expList = new List<ExplosionNetworkSnapshot>(activeExplosions.Count);
+            foreach (var ex in activeExplosions)
+            {
+                if (ex.IsActive)
+                {
+                    expList.Add(new ExplosionNetworkSnapshot
+                    {
+                        X = ex.X,
+                        Y = ex.Y,
+                        Frame = ex.Frame,
+                        IsBig = ex.IsBig
+                    });
+                }
+            }
+            snapshot.Explosions = expList.ToArray();
+        }
+
         // PowerUp
         var activePowerUps = PowerUps.ActivePowerUps;
         if (activePowerUps.Count > 0)
@@ -566,12 +587,21 @@ public class BattleCityEngine : IBattleCityEngine
         {
             Bullets.SyncFromNetwork(snapshot.Bullets);
         }
+        if (snapshot.Explosions != null)
+        {
+            Bullets.SyncExplosionsFromNetwork(snapshot.Explosions);
+        }
         if (snapshot.Enemies != null)
         {
             Enemies.SyncFromNetwork(snapshot.Enemies, snapshot.RemainingEnemyWaveCount);
         }
 
-        // Sync Active Power-Up Item to Guest Engine
+        // Sync Active Power-Up Item to Guest Engine (and spawn floating score popup if item was just picked up)
+        if (PowerUps.ActivePowerUps.Count > 0 && !snapshot.ActivePowerUpType.HasValue)
+        {
+            var oldP = PowerUps.ActivePowerUps[0];
+            PowerUps.SpawnScorePopup(oldP.X, oldP.Y, 500);
+        }
         PowerUps.SyncFromNetwork(snapshot.ActivePowerUpType, snapshot.PowerUpX, snapshot.PowerUpY);
 
         // Sync Destructible Map SubTiles from Host
@@ -1040,6 +1070,12 @@ public class BattleCityEngine : IBattleCityEngine
                         var sfx = pType == PowerUpType.TankLife ? AudioSoundEffect.Life : AudioSoundEffect.Bonus;
                         _pendingNetworkAudioEvents.Add((byte)sfx);
                     });
+                }
+                else
+                {
+                    // Guest locally ticks active explosions & power-up visuals for smooth presentation
+                    Bullets.UpdateExplosions();
+                    PowerUps.UpdateVisuals();
                 }
 
                 // 5. Destructible Map Shovel countdown update

@@ -53,13 +53,13 @@
                                 ShowPlayerSwitch="false" 
                                 ShowEmote="@_isCoopSession" />
         </div>
-    </div>
 
-    <!-- 4. Tactical Emote Wheel Modal (Only in Co-Op Session) -->
-    @if (_isCoopSession)
-    {
-        <EmoteWheel @bind-IsOpen="_isEmoteWheelOpen" OnEmoteSelected="HandleEmoteSelected" />
-    }
+        <!-- 4. Tactical Emote Wheel Modal (Inside Bezel for Fullscreen Support) -->
+        @if (_isCoopSession)
+        {
+            <EmoteWheel @bind-IsOpen="_isEmoteWheelOpen" OnEmoteSelected="HandleEmoteSelected" />
+        }
+    </div>
 
     <!-- 5. Keyboard-Only Instructions & Legend Badge (Desktop hint) -->
     <ArcadeControlsLegend IsCoopSession="@_isCoopSession" />

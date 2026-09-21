@@ -144,6 +144,14 @@ public partial class Arcade : ComponentBase, IAsyncDisposable
                 if (success)
                 {
                     _engineStarted = true;
+
+                    // Ensure Co-Op Room Settings override locally saved default settings
+                    if (_isCoopSession && LobbyService.CurrentRoom?.Settings != null)
+                    {
+                        _settings = LobbyService.CurrentRoom.Settings;
+                        EngineService.Engine.ApplySettings(_settings);
+                    }
+
                     if (_isMuted)
                     {
                         await JS.InvokeVoidAsync("nesSynth.setMute", true);

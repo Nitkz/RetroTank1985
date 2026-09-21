@@ -88,12 +88,12 @@ public class InMemoryRoomManager : IRoomManager, IDisposable
 
         lock (room)
         {
-            if (room.State != CoopRoomState.WaitingForGuest && room.State != CoopRoomState.InLobbyReady)
+            if (room.State != CoopRoomState.WaitingForGuest && room.State != CoopRoomState.InLobbyReady && room.State != CoopRoomState.InGame)
             {
-                return RoomActionResult.Fail("Game has already started or room is unavailable.");
+                return RoomActionResult.Fail("Room is currently unavailable or closed.");
             }
 
-            if (room.IsFull)
+            if (room.IsFull && room.GuestPlayer?.ConnectionId != connectionId)
             {
                 return RoomActionResult.Fail("Room is full (2/2 players).");
             }
@@ -105,15 +105,18 @@ public class InMemoryRoomManager : IRoomManager, IDisposable
                 PlayerName = string.IsNullOrWhiteSpace(request.PlayerName) ? "Player 2" : request.PlayerName.Trim(),
                 SlotIndex = CoopPlayerSlotIndex.Player2,
                 IsHost = false,
-                IsReady = false,
+                IsReady = room.State == CoopRoomState.InGame,
                 LastHeartbeat = DateTime.UtcNow
             };
 
             room.GuestPlayer = guestPlayer;
-            room.State = CoopRoomState.InLobbyReady;
+            if (room.State != CoopRoomState.InGame)
+            {
+                room.State = CoopRoomState.InLobbyReady;
+            }
             _connectionToRoomMap[connectionId] = roomCode;
 
-            _logger.LogInformation("Player {GuestName} joined room {RoomCode} as Guest ({ConnectionId})", guestPlayer.PlayerName, roomCode, connectionId);
+            _logger.LogInformation("Player {GuestName} joined room {RoomCode} as Guest ({ConnectionId}), State={State}", guestPlayer.PlayerName, roomCode, connectionId, room.State);
             return RoomActionResult.Ok(room, "Joined room successfully");
         }
     }

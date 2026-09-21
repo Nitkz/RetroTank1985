@@ -14,6 +14,8 @@ public interface IBulletSystem
     bool TryFirePlayerBullet(PlayerTank player, IAudioEventQueue audioQueue);
     bool TryFireEnemyBullet(EnemyTank enemy, IAudioEventQueue audioQueue);
     void SyncFromNetwork(BulletNetworkSnapshot[] snapshots);
+    void SyncExplosionsFromNetwork(ExplosionNetworkSnapshot[]? snapshots);
+    void UpdateExplosions();
     void Update(
         IReadOnlyList<PlayerTank> players,
         IReadOnlyList<EnemyTank> enemies,
@@ -150,6 +152,28 @@ public class BulletSystem : IBulletSystem
             b.Direction = (Direction)s.Direction;
             b.IsActive = s.IsActive;
             _bullets.Add(b);
+        }
+    }
+
+    public void SyncExplosionsFromNetwork(ExplosionNetworkSnapshot[]? snapshots)
+    {
+        for (int i = 0; i < MaxExplosions; i++) _explosionPool[i].IsActive = false;
+        _explosions.Clear();
+
+        if (snapshots == null || snapshots.Length == 0) return;
+
+        for (int i = 0; i < snapshots.Length && i < MaxExplosions; i++)
+        {
+            var s = snapshots[i];
+            var ex = _explosionPool[i];
+            ex.X = s.X;
+            ex.Y = s.Y;
+            ex.Frame = s.Frame;
+            ex.IsBig = s.IsBig;
+            ex.MaxFrames = s.IsBig ? 5 : 3;
+            ex.FrameDelay = s.IsBig ? 5 : 4;
+            ex.IsActive = true;
+            _explosions.Add(ex);
         }
     }
 
@@ -388,6 +412,11 @@ public class BulletSystem : IBulletSystem
         }
 
         // 5. Update Explosions
+        UpdateExplosions();
+    }
+
+    public void UpdateExplosions()
+    {
         for (int i = _explosions.Count - 1; i >= 0; i--)
         {
             var ex = _explosions[i];
