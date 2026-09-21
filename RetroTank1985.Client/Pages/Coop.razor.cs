@@ -177,6 +177,16 @@ public partial class Coop : IAsyncDisposable
         }
     }
 
+    private void ResumeGame()
+    {
+        if (LobbyService.CurrentRoom != null)
+        {
+            var room = LobbyService.CurrentRoom;
+            Snackbar.Add("Returning to game...", Severity.Info);
+            NavigationManager.NavigateTo($"/arcade?coop=1&stage={room.SelectedStage}&role={(LobbyService.IsHost ? "p1" : "p2")}&room={room.RoomCode}");
+        }
+    }
+
     private async Task OpenOptionsDialog()
     {
         var parameters = new DialogParameters<RetroTank1985.Client.Components.Arcade.GameOptionsDialog>

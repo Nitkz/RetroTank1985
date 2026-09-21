@@ -172,15 +172,25 @@
         </MudButton>
 
         <div class="d-flex align-center gap-3">
-            @if (IsGuest)
+            @if (Room.State == CoopRoomState.InGame)
+            {
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Success" 
+                           StartIcon="@Icons.Material.Filled.SportsEsports" 
+                           Class="pixel-text pulse-animation" 
+                           Style="font-size: 0.85rem; min-width: 180px; box-shadow: 0 0 15px rgba(46, 204, 113, 0.6);" 
+                           OnClick="OnResumeGame">
+                    RETURN TO GAME &rarr;
+                </MudButton>
+            }
+            else if (IsGuest)
             {
                 var isReady = Room.GuestPlayer?.IsReady == true;
                 <MudButton Variant="Variant.Filled" Color="@(isReady ? Color.Dark : Color.Success)" Class="pixel-text" Style="font-size: 0.85rem; min-width: 150px;" OnClick="@(() => OnToggleReady.InvokeAsync(!isReady))">
                     @(isReady ? "CANCEL READY" : "READY (P2)")
                 </MudButton>
             }
-
-            @if (IsHost)
+            else if (IsHost)
             {
                 var canStart = Room.CanStartGame;
                 <MudButton Variant="Variant.Filled" Color="Color.Warning" Disabled="@(!canStart)" Class="pixel-text" Style="font-size: 0.85rem; min-width: 180px; box-shadow: 0 0 15px rgba(241,196,15,0.4);" OnClick="OnStartGame">
@@ -263,6 +273,9 @@
 
     [Parameter]
     public EventCallback OnStartGame { get; set; }
+
+    [Parameter]
+    public EventCallback OnResumeGame { get; set; }
 
     [Parameter]
     public EventCallback OnLeaveRoom { get; set; }
