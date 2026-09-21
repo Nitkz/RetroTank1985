@@ -1,0 +1,145 @@
+@page "/arcade"
+@using RetroTank1985.Client.Components.Play
+
+<PageTitle>RetroTank 1985 | Arcade Mode (1P Campaign)</PageTitle>
+
+<div class="d-flex flex-column align-center w-100 mb-6">
+    <!-- Top Arcade Marquee & Status Header -->
+    <div class="d-flex align-center justify-space-between flex-wrap gap-2 w-100 mb-3" style="max-width: 800px;">
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.VideogameAsset" Color="Color.Warning" Size="Size.Large" />
+            <div>
+                <MudText Typo="Typo.h5" Class="pixel-text" Style="color: #f1c40f; font-size: 1.2rem; text-shadow: 0 0 12px rgba(241, 196, 15, 0.4);">
+                    ARCADE MODE
+                </MudText>
+                <span class="pixel-text" style="color: #94a3b8; font-size: 0.65rem;">1-PLAYER NES CAMPAIGN &bull; STAGES 1–35</span>
+            </div>
+        </div>
+
+        <div class="d-flex align-center gap-2">
+            <!-- High Score Badge -->
+            <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.5); border-radius: 4px; border: 1px solid #f59e0b;">
+                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Color="Color.Warning" Size="Size.Small" Class="mr-1" />
+                <span class="pixel-text" style="color: #f59e0b; font-size: 0.7rem;">HI: @_highScore</span>
+            </div>
+
+            <!-- Current Score Badge -->
+            <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.5); border-radius: 4px; border: 1px solid #3b82f6;">
+                <span class="pixel-text" style="color: #60a5fa; font-size: 0.7rem;">SCORE: @_telemetry.Score</span>
+            </div>
+
+            <!-- Player Lives -->
+            <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.5); border-radius: 4px; border: 1px solid #ef4444;">
+                <MudIcon Icon="@Icons.Material.Filled.Favorite" Color="Color.Error" Size="Size.Small" Class="mr-1" />
+                <span class="pixel-text" style="color: #ef4444; font-size: 0.7rem;">x@_telemetry.Lives</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Arcade Control Bar (Stage Step, Restart, Sound, Fullscreen) -->
+    <div class="d-flex align-center justify-space-between flex-wrap gap-2 pa-2 w-100 mb-3" 
+         style="max-width: 800px; background: #0f172a; border-radius: 8px; border: 1px solid #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        <div class="d-flex align-center gap-2 flex-wrap">
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Warning" 
+                       Size="Size.Small" 
+                       OnClick="OnPrevClicked" 
+                       Disabled="@(_selectedStage <= 1)"
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem;">
+                &lt; PREV
+            </MudButton>
+
+            <MudSelect T="int" 
+                       Value="@_selectedStage" 
+                       ValueChanged="OnStageSelected" 
+                       Dense="true" 
+                       Margin="Margin.Dense" 
+                       Style="min-width: 140px; font-family: var(--retro-font); font-size: 0.75rem;">
+                @for (int s = 1; s <= 35; s++)
+                {
+                    var stageNum = s;
+                    <MudSelectItem Value="@stageNum">STAGE @stageNum.ToString("D2")</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Warning" 
+                       Size="Size.Small" 
+                       OnClick="OnNextClicked" 
+                       Disabled="@(_selectedStage >= 35)"
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem;">
+                NEXT &gt;
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Error" 
+                       Size="Size.Small" 
+                       OnClick="RestartStage" 
+                       StartIcon="@Icons.Material.Filled.Replay"
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem; background-color: #ef4444;">
+                RESTART [R]
+            </MudButton>
+        </div>
+
+        <div class="d-flex align-center gap-2 flex-wrap">
+            <!-- Audio Mute Toggle -->
+            <MudButton Variant="Variant.Filled" 
+                       Color="@(_isMuted ? Color.Default : Color.Success)" 
+                       Size="Size.Small" 
+                       OnClick="ToggleMute" 
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem;"
+                       StartIcon="@(_isMuted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)">
+                @(_isMuted ? "MUTED" : "SOUND ON")
+            </MudButton>
+
+            <!-- Fullscreen Mode Toggle Button -->
+            <MudTooltip Text="Toggle Fullscreen Arcade Display (Or press [F])">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Warning" 
+                           Size="Size.Small" 
+                           OnClick="ToggleFullscreen" 
+                           Class="pixel-text"
+                           Style="font-size: 0.65rem;"
+                           StartIcon="@Icons.Material.Filled.Fullscreen">
+                    FULLSCREEN [F]
+                </MudButton>
+            </MudTooltip>
+        </div>
+    </div>
+
+    <!-- Arcade Bezel Screen (Pure Keyboard Controlled — No Touch Overlays) -->
+    <div id="arcadeBezelContainer" class="arcade-bezel mb-3" style="width: 536px; max-width: 100%;">
+        <canvas id="arcadeGameCanvas" class="game-canvas" width="512" height="480"></canvas>
+    </div>
+
+    <!-- Keyboard-Only Instructions & Legend Badge -->
+    <MudCard Elevation="3" Class="retro-card pa-3 w-100" Style="max-width: 800px; background: #11141c;">
+        <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+            <div class="d-flex align-center gap-2">
+                <MudIcon Icon="@Icons.Material.Filled.Keyboard" Color="Color.Warning" Size="Size.Small" />
+                <span class="pixel-text" style="color: #f1c40f; font-size: 0.7rem;">KEYBOARD CONTROLS</span>
+            </div>
+            <div class="d-flex align-center flex-wrap gap-2">
+                <span class="channel-tag tag-noise">
+                    MOVE: <strong>ARROW KEYS</strong> / <strong>WASD</strong>
+                </span>
+                <span class="channel-tag tag-pulse">
+                    FIRE: <strong>SPACE</strong> / <strong>ENTER</strong> / <strong>J</strong>
+                </span>
+                <span class="channel-tag tag-tri">
+                    PAUSE: <strong>P</strong> / <strong>ESC</strong>
+                </span>
+                <span class="channel-tag tag-pulse" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: #ef4444;">
+                    RESTART: <strong>R</strong>
+                </span>
+                <span class="channel-tag tag-noise" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: #f59e0b;">
+                    FULLSCREEN: <strong>F</strong>
+                </span>
+            </div>
+        </div>
+    </MudCard>
+</div>

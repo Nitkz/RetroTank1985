@@ -85,7 +85,36 @@ publish-wasm.bat
 - Central access point for all reverse-engineered game modules.
 - Responsive arcade cabinet aesthetic with authentic 1985 color grading.
 
-### 2. Stage Arena (`/play`) — C# Hybrid Game Engine
+### 2. Arcade Mode (`/arcade`) — Authentic 1-Player Offline Campaign
+- **Pure Retro Arcade Experience**:
+  - Focuses entirely on single-player 1P campaign progression across all 35 original NES stages.
+  - **Zero On-Screen Clutter**: On-screen touch controller/virtual D-pad completely removed for a clean, distraction-free arcade cabinet screen.
+- **Keyboard-Only Control Scheme**:
+  - **Move**: `Arrow Keys` or `W, A, S, D` (with Famicom 8px grid snapping)
+  - **Fire**: `Enter`, `Space`, or `J`
+  - **Pause**: `P` or `Escape`
+  - **Restart Current Stage**: `R`
+- **Fullscreen Cabinet Mode**:
+  - Dedicated **FULLSCREEN [F]** toggle button and `F` keyboard shortcut.
+  - Integration with browser Fullscreen API and CSS aspect-ratio lock (`:fullscreen`), maintaining sharp NES pixel scaling on any display resolution.
+- **Campaign Flow**:
+  - Live HUD displaying Score, High Score, and Lives.
+  - Quick Stage Jump selector (`< PREV`, `STAGE 01-35`, `NEXT >`).
+  - Automatic stage-to-stage advancement after the Stage Tally chime sequence.
+
+### 3. Dev Sandbox & Physics Lab (`/play`) — Engine Testing & 2P Co-Op Lab
+- **Interactive Developer & Testing Lab**:
+  - **Dedicated Cheat & Debug Drawer (`GameDebugSandboxPanel`)**:
+    - Instant Enemy Spawner: Basic, Fast, Power, and Armor tanks + Flashing Red item carrier toggle.
+    - Power-Up Laboratory: Directly spawn any of the 6 classic power-up crates onto the battlefield.
+    - Instant Cheats: `Nuke All Enemies`, `Fortify Eagle with Steel`, `Star Power Upgrades (Tiers 0–3)`, and `Force Shield Toggle`.
+    - Simulation Triggers: Instantly trigger Stage Curtain wipe, simulate Stage Clear Tally, or simulate Game Over flow.
+  - **Live Telemetry & Diagnostics HUD**: Real-time monitor tracking FPS, player coordinates, heading angle, remaining wave queue, and active field tank counts.
+  - **Interactive Mission Briefing**: Map preview, sub-tile terrain statistics (Brick/Steel/Water/Trees/Ice), and 20-tank wave queue breakdown.
+  - **Mobile Touch Testing**: Virtual on-screen D-Pad and Fire button with P1/P2 touch selector for mobile/touchscreen ergonomics validation.
+- **2-Player Co-Op Arena**:
+  - Split-keyboard cooperative play: Player 1 (`WASD + Space/J`) & Player 2 (`Arrow Keys + Enter/K/L/Numpad0`).
+  - SP1 Green Palette Tank, mutual friendly-fire clink cancellation, and dual side HUD.
 - **60 FPS Fixed Timestep**: Deterministic physics simulation decoupled from display refresh rates.
 - **Zero-Allocation 60 FPS Pipeline**:
   - Reused `RenderFrameDto` snapshot instance and pre-allocated Bullet/Explosion/Enemy pools.
@@ -132,7 +161,7 @@ publish-wasm.bat
 - **Dual Controller Support**: Full keyboard (WASD / Arrows + Space/J) and on-screen Touch D-Pad with Fire button.
 - **Live Telemetry HUD**: Throttled 500ms status monitor reporting real-time FPS, coordinate position, direction, remaining wave enemies, and active field enemies.
 
-### 3. NES Sound & BGM Synthesizer (`/sound-bgm`)
+### 4. NES Sound & BGM Synthesizer (`/sound-bgm`)
 Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behavior:
 
 | Effect / Music | NES APU Channel | Technique |
@@ -148,12 +177,12 @@ Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behav
 | **Victory Fanfare** | Pulse 1 + Pulse 2 + Tri | Full victory fanfare sequence decoded from ROM `$EF3C` |
 | **Game Over BGM** | Pulse 1 | Chromatic step-down game over sequence |
 
-### 4. Stage, CHR & Item Inspector (`/stage-inspector`)
+### 5. Stage, CHR & Item Inspector (`/stage-inspector`)
 - **Stage Arena Viewer (`StageArenaTab`)**: Decoded 35 stages from ROM `$F07A` with live canvas rendering, display toggles (Grid, Spawns, Coords), Enemy Recon ($E4EC / $E578), sequential spawn queue, terrain distribution stats, and JSON viewer.
 - **CHR-ROM Tile Catalog (`ChrTileCatalogTab`)**: 512 8×8 tilemap viewer with full NES palette switching (BG0–BG3, SP0–SP3) and interactive 4-direction Tank Metasprite live inspector.
 - **Power-ups & Specials Gallery (`PowerUpsSpecialsTab`)**: Interactive 16×16 metasprite catalog for 6 classic droppable items (Helmet, Timer, Shovel, Star, Grenade, 1-UP) with instant bonus SFX testing, along with Phoenix HQ intact/destroyed and Force Shield badges.
 
-### 5. Upcoming: 👑 Epic Boss Battles & Tactical Munitions (Phase 8)
+### 6. Upcoming: 👑 Epic Boss Battles & Tactical Munitions (Phase 8)
 - **Mega Boss Tank Encounters (บอสใหญ่ท้ายฉาก)**: Giant multi-tile armored Boss Mechs with multi-phase HP bars.
 - **Minion Swarm Deployment (Boss ปล่อยลูกน้อง)**: Boss actively summons support tank drones.
 - **Dual Arm Artillery (ยิงกระสุนจากแขนสองข้าง)**: Simultaneous twin-cannon firing with spread/cross-fire projectile mechanics.

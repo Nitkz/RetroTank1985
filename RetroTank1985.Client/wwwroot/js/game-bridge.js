@@ -43,41 +43,33 @@ window.GameBridge = (function () {
       e.preventDefault();
     }
     switch (e.code) {
-      // Player 1 Movement & Fire
+      // Movement (WASD or Arrow Keys)
       case 'KeyW':
+      case 'ArrowUp':
         keys.up = true;
         break;
       case 'KeyS':
+      case 'ArrowDown':
         keys.down = true;
         break;
       case 'KeyA':
+      case 'ArrowLeft':
         keys.left = true;
         break;
       case 'KeyD':
+      case 'ArrowRight':
         keys.right = true;
         break;
+
+      // Fire (Space, J, Enter, Numpad0, K, L)
       case 'Space':
       case 'KeyJ':
-        keys.fire = true;
-        break;
-
-      // Player 2 Movement & Fire
-      case 'ArrowUp':
-        keys.p2Up = true;
-        break;
-      case 'ArrowDown':
-        keys.p2Down = true;
-        break;
-      case 'ArrowLeft':
-        keys.p2Left = true;
-        break;
-      case 'ArrowRight':
-        keys.p2Right = true;
-        break;
       case 'Enter':
       case 'Numpad0':
       case 'KeyK':
       case 'KeyL':
+        keys.fire = true;
+        // Also keep p2Fire for 2P mode compatibility
         keys.p2Fire = true;
         break;
 
@@ -91,46 +83,45 @@ window.GameBridge = (function () {
           dotNetRef.invokeMethodAsync('RestartCurrentStage');
         }
         break;
+      case 'KeyF':
+        if (!e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          const arcadeElem = document.getElementById('arcadeBezelContainer') || canvas;
+          if (arcadeElem) {
+            window.GameBridge.toggleFullscreen(arcadeElem.id);
+          }
+        }
+        break;
     }
   }
 
   function onKeyUp(e) {
     switch (e.code) {
-      // Player 1
+      // Movement (WASD or Arrow Keys)
       case 'KeyW':
+      case 'ArrowUp':
         keys.up = false;
         break;
       case 'KeyS':
+      case 'ArrowDown':
         keys.down = false;
         break;
       case 'KeyA':
+      case 'ArrowLeft':
         keys.left = false;
         break;
       case 'KeyD':
+      case 'ArrowRight':
         keys.right = false;
         break;
+
+      // Fire (Space, J, Enter, Numpad0, K, L)
       case 'Space':
       case 'KeyJ':
-        keys.fire = false;
-        break;
-
-      // Player 2
-      case 'ArrowUp':
-        keys.p2Up = false;
-        break;
-      case 'ArrowDown':
-        keys.p2Down = false;
-        break;
-      case 'ArrowLeft':
-        keys.p2Left = false;
-        break;
-      case 'ArrowRight':
-        keys.p2Right = false;
-        break;
       case 'Enter':
       case 'Numpad0':
       case 'KeyK':
       case 'KeyL':
+        keys.fire = false;
         keys.p2Fire = false;
         break;
 
@@ -343,6 +334,23 @@ window.GameBridge = (function () {
         if (isPressed) {
           keys.pause = true;
           keys.pausePulse = true;
+        }
+      }
+    },
+
+    toggleFullscreen(elementId) {
+      const elem = (elementId ? document.getElementById(elementId) : null) || canvas || document.documentElement;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(err => console.warn('Fullscreen failed:', err));
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(err => console.warn('Exit fullscreen failed:', err));
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
         }
       }
     }

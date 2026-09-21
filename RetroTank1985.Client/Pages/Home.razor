@@ -14,10 +14,10 @@
 </div>
 
 <MudGrid Justify="Justify.Center" Spacing="4">
-    <!-- Featured: Full Arcade Mode (Coming Soon) -->
+    <!-- Featured: Full Arcade Mode (1P Offline Campaign) -->
     <MudItem xs="12" md="6">
-        <div class="hub-card" style="opacity: 0.92; border: 2px dashed #f59e0b; border-radius: 8px;">
-            <MudCard Elevation="6" Class="retro-card pa-5" Style="background: linear-gradient(145deg, #181c26 0%, #11141c 100%);">
+        <a href="arcade" class="hub-card">
+            <MudCard Elevation="6" Class="retro-card pa-5" Style="background: linear-gradient(145deg, #1f1b2e 0%, #11141c 100%); border-color: #f59e0b;">
                 <div class="d-flex align-center justify-space-between mb-3">
                     <div class="d-flex align-center">
                         <MudIcon Icon="@Icons.Material.Filled.VideogameAsset" Color="Color.Warning" Size="Size.Large" Class="mr-3" />
@@ -25,24 +25,22 @@
                             <MudText Typo="Typo.h5" Class="pixel-text font-bold" Style="color: #f1c40f; font-size: 1.1rem;">
                                 ARCADE MODE
                             </MudText>
-                            <span style="font-size: 0.75rem; color: #94a3b8;">Authentic 1985 Campaign &bull; Stages 1–35</span>
+                            <span style="font-size: 0.75rem; color: #94a3b8;">1P Offline Campaign &bull; Stages 1–35 &bull; Fullscreen</span>
                         </div>
                     </div>
                     <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
-                        IN DEV (PHASE 3-6)
+                        PLAYABLE (1P)
                     </MudChip>
                 </div>
                 <MudText Typo="Typo.body2" Style="color: #cbd5e1; line-height: 1.6;" Class="mb-4">
-                    ประสบการณ์การเล่นเกม Battle City ตัวเต็มแบบสมบูรณ์: ระบบศัตรู AI Wave 20 คัน, ทำลายกำแพงอิฐ Sub-tile, ฐานอินทรี Phoenix HQ, เก็บ Power-up ไอเทม 6 แบบ, และหน้าสรุปคะแนน Stage Tally Screen
+                    ประสบการณ์การเล่นเกม Battle City 1985 โหมดแคมเปญ 1P Solo แบบออฟไลน์สมบูรณ์: ควบคุมด้วยคีย์บอร์ดแท้ 100%, โหมด Fullscreen เต็มจอ, ศัตรู AI Wave 20 คัน, ทำลายกำแพงอิฐ Sub-tile, พาวเวอร์อัป 6 แบบ, และหน้าสรุปคะแนน Stage Tally
                 </MudText>
                 <div class="d-flex justify-space-between align-center pt-2" style="border-top: 1px solid #232938;">
-                    <span class="pixel-text" style="font-size: 0.7rem; color: #f59e0b;">FULL CAMPAIGN &bull; COMING SOON</span>
-                    <MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Outlined" Class="pixel-text" Style="font-size: 0.6rem;">
-                        ROADMAP ACTIVE
-                    </MudChip>
+                    <span class="pixel-text" style="font-size: 0.7rem; color: #f59e0b;">LAUNCH ARCADE CAMPAIGN &rarr;</span>
+                    <MudIcon Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Warning" />
                 </div>
             </MudCard>
-        </div>
+        </a>
     </MudItem>
 
     <!-- Active Section: Stage Arena (Dev Sandbox & Physics Lab) -->
@@ -51,24 +49,24 @@
             <MudCard Elevation="4" Class="retro-card pa-5" Style="background: linear-gradient(145deg, #181e2e 0%, #11141c 100%);">
                 <div class="d-flex align-center justify-space-between mb-3">
                     <div class="d-flex align-center">
-                        <MudIcon Icon="@Icons.Material.Filled.SportsEsports" Color="Color.Error" Size="Size.Large" Class="mr-3" />
+                        <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Error" Size="Size.Large" Class="mr-3" />
                         <div>
                             <MudText Typo="Typo.h5" Class="pixel-text font-bold" Style="color: #ef4444; font-size: 1.1rem;">
-                                PLAY ARENA (1P / 2P CO-OP)
+                                DEV SANDBOX &amp; PHYSICS LAB
                             </MudText>
-                            <span style="font-size: 0.75rem; color: #94a3b8;">1P Solo &bull; 2P Green Tank Co-Op &bull; Stages 1–35</span>
+                            <span style="font-size: 0.75rem; color: #94a3b8;">Testing Lab &bull; Cheat Tools &bull; 2P Co-Op &bull; Touch D-Pad</span>
                         </div>
                     </div>
-                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
-                        PLAYABLE
+                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
+                        DEV TOOLS
                     </MudChip>
                 </div>
                 <MudText Typo="Typo.body2" Style="color: #cbd5e1; line-height: 1.6;" Class="mb-4">
-                    สนามรบ 60 FPS NES Engine: รองรับการเล่น 2 คน (P1 Yellow + P2 Green Tank แยกปุ่มควบคุม), บันทึก High Score &amp; Audio Prefs บน LocalStorage, ระบบกระสุน Sub-tile, Power-up 6 แบบ, และหน้าสรุปคะแนน Stage Tally Screen
+                    ห้องทดลองสำหรับนักพัฒนาและผู้ทดสอบ: เมนูโกงเกมเสกศัตรู/ไอเทม (Cheat Panel), Nuke ล้างบางจอ, ปรับระดับ Star Power, ทดสอบ Co-Op 2 คน (P1 Yellow + P2 Green), จำลองระบบสัมผัส Touch D-Pad, และจอตรวจวัด Telemetry FPS/พิกัด
                 </MudText>
                 <div class="d-flex justify-space-between align-center pt-2" style="border-top: 1px solid #232938;">
-                    <span class="pixel-text" style="font-size: 0.7rem; color: #ef4444;">LAUNCH ARENA &rarr;</span>
-                    <MudIcon Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Error" />
+                    <span class="pixel-text" style="font-size: 0.7rem; color: #ef4444;">OPEN DEV SANDBOX &rarr;</span>
+                    <MudIcon Icon="@Icons.Material.Filled.Terminal" Color="Color.Error" />
                 </div>
             </MudCard>
         </a>
