@@ -1,0 +1,233 @@
+@using RetroTank1985.Shared.Enums
+@using RetroTank1985.Shared.Models.Network
+
+<MudCard Elevation="8" Class="retro-card pa-4" Style="background: linear-gradient(145deg, #161a26 0%, #0d111a 100%); border: 2px solid #2c3245;">
+    <!-- Room Header -->
+    <div class="d-flex align-center justify-space-between pb-3 mb-4" style="border-bottom: 2px dashed #2c3245;">
+        <div class="d-flex align-center gap-3">
+            <MudIcon Icon="@Icons.Material.Filled.Wifi" Color="Color.Success" Size="Size.Medium" />
+            <div>
+                <span class="text-caption" style="color: #94a3b8; letter-spacing: 1px;">CO-OP LOBBY CODE</span>
+                <div class="d-flex align-center gap-2">
+                    <span class="pixel-text font-bold" style="font-size: 1.5rem; color: #f1c40f; letter-spacing: 4px; text-shadow: 0 0 12px rgba(241,196,15,0.4);">
+                        @Room.RoomCode
+                    </span>
+                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" Color="Color.Warning" OnClick="OnCopyCode" />
+
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex align-center gap-2">
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" StartIcon="@Icons.Material.Filled.Share" OnClick="OnShareInvite">
+                INVITE LINK
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.QrCode2" OnClick="OnShowQr">
+                QR CODE
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- Players Dual Card Grid -->
+    <MudGrid Spacing="3" Class="mb-4">
+        <!-- Player 1 (Host - Yellow Tank) -->
+        <MudItem xs="12" sm="6">
+            <div class="player-slot-card pa-3" style="background: @(Room.HostPlayer != null ? "rgba(241, 196, 15, 0.08)" : "rgba(15, 23, 42, 0.4)"); border: 2px solid @(Room.HostPlayer != null ? "#f1c40f" : "#334155"); border-radius: 8px;">
+                <div class="d-flex align-center justify-space-between mb-2">
+                    <div class="d-flex align-center gap-2">
+                        <span class="slot-badge host-badge pixel-text">1P HOST</span>
+                        <MudText Typo="Typo.subtitle1" Class="pixel-text font-bold" Style="color: #f1c40f; font-size: 0.95rem;">
+                            @(Room.HostPlayer?.PlayerName ?? "EMPTY")
+                        </MudText>
+                    </div>
+                    @if (Room.HostPlayer != null)
+                    {
+                        <div class="d-flex align-center gap-1">
+                            <span class="led-indicator @(Room.HostPlayer.IsReady ? "led-green" : "led-red")"></span>
+                            <span class="pixel-text" style="font-size: 0.65rem; color: @(Room.HostPlayer.IsReady ? "#2ecc71" : "#e74c3c");">
+                                @(Room.HostPlayer.IsReady ? "READY" : "WAITING")
+                            </span>
+                        </div>
+                    }
+                </div>
+
+                <div class="d-flex align-center justify-space-between pt-2" style="font-size: 0.8rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <div class="d-flex align-center gap-1">
+                        <span style="display:inline-block; width: 14px; height: 14px; background: #f1c40f; border-radius: 2px; box-shadow: 0 0 6px #f1c40f;"></span>
+                        <span>Yellow Tank</span>
+                    </div>
+                    @if (Room.HostPlayer != null)
+                    {
+                        <span class="text-caption" style="color: #10b981;">● Ping @(Room.HostPlayer.PingMs)ms</span>
+                    }
+                </div>
+            </div>
+        </MudItem>
+
+        <!-- Player 2 (Guest - Green Tank) -->
+        <MudItem xs="12" sm="6">
+            <div class="player-slot-card pa-3" style="background: @(Room.GuestPlayer != null ? "rgba(46, 204, 113, 0.08)" : "rgba(15, 23, 42, 0.4)"); border: 2px solid @(Room.GuestPlayer != null ? "#2ecc71" : "#334155"); border-radius: 8px;">
+                <div class="d-flex align-center justify-space-between mb-2">
+                    <div class="d-flex align-center gap-2">
+                        <span class="slot-badge guest-badge pixel-text">2P GUEST</span>
+                        <MudText Typo="Typo.subtitle1" Class="pixel-text font-bold" Style="color: #2ecc71; font-size: 0.95rem;">
+                            @(Room.GuestPlayer?.PlayerName ?? "WAITING...")
+                        </MudText>
+                    </div>
+                    @if (Room.GuestPlayer != null)
+                    {
+                        <div class="d-flex align-center gap-1">
+                            <span class="led-indicator @(Room.GuestPlayer.IsReady ? "led-green" : "led-red")"></span>
+                            <span class="pixel-text" style="font-size: 0.65rem; color: @(Room.GuestPlayer.IsReady ? "#2ecc71" : "#e74c3c");">
+                                @(Room.GuestPlayer.IsReady ? "READY" : "NOT READY")
+                            </span>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Color="Color.Success" />
+                    }
+                </div>
+
+                <div class="d-flex align-center justify-space-between pt-2" style="font-size: 0.8rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <div class="d-flex align-center gap-1">
+                        <span style="display:inline-block; width: 14px; height: 14px; background: #2ecc71; border-radius: 2px; box-shadow: 0 0 6px #2ecc71;"></span>
+                        <span>Green Tank</span>
+                    </div>
+                    @if (Room.GuestPlayer != null)
+                    {
+                        <span class="text-caption" style="color: #10b981;">● Ping @(Room.GuestPlayer.PingMs)ms</span>
+                    }
+                    else
+                    {
+                        <span class="text-caption" style="color: #f59e0b;">Waiting for P2 to join...</span>
+                    }
+                </div>
+            </div>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Stage & Match Config -->
+    <div class="pa-3 mb-4" style="background: #11141d; border: 1px solid #1e293b; border-radius: 8px;">
+        <div class="d-flex align-center justify-space-between flex-wrap gap-3">
+            <div class="d-flex align-center gap-3">
+                <MudIcon Icon="@Icons.Material.Filled.Flag" Color="Color.Warning" />
+                <div>
+                    <span class="text-caption" style="color: #94a3b8;">SELECTED MISSION</span>
+                    <div class="pixel-text" style="font-size: 1rem; color: #f8fafc;">
+                        STAGE @(Room.SelectedStage.ToString("D2"))
+                    </div>
+                </div>
+            </div>
+
+            @if (IsHost)
+            {
+                <div class="d-flex align-center gap-2">
+                    <MudSelect T="int" Value="@Room.SelectedStage" ValueChanged="@OnStageChanged" Label="Choose Stage" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width: 140px;">
+                        @for (int i = 1; i <= 35; i++)
+                        {
+                            var stageNum = i;
+                            <MudSelectItem T="int" Value="@stageNum">Stage @stageNum.ToString("D2")</MudSelectItem>
+                        }
+                    </MudSelect>
+                </div>
+            }
+            else
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Outlined" Class="pixel-text" Style="font-size: 0.65rem;">
+                    HOST CONTROLS STAGE
+                </MudChip>
+            }
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="d-flex align-center justify-space-between flex-wrap gap-3 pt-3" style="border-top: 1px solid #232938;">
+        <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Filled.ExitToApp" OnClick="OnLeaveRoom">
+            LEAVE ROOM
+        </MudButton>
+
+        <div class="d-flex align-center gap-3">
+            @if (IsGuest)
+            {
+                var isReady = Room.GuestPlayer?.IsReady == true;
+                <MudButton Variant="Variant.Filled" Color="@(isReady ? Color.Dark : Color.Success)" Class="pixel-text" Style="font-size: 0.85rem; min-width: 150px;" OnClick="@(() => OnToggleReady.InvokeAsync(!isReady))">
+                    @(isReady ? "CANCEL READY" : "READY (P2)")
+                </MudButton>
+            }
+
+            @if (IsHost)
+            {
+                var canStart = Room.CanStartGame;
+                <MudButton Variant="Variant.Filled" Color="Color.Warning" Disabled="@(!canStart)" Class="pixel-text" Style="font-size: 0.85rem; min-width: 180px; box-shadow: 0 0 15px rgba(241,196,15,0.4);" OnClick="OnStartGame">
+                    START MISSION &rarr;
+                </MudButton>
+            }
+        </div>
+    </div>
+</MudCard>
+
+<style>
+    .slot-badge {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+    .host-badge {
+        background: rgba(241, 196, 15, 0.2);
+        color: #f1c40f;
+        border: 1px solid #f1c40f;
+    }
+    .guest-badge {
+        background: rgba(46, 204, 113, 0.2);
+        color: #2ecc71;
+        border: 1px solid #2ecc71;
+    }
+    .led-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    .led-green {
+        background-color: #2ecc71;
+        box-shadow: 0 0 8px #2ecc71;
+    }
+    .led-red {
+        background-color: #e74c3c;
+        box-shadow: 0 0 8px #e74c3c;
+    }
+</style>
+
+@code {
+    [Parameter, EditorRequired]
+    public CoopRoomInfo Room { get; set; } = default!;
+
+    [Parameter]
+    public bool IsHost { get; set; }
+
+    [Parameter]
+    public bool IsGuest { get; set; }
+
+    [Parameter]
+    public EventCallback OnCopyCode { get; set; }
+
+    [Parameter]
+    public EventCallback OnShareInvite { get; set; }
+
+    [Parameter]
+    public EventCallback OnShowQr { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnStageChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> OnToggleReady { get; set; }
+
+    [Parameter]
+    public EventCallback OnStartGame { get; set; }
+
+    [Parameter]
+    public EventCallback OnLeaveRoom { get; set; }
+}

@@ -20,6 +20,7 @@ builder.Services.AddScoped(sp =>
 });
 builder.Services.AddScoped<RetroTank1985.Client.Services.StageService>();
 builder.Services.AddScoped<RetroTank1985.Client.Services.GameStorageService>();
+builder.Services.AddScoped<RetroTank1985.Client.Services.CoopLobbyClientService>();
 
 // Battle City C# Game Engine Services (Hybrid Architecture)
 builder.Services.AddTransient<RetroTank1985.Client.Engine.Core.IDestructibleMap, RetroTank1985.Client.Engine.Core.DestructibleMap>();

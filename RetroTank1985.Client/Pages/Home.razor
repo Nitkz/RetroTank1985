@@ -14,10 +14,10 @@
 </div>
 
 <MudGrid Justify="Justify.Center" Spacing="4">
-    <!-- Featured: Full Arcade Mode (1P Offline Campaign) -->
+    <!-- Featured 1: Full Arcade Mode (1P Offline Campaign) -->
     <MudItem xs="12" md="6">
         <a href="arcade" class="hub-card">
-            <MudCard Elevation="6" Class="retro-card pa-5" Style="background: linear-gradient(145deg, #1f1b2e 0%, #11141c 100%); border-color: #f59e0b;">
+            <MudCard Elevation="6" Class="retro-card pa-5 h-100" Style="background: linear-gradient(145deg, #1f1b2e 0%, #11141c 100%); border-color: #f59e0b;">
                 <div class="d-flex align-center justify-space-between mb-3">
                     <div class="d-flex align-center">
                         <MudIcon Icon="@Icons.Material.Filled.VideogameAsset" Color="Color.Warning" Size="Size.Large" Class="mr-3" />
@@ -43,52 +43,76 @@
         </a>
     </MudItem>
 
-    <!-- Active Section: Stage Arena (Dev Sandbox & Physics Lab) -->
+    <!-- Featured 2: Online 2-Player Co-Op -->
     <MudItem xs="12" md="6">
-        <a href="play" class="hub-card">
-            <MudCard Elevation="4" Class="retro-card pa-5" Style="background: linear-gradient(145deg, #181e2e 0%, #11141c 100%);">
+        <a href="coop" class="hub-card">
+            <MudCard Elevation="6" Class="retro-card pa-5 h-100" Style="background: linear-gradient(145deg, #13241d 0%, #11141c 100%); border-color: #2ecc71;">
                 <div class="d-flex align-center justify-space-between mb-3">
                     <div class="d-flex align-center">
-                        <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Error" Size="Size.Large" Class="mr-3" />
+                        <MudIcon Icon="@Icons.Material.Filled.Public" Color="Color.Success" Size="Size.Large" Class="mr-3" />
                         <div>
-                            <MudText Typo="Typo.h5" Class="pixel-text font-bold" Style="color: #ef4444; font-size: 1.1rem;">
-                                DEV SANDBOX &amp; PHYSICS LAB
+                            <MudText Typo="Typo.h5" Class="pixel-text font-bold" Style="color: #2ecc71; font-size: 1.1rem;">
+                                ONLINE 2P CO-OP
                             </MudText>
-                            <span style="font-size: 0.75rem; color: #94a3b8;">Testing Lab &bull; Cheat Tools &bull; 2P Co-Op &bull; Touch D-Pad</span>
+                            <span style="font-size: 0.75rem; color: #94a3b8;">Real-Time Multiplayer &bull; WebRTC/SignalR &bull; QR Code</span>
                         </div>
                     </div>
-                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
-                        DEV TOOLS
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.65rem;">
+                        ONLINE (2P)
                     </MudChip>
                 </div>
                 <MudText Typo="Typo.body2" Style="color: #cbd5e1; line-height: 1.6;" Class="mb-4">
-                    ห้องทดลองสำหรับนักพัฒนาและผู้ทดสอบ: เมนูโกงเกมเสกศัตรู/ไอเทม (Cheat Panel), Nuke ล้างบางจอ, ปรับระดับ Star Power, ทดสอบ Co-Op 2 คน (P1 Yellow + P2 Green), จำลองระบบสัมผัส Touch D-Pad, และจอตรวจวัด Telemetry FPS/พิกัด
+                    เล่นออนไลน์ 2 คนแบบเรียลไทม์: สร้างห้องด้วยรหัส 6 หลัก, สแกน QR Code หรือแชร์ลิงก์ให้เพื่อนเข้าร่วมได้ทันทีจากมือถือ/คอมพิวเตอร์, ช่วยกันปกป้องฐานนกอินทรี และร่วมยืมชีวิต (Borrow Life) ลุย 35 ด่าน
                 </MudText>
                 <div class="d-flex justify-space-between align-center pt-2" style="border-top: 1px solid #232938;">
-                    <span class="pixel-text" style="font-size: 0.7rem; color: #ef4444;">OPEN DEV SANDBOX &rarr;</span>
-                    <MudIcon Icon="@Icons.Material.Filled.Terminal" Color="Color.Error" />
+                    <span class="pixel-text" style="font-size: 0.7rem; color: #2ecc71;">ENTER CO-OP LOBBY &rarr;</span>
+                    <MudIcon Icon="@Icons.Material.Filled.Wifi" Color="Color.Success" />
+                </div>
+            </MudCard>
+        </a>
+    </MudItem>
+
+    <!-- Active Section: Stage Arena (Dev Sandbox & Physics Lab) -->
+    <MudItem xs="12" sm="6" md="4">
+        <a href="play" class="hub-card">
+            <MudCard Elevation="4" Class="retro-card pa-4 h-100" Style="background: linear-gradient(145deg, #181e2e 0%, #11141c 100%);">
+                <div class="d-flex align-center justify-space-between mb-3">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Error" Size="Size.Medium" Class="mr-2" />
+                        <div>
+                            <MudText Typo="Typo.h6" Class="pixel-text font-bold" Style="color: #ef4444; font-size: 0.95rem;">
+                                DEV SANDBOX
+                            </MudText>
+                            <span style="font-size: 0.7rem; color: #94a3b8;">Cheat Tools &bull; Touch D-Pad</span>
+                        </div>
+                    </div>
+                </div>
+                <MudText Typo="Typo.body2" Style="color: #cbd5e1;" Class="mb-3">
+                    ห้องทดลองโกงเกมเสกศัตรู/ไอเทม, Nuke ล้างจอ, Star Power, และตรวจวัด Telemetry
+                </MudText>
+                <div class="d-flex justify-space-between align-center">
+                    <span class="pixel-text" style="font-size: 0.65rem; color: #ef4444;">OPEN SANDBOX &rarr;</span>
+                    <MudIcon Icon="@Icons.Material.Filled.Terminal" Color="Color.Error" Size="Size.Small" />
                 </div>
             </MudCard>
         </a>
     </MudItem>
 
     <!-- Sub Section 1: Sound & BGM Synthesizer -->
-    <MudItem xs="12" sm="6" md="6">
+    <MudItem xs="12" sm="6" md="4">
         <a href="sound-bgm" class="hub-card">
-            <MudCard Elevation="3" Class="retro-card pa-4">
+            <MudCard Elevation="3" Class="retro-card pa-4 h-100">
                 <div class="d-flex align-center mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.GraphicEq" Color="Color.Warning" Size="Size.Medium" Class="mr-3" />
+                    <MudIcon Icon="@Icons.Material.Filled.GraphicEq" Color="Color.Warning" Size="Size.Medium" Class="mr-2" />
                     <div>
-                        <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.9rem;">
-                            SOUND &amp; BGM SYNTH
+                        <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.95rem;">
+                            SOUND &amp; BGM
                         </MudText>
-                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Style="font-size: 0.6rem;">
-                            AVAILABLE
-                        </MudChip>
+                        <span style="font-size: 0.7rem; color: #94a3b8;">Web Audio APU Synth</span>
                     </div>
                 </div>
                 <MudText Typo="Typo.body2" Style="color: #cbd5e1;" Class="mb-3">
-                    จำลอง NES APU Sound Synthesizer ผ่าน Web Audio API (Pulse 1/2, Triangle, Noise) สำหรับ SFX และ BGM ดั้งเดิม
+                    จำลอง NES APU Synth (Pulse 1/2, Triangle, Noise) สำหรับ SFX และ BGM ดั้งเดิม
                 </MudText>
                 <div class="d-flex justify-space-between align-center">
                     <span class="pixel-text" style="font-size: 0.65rem; color: #f1c40f;">EXPLORE SYNTH &rarr;</span>
@@ -99,22 +123,20 @@
     </MudItem>
 
     <!-- Sub Section 2: ROM & Tilemap Inspector -->
-    <MudItem xs="12" sm="6" md="6">
+    <MudItem xs="12" sm="6" md="4">
         <a href="stage-inspector" class="hub-card">
-            <MudCard Elevation="3" Class="retro-card pa-4">
+            <MudCard Elevation="3" Class="retro-card pa-4 h-100">
                 <div class="d-flex align-center mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.Map" Color="Color.Warning" Size="Size.Medium" Class="mr-3" />
+                    <MudIcon Icon="@Icons.Material.Filled.Map" Color="Color.Warning" Size="Size.Medium" Class="mr-2" />
                     <div>
-                        <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.9rem;">
-                            STAGE &amp; TILES INSPECTOR
+                        <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #f1c40f; font-size: 0.95rem;">
+                            STAGE INSPECTOR
                         </MudText>
-                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Style="font-size: 0.6rem;">
-                            AVAILABLE
-                        </MudChip>
+                        <span style="font-size: 0.7rem; color: #94a3b8;">35 Stages &bull; CHR Tiles</span>
                     </div>
                 </div>
                 <MudText Typo="Typo.body2" Style="color: #cbd5e1;" Class="mb-3">
-                    ตรวจสอบแผนที่ด่าน 1 - 35 แบบ JSON ($F07A), ตารางเกิดศัตรู ($E4EC), และสไปรต์ CHR-ROM 512 ไทล์พร้อมพาเลตต์สี NES ($D44A)
+                    ตรวจสอบแผนที่ด่าน 1 - 35, ตารางเกิดศัตรู, และสไปรต์ CHR-ROM 512 ไทล์
                 </MudText>
                 <div class="d-flex justify-space-between align-center">
                     <span class="pixel-text" style="font-size: 0.65rem; color: #f1c40f;">OPEN INSPECTOR &rarr;</span>
@@ -124,3 +146,4 @@
         </a>
     </MudItem>
 </MudGrid>
+
