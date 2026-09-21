@@ -1,4 +1,4 @@
-namespace RetroTank1985.Client.Models;
+namespace RetroTank1985.Shared.Models;
 
 public enum TileType
 {

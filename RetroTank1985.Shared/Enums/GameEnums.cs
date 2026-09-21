@@ -1,4 +1,4 @@
-namespace RetroTank1985.Client.Engine.Enums;
+namespace RetroTank1985.Shared.Enums;
 
 /// <summary>
 /// Audio events triggered by C# Game Brain and executed by Web Audio APU.

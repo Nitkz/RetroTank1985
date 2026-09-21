@@ -1,4 +1,4 @@
-namespace RetroTank1985.Client.Engine.Enums;
+namespace RetroTank1985.Shared.Enums;
 
 /// <summary>
 /// 6 Droppable Power-Up items in NES Battle City.

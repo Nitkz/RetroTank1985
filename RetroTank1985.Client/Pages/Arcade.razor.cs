@@ -4,7 +4,7 @@ using MudBlazor;
 using RetroTank1985.Client.Components.Arcade;
 using RetroTank1985.Client.Components.Play;
 using RetroTank1985.Client.Engine.Models;
-using RetroTank1985.Client.Models;
+using RetroTank1985.Shared.Models;
 using RetroTank1985.Client.Services;
 
 namespace RetroTank1985.Client.Pages;

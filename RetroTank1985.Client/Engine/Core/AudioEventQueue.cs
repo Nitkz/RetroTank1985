@@ -1,4 +1,4 @@
-using RetroTank1985.Client.Engine.Enums;
+using RetroTank1985.Shared.Enums;
 
 namespace RetroTank1985.Client.Engine.Core;
 

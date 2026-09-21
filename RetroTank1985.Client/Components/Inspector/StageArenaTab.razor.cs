@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using RetroTank1985.Client.Models;
+using RetroTank1985.Shared.Models;
 
 namespace RetroTank1985.Client.Components.Inspector;
 

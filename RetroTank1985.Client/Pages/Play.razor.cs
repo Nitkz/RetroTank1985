@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using RetroTank1985.Client.Engine.Models;
-using RetroTank1985.Client.Models;
+using RetroTank1985.Shared.Models;
 using RetroTank1985.Client.Services;
 
 namespace RetroTank1985.Client.Pages;
@@ -138,7 +138,7 @@ public partial class Play : ComponentBase, IAsyncDisposable
         EngineService.Engine.ToggleEagleSteel(fortified);
     }
 
-    private void HandleDebugSpawnPowerUp(Engine.Enums.PowerUpType type)
+    private void HandleDebugSpawnPowerUp(PowerUpType type)
     {
         EngineService.Engine.SpawnPowerUpDebug(type);
     }

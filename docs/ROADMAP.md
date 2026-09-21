@@ -15,8 +15,9 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 | **Phase 5** | Phoenix Eagle Base & Droppable Power-Up System | ✅ **Completed** | 2026-09-20 |
 | **Phase 6** | Stage Transitions, Score Tally & Game Over Flow | ✅ **Completed** | 2026-09-20 |
 | **Phase 7** | Two-Player Co-Op & High Score Persistence | ✅ **Completed** | 2026-09-20 |
-| **Phase 8** | 👑 Epic Boss Battles & Special Munition Crates | 💡 **New / Planned** | Future Expansion |
-| **Phase 9** | 🛠️ Stage Editor & Custom Campaign Builder | ⏳ **Planned** | Future Expansion |
+| **Phase 8** | 🌐 Real-Time Online 2-Player Co-Op (WebRTC P2P & SignalR) | 🚀 **Next In Progress** | 2026-09-25 |
+| **Phase 9** | 👑 Epic Boss Battles & Special Munition Crates | 💡 **Planned** | Future Expansion |
+| **Phase 10** | 🛠️ Stage Editor & Custom Campaign Builder | ⏳ **Planned** | Future Expansion |
 
 ---
 
@@ -139,8 +140,35 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 
 ---
 
-### 💡 Phase 8: 👑 Epic Boss Battles & Special Munitions (New Expansion)
-> 📄 **Detailed Design Document:** [BOSS_DESIGN_SPEC.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/BOSS_DESIGN_SPEC.md)
+### 🚀 Phase 8: 🌐 Real-Time Online 2-Player Co-Op (Next Feature)
+> 📄 **Detailed Design Document:** [ONLINE_COOP_DESIGN_SPEC.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/ONLINE_COOP_DESIGN_SPEC.md)
+- [ ] **Dual-Mode Networking Architecture**:
+  - **WebRTC DataChannels (P2P)**: Direct browser-to-browser UDP channel for static Cloudflare Pages / Standalone WASM deployment.
+  - **SignalR Binary WebSockets Hub**: High-performance fallback and dedicated server multiplayer backend for ASP.NET Core host.
+- [ ] **Host-Authoritative Simulation & Delta Sync**:
+  - Player 1 (Host) runs full physics, enemy AI, destructible terrain mutations, and power-up RNG.
+  - Compact `CoopSyncSnapshotDto` state streaming (30–60Hz) with delta compression (< 2 KB/s).
+- [ ] **Client-Side Prediction & Entity Interpolation (P2 Guest)**:
+  - Local prediction for P2 tank steering and shooting for instant 0ms control feedback.
+  - Smooth Hermite interpolation for enemy tanks and projectile trajectories.
+  - Soft-snap desync reconciliation.
+- [ ] **Frictionless Lobby & Room Matchmaking (`/coop`)**:
+  - 6-character memorable Room Codes (e.g. `TANK85`).
+  - One-click invite link sharing (`https://.../coop?room=TANK85`).
+  - Built-in QR Code generator for instant Mobile-to-Desktop pairing.
+  - Real-time RTT / Ping latency HUD monitor.
+- [ ] **Authentic Co-Op Gameplay Features**:
+  - **Borrow Life Mechanic**: Dead players can borrow extra lives from teammates by pressing Fire at respawn.
+  - **Friendly Fire Tuning**: Classic clink & stun lock vs Kids Safe pass-through mode.
+  - **Retro 8-Bit Emote Wheel**: Radial quick-chat messages ("DEFEND HQ!", "TAKE STAR!", "NICE SHOT!").
+  - **Disconnection Handling**: 15s reconnect grace period with automatic state resumption.
+- [ ] **Dual-Player End-of-Stage Tally & MVP System**:
+  - Synchronized tally screen displaying individual kill stats, point breakdown, and match MVP awards.
+
+---
+
+### 💡 Phase 9: 👑 Epic Boss Battles & Special Munitions (Planned Expansion)
+> 📄 **Detailed Design Document:** [BOSS_DESIGN_SPEC.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/BOSS_DESIGN_SPEC.md)
 - [x] **Boss Mech Sprite & Anatomy Studio**:
   - Interactive Sprite preview in Stage Inspector with 64×48 Bilateral Mirror Metasprite matrix, NES 8×8 CHR grid, layer toggles, and live combat simulation.
 - [ ] **End-of-Stage Boss Encounters (บอสใหญ่ท้ายฉาก: "ปลา" Demon Manta Leviathan)**:
@@ -162,7 +190,7 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 
 ---
 
-### ⏳ Phase 9: 🛠️ Stage Editor & Custom Campaign Builder (Planned)
+### ⏳ Phase 10: 🛠️ Stage Editor & Custom Campaign Builder (Planned)
 - [ ] **Interactive Visual Tile Painter**:
   - 13×13 tile / 26×26 sub-tile drag-and-drop grid editor for Brick, Steel, Water, Trees, Ice, and Eagle HQ.
 - [ ] **Wave & Enemy Spawner Configurator**:
@@ -174,4 +202,4 @@ Project development roadmap for **RetroTank 1985**, an authentic Battle City (19
 - [ ] **Instant Test-Play Arena**:
   - Test-drive custom maps directly in the arena without leaving the editor.
 
-*Last Updated: 2026-09-20 • RetroTank 1985 Core Team*
+*Last Updated: 2026-09-21 • RetroTank 1985 Core Team*

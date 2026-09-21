@@ -1,4 +1,4 @@
-namespace RetroTank1985.Client.Engine.Models;
+namespace RetroTank1985.Shared.Models;
 
 public enum GameDifficultyPreset
 {

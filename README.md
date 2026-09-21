@@ -31,7 +31,8 @@ For modularity and ease of reference, all detailed technical specifications and 
 | Document | Description | Target Audience |
 | :--- | :--- | :--- |
 | 📖 [README.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/README.md) | Project Overview, Architecture, Tech Stack, Setup, Code Structure & Deployment | All Developers & Contributors |
-| 🗺️ [ROADMAP.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/ROADMAP.md) | 9-Phase Development Roadmap, Milestones, and Historical Changelog | Project Tracking & Planning |
+| 🗺️ [ROADMAP.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/ROADMAP.md) | 10-Phase Development Roadmap, Milestones, and Historical Changelog | Project Tracking & Planning |
+| 🌐 [ONLINE_COOP_DESIGN_SPEC.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/ONLINE_COOP_DESIGN_SPEC.md) | Real-Time Online 2-Player Co-Op, WebRTC P2P/SignalR, Lobby & Borrow Life Spec | Multiplayer & Network Devs |
 | 🛡️ [GAME_MECHANICS_SPEC.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/GAME_MECHANICS_SPEC.md) | Game Pace Tuning, Kid-Friendly Presets, and Dual-Layer Defense / Armor System | Game Designers & Engine Devs |
 | 👑 [BOSS_DESIGN_SPEC.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/BOSS_DESIGN_SPEC.md) | Giant Boss Mech Battle Mechanics, Attack Patterns, and Special Munitions | Expansion Feature Devs |
 
@@ -201,14 +202,28 @@ Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behav
 - **CHR-ROM Tile Catalog (`ChrTileCatalogTab`)**: 512 8×8 tilemap viewer with full NES palette switching (BG0–BG3, SP0–SP3) and interactive 4-direction Tank Metasprite live inspector.
 - **Power-ups & Specials Gallery (`PowerUpsSpecialsTab`)**: Interactive 16×16 metasprite catalog for 6 classic droppable items (Helmet, Timer, Shovel, Star, Grenade, 1-UP) with instant bonus SFX testing, along with Phoenix HQ intact/destroyed and Force Shield badges.
 
-### 6. Upcoming: 👑 Epic Boss Battles & Tactical Munitions (Phase 8)
+### 6. Next: 🌐 Real-Time Online 2-Player Co-Op (Phase 8)
+- **Dual-Mode Networking Architecture**:
+  - **WebRTC DataChannels (P2P)**: Direct browser-to-browser UDP channel for standalone WASM on Cloudflare Pages without server cost.
+  - **SignalR Binary WebSockets Hub**: Ultra-reliable multiplayer backend for self-hosted ASP.NET Core deployments.
+- **Host-Authoritative & Client-Side Prediction**:
+  - Host runs deterministic physics, enemy AI, destructible map, and power-up systems.
+  - Guest (P2) features 0ms local input prediction and smooth entity interpolation.
+- **Instant Matchmaking & QR Pairing**:
+  - 6-character room codes (`TANK85`), one-click URL invite links, and live QR code generator for seamless Mobile vs PC cross-play.
+- **Authentic NES Co-Op Gameplay**:
+  - **Borrow Life Mechanic**: Respawn life borrowing from teammate when at 0 lives.
+  - **Retro 8-Bit Emote Wheel**: Fast radial tactical messaging ("DEFEND HQ!", "TAKE STAR!", "NICE SHOT!").
+  - **Dual-Column Stage Tally & MVP**: Synchronized post-stage score and kill breakdown with victory fanfare.
+
+### 7. Upcoming: 👑 Epic Boss Battles & Tactical Munitions (Phase 9)
 - **Mega Boss Tank Encounters (บอสใหญ่ท้ายฉาก)**: Giant multi-tile armored Boss Mechs with multi-phase HP bars.
 - **Minion Swarm Deployment (Boss ปล่อยลูกน้อง)**: Boss actively summons support tank drones.
 - **Dual Arm Artillery (ยิงกระสุนจากแขนสองข้าง)**: Simultaneous twin-cannon firing with spread/cross-fire projectile mechanics.
 - **Multi-Tile Jump Maneuver (กระโดดข้ามสิ่งกีดขวางได้หลายช่อง)**: Boss leaps airborne across brick, steel, and water obstacles.
 - **Tactical Weapon Crates (หีบกระสุนแรงพิเศษ)**: Crates dropping Laser Rails, AOE Plasma Bombs, and Heavy AP Shells.
 
-### 7. Upcoming: 🛠️ Stage Editor & Custom Campaign Builder (Phase 9)
+### 8. Upcoming: 🛠️ Stage Editor & Custom Campaign Builder (Phase 10)
 - **Interactive Visual Tile Painter**: 13×13 tile / 26×26 sub-tile drag-and-drop grid editor for Brick, Steel, Water, Trees, Ice, and Eagle HQ.
 - **Wave & Spawner Configurator**: Custom 20-tank queue composition designer (configure Basic, Fast, Power, Armor + Flashing carriers).
 - **Campaign Slots & LocalStorage**: Multi-slot save/load system for user-created custom maps.
@@ -222,14 +237,21 @@ Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behav
 ```
 RetroTank1985/
 ├── docs/                        # Modular Technical Specifications & Roadmaps
-│   ├── ROADMAP.md               # Detailed development roadmap (Phases 1 - 9)
+│   ├── ROADMAP.md               # Detailed development roadmap (Phases 1 - 10)
+│   ├── ONLINE_COOP_DESIGN_SPEC.md # Real-Time Online 2-Player Co-Op Specification
 │   ├── GAME_MECHANICS_SPEC.md   # Game Pace, Kid-Friendly, & Dual-Layer Defense Spec
 │   └── BOSS_DESIGN_SPEC.md      # Giant Boss Mech battle mechanics & munitions
 ├── publish-wasm.bat             # Automated Release script (Cloudflare Pages + Zip)
-├── RetroTank1985.slnx           # Modern .NET Solution File
+├── RetroTank1985.slnx           # Modern .NET Solution File (Shared + Client + Server)
 ├── README.md                    # Project overview & documentation index
 │
-├── RetroTank1985/               # Server host project (Blazor Web App for local dev)
+├── RetroTank1985.Shared/        # Shared Contracts & Domain Class Library (.NET 9)
+│   ├── Contracts/               # SignalR Hub & Client contracts (ICoopLobbyContracts.cs)
+│   ├── Enums/                   # Direction, SubTileType, PowerUpType, GameEnums, CoopEnums
+│   └── Models/                  # StageModel, GameSettings, and Network DTOs
+│       └── Network/             # CoopRoomModels, WebRtcSignaling, CoopGamePackets, Tally, LifeBorrow
+│
+├── RetroTank1985/               # Server host project (Blazor Web App & SignalR Server)
 │   ├── Components/
 │   │   ├── App.razor            # Root HTML template for Server Host mode
 │   │   └── Routes.razor
@@ -252,12 +274,9 @@ RetroTank1985/
 │   │       └── PowerUpsSpecialsTab.razor.cs # PowerUpsSpecialsTab Code-Behind
 │   ├── Engine/                  # C# Game Core Layer (Brain)
 │   │   ├── Core/                # Physics, DestructibleMap, EnemySystem, PowerUpSystem, Bullets, Engine
-│   │   ├── Enums/               # Direction, SubTileType, PowerUpType, GameEnums
 │   │   └── Models/              # PlayerTank, EnemyTank, PowerUp, GameEntities, RenderFrameDto, InputState
 │   ├── Layout/
 │   │   └── MainLayout.razor     # Retro arcade layout & MudBlazor theme
-│   ├── Models/
-│   │   └── StageModel.cs        # Stage, Tile, and Enemy data models
 │   ├── Pages/
 │   │   ├── Home.razor           # Navigation Hub
 │   │   ├── Play.razor           # Stage Arena Razor Template

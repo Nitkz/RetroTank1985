@@ -1,4 +1,4 @@
-namespace RetroTank1985.Client.Engine.Enums;
+namespace RetroTank1985.Shared.Enums;
 
 /// <summary>
 /// 8x8 px sub-tile types in the 26x26 Battle City playfield.

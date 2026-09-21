@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using RetroTank1985.Client.Models;
+using RetroTank1985.Shared.Models;
 
 namespace RetroTank1985.Client.Services;
 

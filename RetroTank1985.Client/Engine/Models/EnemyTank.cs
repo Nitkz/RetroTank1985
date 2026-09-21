@@ -1,5 +1,5 @@
-using RetroTank1985.Client.Engine.Enums;
-using RetroTank1985.Client.Models;
+using RetroTank1985.Shared.Enums;
+using RetroTank1985.Shared.Models;
 
 namespace RetroTank1985.Client.Engine.Models;
 

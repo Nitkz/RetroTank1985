@@ -1,4 +1,4 @@
-namespace RetroTank1985.Client.Engine.Enums;
+namespace RetroTank1985.Shared.Enums;
 
 /// <summary>
 /// 4-Directional NES Battle City orientation.
