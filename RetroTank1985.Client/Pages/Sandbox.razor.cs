@@ -151,7 +151,7 @@ public partial class Sandbox : ComponentBase, IAsyncDisposable
     private async Task HandleVirtualTouch((string control, bool isPressed) args) =>
         await EngineService.SetVirtualInputAsync(args.control, args.isPressed);
 
-    private void HandleDebugSpawn(Components.Play.GameDebugSandboxPanel.EnemyTypeSpawnArgs args)
+    private void HandleDebugSpawn(Components.Sandbox.GameDebugSandboxPanel.EnemyTypeSpawnArgs args)
     {
         EngineService.Engine.SpawnEnemyDebug(args.Type, -1, args.IsFlashing);
     }

@@ -176,11 +176,14 @@ RetroTank1985/
 │   │   ├── Coop/                # Online Co-Op Lobby & Gameplay Components
 │   │   │   ├── CoopLobbyCard.razor      # Room pairing, options dialog & ready state
 │   │   │   └── EmoteWheel.razor         # 8-direction radial quick chat
-│   │   ├── Play/                # Engine Sandbox Sub-Components
+│   │   ├── Controls/            # Cross-Mode Input & Touch Controllers
+│   │   │   ├── MobaTouchController.razor # Ergonomic floating joystick controller
+│   │   │   └── VirtualDPad.razor         # Classic on-screen directional pad
+│   │   ├── Sandbox/             # Engine Sandbox Sub-Components
+│   │   │   ├── GameControlBar.razor      # Stage stepper, restart & mute bar
 │   │   │   ├── GameDebugSandboxPanel.razor # Live spawner, power-up lab & cheats
-│   │   │   ├── MissionBriefingCard.razor   # Enemy battalion breakdown & key guide
-│   │   │   ├── MobaTouchController.razor   # Ergonomic floating joystick controller
-│   │   │   └── TelemetryHud.razor          # Real-time engine telemetry strip
+│   │   │   ├── MissionBriefingCard.razor # Enemy battalion breakdown & key guide
+│   │   │   └── TelemetryHud.razor        # Real-time engine telemetry strip
 │   │   └── Inspector/           # Stage & CHR Inspector Sub-Components
 │   │       ├── StageArenaTab.razor         # 35-Stage map canvas & Recon UI
 │   │       ├── ChrTileCatalogTab.razor     # 512 CHR Sheet & Tank metasprites UI
