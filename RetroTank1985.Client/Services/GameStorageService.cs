@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.JSInterop;
+using RetroTank1985.Client.Engine.Models;
 
 namespace RetroTank1985.Client.Services;
 
@@ -113,6 +114,39 @@ public class GameStorageService
         {
             var json = JsonSerializer.Serialize(prefs);
             await _js.InvokeVoidAsync("localStorage.setItem", AudioPrefsKey, json);
+        }
+        catch
+        {
+            // Ignore
+        }
+    }
+
+    private const string GameSettingsKey = "retrotank_game_settings";
+
+    public async Task<GameSettings> GetGameSettingsAsync()
+    {
+        try
+        {
+            var json = await _js.InvokeAsync<string?>("localStorage.getItem", GameSettingsKey);
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                var settings = JsonSerializer.Deserialize<GameSettings>(json);
+                if (settings != null) return settings;
+            }
+        }
+        catch
+        {
+            // Ignore
+        }
+        return new GameSettings();
+    }
+
+    public async Task SaveGameSettingsAsync(GameSettings settings)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(settings);
+            await _js.InvokeVoidAsync("localStorage.setItem", GameSettingsKey, json);
         }
         catch
         {

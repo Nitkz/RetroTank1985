@@ -1,0 +1,253 @@
+@namespace RetroTank1985.Client.Components.Arcade
+@using RetroTank1985.Client.Engine.Models
+
+<MudDialog Class="retro-card pa-4" Style="background: #0f172a; border: 2px solid #3b82f6; border-radius: 12px;">
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.Tune" Color="Color.Info" Size="Size.Large" />
+            <div>
+                <MudText Typo="Typo.h6" Class="pixel-text" Style="color: #60a5fa; font-size: 1rem;">
+                    GAME CONFIG &amp; DIFFICULTY
+                </MudText>
+                <MudText Typo="Typo.caption" Style="color: #94a3b8; font-size: 0.65rem;">
+                    ปรับแต่งความเร็วเกม จำนวนตัวเกิด และความอึดเกราะสำหรับเด็ก
+                </MudText>
+            </div>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <!-- Difficulty Presets Grid -->
+        <MudText Typo="Typo.subtitle2" Class="pixel-text mb-2" Style="color: #f1c40f; font-size: 0.75rem;">
+            SELECT PRESET
+        </MudText>
+
+        <MudGrid Spacing="2" Class="mb-4">
+            <!-- 1. Kids Friendly -->
+            <MudItem xs="6" sm="3">
+                <div class="pa-2 text-center h-100 cursor-pointer d-flex flex-column justify-space-between" 
+                     @onclick="@(() => SelectPreset(GameDifficultyPreset.KidsFriendly))"
+                     style="background: @(_model.Preset == GameDifficultyPreset.KidsFriendly ? "rgba(16, 185, 129, 0.2)" : "#1e293b"); 
+                            border: 2px solid @(_model.Preset == GameDifficultyPreset.KidsFriendly ? "#10b981" : "#334155"); 
+                            border-radius: 8px;">
+                    <div>
+                        <div style="font-size: 1.5rem;">🐣</div>
+                        <div class="pixel-text font-bold" style="font-size: 0.65rem; color: #34d399;">KIDS EASY</div>
+                    </div>
+                    <div class="pixel-text mt-1" style="font-size: 0.5rem; color: #94a3b8;">
+                        5 Lives • 3 HP • 0.8x Speed • Safe Base
+                    </div>
+                </div>
+            </MudItem>
+
+            <!-- 2. Classic 1985 -->
+            <MudItem xs="6" sm="3">
+                <div class="pa-2 text-center h-100 cursor-pointer d-flex flex-column justify-space-between" 
+                     @onclick="@(() => SelectPreset(GameDifficultyPreset.Classic1985))"
+                     style="background: @(_model.Preset == GameDifficultyPreset.Classic1985 ? "rgba(245, 158, 11, 0.2)" : "#1e293b"); 
+                            border: 2px solid @(_model.Preset == GameDifficultyPreset.Classic1985 ? "#f59e0b" : "#334155"); 
+                            border-radius: 8px;">
+                    <div>
+                        <div style="font-size: 1.5rem;">🕹️</div>
+                        <div class="pixel-text font-bold" style="font-size: 0.65rem; color: #fbbf24;">CLASSIC 1985</div>
+                    </div>
+                    <div class="pixel-text mt-1" style="font-size: 0.5rem; color: #94a3b8;">
+                        3 Lives • 1 HP • 1.0x Speed • Authentic
+                    </div>
+                </div>
+            </MudItem>
+
+            <!-- 3. Veteran -->
+            <MudItem xs="6" sm="3">
+                <div class="pa-2 text-center h-100 cursor-pointer d-flex flex-column justify-space-between" 
+                     @onclick="@(() => SelectPreset(GameDifficultyPreset.Veteran))"
+                     style="background: @(_model.Preset == GameDifficultyPreset.Veteran ? "rgba(239, 68, 68, 0.2)" : "#1e293b"); 
+                            border: 2px solid @(_model.Preset == GameDifficultyPreset.Veteran ? "#ef4444" : "#334155"); 
+                            border-radius: 8px;">
+                    <div>
+                        <div style="font-size: 1.5rem;">⚔️</div>
+                        <div class="pixel-text font-bold" style="font-size: 0.65rem; color: #f87171;">VETERAN</div>
+                    </div>
+                    <div class="pixel-text mt-1" style="font-size: 0.5rem; color: #94a3b8;">
+                        1 Life • 1 HP • 1.2x Speed • Aggressive
+                    </div>
+                </div>
+            </MudItem>
+
+            <!-- 4. Custom -->
+            <MudItem xs="6" sm="3">
+                <div class="pa-2 text-center h-100 cursor-pointer d-flex flex-column justify-space-between" 
+                     @onclick="@(() => SelectPreset(GameDifficultyPreset.Custom))"
+                     style="background: @(_model.Preset == GameDifficultyPreset.Custom ? "rgba(59, 130, 246, 0.2)" : "#1e293b"); 
+                            border: 2px solid @(_model.Preset == GameDifficultyPreset.Custom ? "#3b82f6" : "#334155"); 
+                            border-radius: 8px;">
+                    <div>
+                        <div style="font-size: 1.5rem;">⚙️</div>
+                        <div class="pixel-text font-bold" style="font-size: 0.65rem; color: #60a5fa;">CUSTOM</div>
+                    </div>
+                    <div class="pixel-text mt-1" style="font-size: 0.5rem; color: #94a3b8;">
+                        ปรับแต่งอิสระตามใจ
+                    </div>
+                </div>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Custom Fine-Tuning Controls -->
+        <div class="pa-3 mb-2" style="background: #111827; border-radius: 8px; border: 1px solid #1f2937;">
+            <!-- Game Pace Speed -->
+            <div class="mb-3">
+                <div class="d-flex justify-space-between align-center mb-1">
+                    <span class="pixel-text" style="font-size: 0.65rem; color: #e2e8f0;">
+                        🏎️ GAME PACE (ความเร็วเกม):
+                    </span>
+                    <span class="pixel-text font-bold" style="font-size: 0.7rem; color: #38bdf8;">
+                        @((int)(_model.GameSpeedMultiplier * 100))% 
+                        @(_model.GameSpeedMultiplier < 1.0f ? "(ช้าลง/เล่นง่าย)" : (_model.GameSpeedMultiplier > 1.0f ? "(เร็ว/ท้าทาย)" : "(มาตรฐาน)"))
+                    </span>
+                </div>
+                <MudSlider T="float" 
+                           Value="@_model.GameSpeedMultiplier" 
+                           ValueChanged="OnSpeedChanged" 
+                           Min="0.75f" 
+                           Max="1.25f" 
+                           Step="0.05f" 
+                           Color="Color.Info" />
+            </div>
+
+            <!-- Starting Lives -->
+            <div class="mb-3">
+                <div class="d-flex justify-space-between align-center mb-1">
+                    <span class="pixel-text" style="font-size: 0.65rem; color: #e2e8f0;">
+                        ❤️ STARTING LIVES (จำนวนตัวเกิด):
+                    </span>
+                    <span class="pixel-text font-bold" style="font-size: 0.7rem; color: #f87171;">
+                        @_model.StartingLives ตัว
+                    </span>
+                </div>
+                <MudSlider T="int" 
+                           Value="@_model.StartingLives" 
+                           ValueChanged="OnLivesChanged" 
+                           Min="1" 
+                           Max="10" 
+                           Step="1" 
+                           Color="Color.Error" />
+            </div>
+
+            <!-- Player Armor HP -->
+            <div class="mb-3">
+                <div class="d-flex justify-space-between align-center mb-1">
+                    <span class="pixel-text" style="font-size: 0.65rem; color: #e2e8f0;">
+                        🛡️ PLAYER ARMOR (ความอึดเกราะ HP):
+                    </span>
+                    <span class="pixel-text font-bold" style="font-size: 0.7rem; color: @GetArmorColor(_model.PlayerArmorHp);">
+                        @GetArmorText(_model.PlayerArmorHp)
+                    </span>
+                </div>
+                <MudSlider T="int" 
+                           Value="@_model.PlayerArmorHp" 
+                           ValueChanged="OnArmorChanged" 
+                           Min="1" 
+                           Max="5" 
+                           Step="1" 
+                           Color="Color.Success" />
+            </div>
+
+            <!-- Eagle Base Fortification -->
+            <div class="d-flex justify-space-between align-center mt-2 pt-2" style="border-top: 1px solid #1f2937;">
+                <div>
+                    <div class="pixel-text" style="font-size: 0.65rem; color: #e2e8f0;">
+                        🦅 FORTIFY EAGLE BASE (เกราะเหล็กล้อมฐานนกอินทรี):
+                    </div>
+                    <div class="pixel-text" style="font-size: 0.55rem; color: #94a3b8;">
+                        ป้องกันฐานถูกยิงพังโดยไม่ตั้งใจ
+                    </div>
+                </div>
+                <MudSwitch T="bool" 
+                           Value="@_model.FortifyEagleByDefault" 
+                           ValueChanged="OnEagleFortifiedChanged" 
+                           Color="Color.Warning" />
+            </div>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel" Class="pixel-text" Style="font-size: 0.7rem;">
+            CANCEL
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="SaveAndApply" Class="pixel-text" Style="font-size: 0.7rem;">
+            APPLY &amp; SAVE
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public GameSettings InitialSettings { get; set; } = new();
+
+    private GameSettings _model = new();
+
+    protected override void OnInitialized()
+    {
+        // Deep copy settings
+        _model = new GameSettings
+        {
+            Preset = InitialSettings.Preset,
+            GameSpeedMultiplier = InitialSettings.GameSpeedMultiplier,
+            StartingLives = InitialSettings.StartingLives,
+            PlayerArmorHp = InitialSettings.PlayerArmorHp,
+            FortifyEagleByDefault = InitialSettings.FortifyEagleByDefault,
+            EnemyWaveSize = InitialSettings.EnemyWaveSize
+        };
+    }
+
+    private void SelectPreset(GameDifficultyPreset preset)
+    {
+        _model.ApplyPreset(preset);
+        StateHasChanged();
+    }
+
+    private void OnSpeedChanged(float val)
+    {
+        _model.GameSpeedMultiplier = val;
+        _model.Preset = GameDifficultyPreset.Custom;
+    }
+
+    private void OnLivesChanged(int val)
+    {
+        _model.StartingLives = val;
+        _model.Preset = GameDifficultyPreset.Custom;
+    }
+
+    private void OnArmorChanged(int val)
+    {
+        _model.PlayerArmorHp = val;
+        _model.Preset = GameDifficultyPreset.Custom;
+    }
+
+    private void OnEagleFortifiedChanged(bool val)
+    {
+        _model.FortifyEagleByDefault = val;
+        _model.Preset = GameDifficultyPreset.Custom;
+    }
+
+    private string GetArmorText(int hp) => hp switch
+    {
+        1 => "1 HP (ตัวเปล่าคลาสสิก โดน 1 นัดแตก)",
+        2 => "2 HP (⚡ เกราะทอง กันได้ 1 นัด)",
+        3 => "3 HP (🛡️ เกราะเขียว กันได้ 2 นัด)",
+        4 => "4 HP (💎 เกราะไซเบอร์ ทนได้ 3 นัด)",
+        5 => "5 HP (👶 เกราะเด็ก Safe ทนได้ 4 นัด)",
+        _ => $"{hp} HP"
+    };
+
+    private string GetArmorColor(int hp) => hp switch
+    {
+        1 => "#94a3b8",
+        2 => "#fbbf24",
+        3 => "#34d399",
+        4 => "#38bdf8",
+        5 => "#a78bfa",
+        _ => "#ffffff"
+    };
+
+    private void SaveAndApply() => MudDialog.Close(DialogResult.Ok(_model));
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -10,6 +10,7 @@ public interface IBattleCityEngine
     PlayerTank Player2 { get; }
     bool IsTwoPlayerMode { get; set; }
     int HighScore { get; set; }
+    GameSettings Settings { get; }
     IDestructibleMap Map { get; }
     IBulletSystem Bullets { get; }
     IEnemySystem Enemies { get; }
@@ -20,7 +21,8 @@ public interface IBattleCityEngine
     int Score { get; }
     bool IsPaused { get; }
 
-    void InitializeStage(StageModel? stage, int stageNumber);
+    void ApplySettings(GameSettings settings);
+    void InitializeStage(StageModel? stage, int stageNumber, bool preservePlayerState = false);
     void ResetPlayer();
     void SetTwoPlayerMode(bool enable);
     void TogglePause();
@@ -92,6 +94,7 @@ public class BattleCityEngine : IBattleCityEngine
     public PlayerTank Player2 { get; }
     public bool IsTwoPlayerMode { get; set; } = false;
     public int HighScore { get; set; } = 20000;
+    public GameSettings Settings { get; private set; } = new();
 
     public IDestructibleMap Map { get; }
     public ITankPhysics Physics { get; }
@@ -123,6 +126,8 @@ public class BattleCityEngine : IBattleCityEngine
         Player = new PlayerTank { PlayerIndex = 1 };
         Player2 = new PlayerTank { PlayerIndex = 2 };
 
+        ApplySettings(Settings);
+
         // Pre-allocate pool objects for zero heap allocations
         for (int i = 0; i < 16; i++)
         {
@@ -143,18 +148,39 @@ public class BattleCityEngine : IBattleCityEngine
         }
     }
 
+    public void ApplySettings(GameSettings settings)
+    {
+        Settings = settings;
+
+        // 1. Speeds & Fire Rate
+        Player.Speed = PlayerTank.NormalSpeed * settings.GameSpeedMultiplier;
+        Player2.Speed = PlayerTank.NormalSpeed * settings.GameSpeedMultiplier;
+
+        Bullets.SpeedMultiplier = settings.GameSpeedMultiplier;
+        Enemies.SpeedMultiplier = settings.GameSpeedMultiplier;
+        Enemies.TotalWaveEnemies = settings.EnemyWaveSize;
+        Enemies.FireIntervalFrames = settings.Preset == GameDifficultyPreset.KidsFriendly ? 55 : (settings.Preset == GameDifficultyPreset.Veteran ? 25 : 35);
+
+        // 2. Armor & Lives
+        Player.MaxHp = settings.PlayerArmorHp;
+        Player.Hp = settings.PlayerArmorHp;
+
+        Player2.MaxHp = settings.PlayerArmorHp;
+        Player2.Hp = settings.PlayerArmorHp;
+    }
+
     public void SetTwoPlayerMode(bool enable)
     {
         IsTwoPlayerMode = enable;
         Player2.IsActive = enable;
         if (enable && Player2.Lives <= 0)
         {
-            Player2.Lives = 3;
+            Player2.Lives = Settings.StartingLives;
             Player2.Reset(8 * 16f, 12 * 16f);
         }
     }
 
-    public void InitializeStage(StageModel? stage, int stageNumber)
+    public void InitializeStage(StageModel? stage, int stageNumber, bool preservePlayerState = false)
     {
         CurrentStage = stageNumber;
         Map.LoadStage(stage?.Grid);
@@ -162,16 +188,29 @@ public class BattleCityEngine : IBattleCityEngine
         Audio.Clear();
         Enemies.InitializeWave(stage);
         PowerUps.Clear();
+
+        if (Settings.FortifyEagleByDefault)
+        {
+            Map.FortifyEagleWithSteel(true);
+        }
         
         _player1RespawnTimer = 0;
         _player2RespawnTimer = 0;
 
-        Player.Lives = 3;
-        Player.StarPower = 0;
+        int p1Lives = preservePlayerState ? Math.Max(1, Player.Lives) : Settings.StartingLives;
+        int p1Stars = preservePlayerState ? Player.StarPower : 0;
+        Player.Lives = p1Lives;
+        Player.MaxHp = Settings.PlayerArmorHp;
+        Player.Hp = Settings.PlayerArmorHp; // Restore full armor HP on new stage
+        Player.StarPower = p1Stars;
         Player.Reset(4 * 16f, 12 * 16f);
 
-        Player2.Lives = 3;
-        Player2.StarPower = 0;
+        int p2Lives = preservePlayerState ? Math.Max(1, Player2.Lives) : Settings.StartingLives;
+        int p2Stars = preservePlayerState ? Player2.StarPower : 0;
+        Player2.Lives = p2Lives;
+        Player2.MaxHp = Settings.PlayerArmorHp;
+        Player2.Hp = Settings.PlayerArmorHp;
+        Player2.StarPower = p2Stars;
         Player2.Reset(8 * 16f, 12 * 16f);
         Player2.IsActive = IsTwoPlayerMode;
 
@@ -191,20 +230,24 @@ public class BattleCityEngine : IBattleCityEngine
     {
         if (Player.Lives <= 0)
         {
-            Player.Lives = 3;
+            Player.Lives = Settings.StartingLives;
         }
         _player1RespawnTimer = 0;
         _gameOverDelayTimer = 0;
         _gameOverSoundTriggered = false;
+        Player.MaxHp = Settings.PlayerArmorHp;
+        Player.Hp = Settings.PlayerArmorHp;
         Player.Reset(4 * 16f, 12 * 16f);
 
         if (IsTwoPlayerMode)
         {
             if (Player2.Lives <= 0)
             {
-                Player2.Lives = 3;
+                Player2.Lives = Settings.StartingLives;
             }
             _player2RespawnTimer = 0;
+            Player2.MaxHp = Settings.PlayerArmorHp;
+            Player2.Hp = Settings.PlayerArmorHp;
             Player2.Reset(8 * 16f, 12 * 16f);
         }
 
@@ -699,6 +742,9 @@ public class BattleCityEngine : IBattleCityEngine
         _cachedFrame.PlayerShieldFrame = Player.ShieldFrame;
         _cachedFrame.PlayerActive = Player.IsActive;
         _cachedFrame.PlayerStarPower = Player.StarPower;
+        _cachedFrame.PlayerHp = Player.Hp;
+        _cachedFrame.PlayerMaxHp = Player.MaxHp;
+        _cachedFrame.PlayerInvulnerable = Player.InvulnerableTimer > 0;
         _cachedFrame.Lives = Player.Lives;
         _cachedFrame.Score = Player.Score;
 
@@ -712,6 +758,9 @@ public class BattleCityEngine : IBattleCityEngine
         _cachedFrame.Player2ShieldFrame = Player2.ShieldFrame;
         _cachedFrame.Player2Active = IsTwoPlayerMode && Player2.IsActive;
         _cachedFrame.Player2StarPower = Player2.StarPower;
+        _cachedFrame.Player2Hp = Player2.Hp;
+        _cachedFrame.Player2MaxHp = Player2.MaxHp;
+        _cachedFrame.Player2Invulnerable = Player2.InvulnerableTimer > 0;
         _cachedFrame.Player2Lives = Player2.Lives;
         _cachedFrame.Player2Score = Player2.Score;
 
@@ -876,12 +925,16 @@ public class BattleCityEngine : IBattleCityEngine
         _cachedTelemetry.Direction = Player.Direction.ToString().ToUpperInvariant();
         _cachedTelemetry.Shield = Player.ShieldActive;
         _cachedTelemetry.Lives = Player.Lives;
+        _cachedTelemetry.Hp = Player.Hp;
+        _cachedTelemetry.MaxHp = Player.MaxHp;
         _cachedTelemetry.Score = Player.Score;
 
         _cachedTelemetry.IsTwoPlayer = IsTwoPlayerMode;
         _cachedTelemetry.P2X = (int)MathF.Round(Player2.X);
         _cachedTelemetry.P2Y = (int)MathF.Round(Player2.Y);
         _cachedTelemetry.P2Lives = Player2.Lives;
+        _cachedTelemetry.P2Hp = Player2.Hp;
+        _cachedTelemetry.P2MaxHp = Player2.MaxHp;
         _cachedTelemetry.P2Score = Player2.Score;
         _cachedTelemetry.HighScore = HighScore;
 

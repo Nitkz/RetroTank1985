@@ -15,6 +15,10 @@ public interface IEnemySystem
     int TotalKills { get; }
     bool IsWaveCleared { get; }
 
+    float SpeedMultiplier { get; set; }
+    int TotalWaveEnemies { get; set; }
+    int FireIntervalFrames { get; set; }
+
     void InitializeWave(StageModel? stage);
     void Update(IReadOnlyList<PlayerTank> players, IDestructibleMap map, IBulletSystem bullets, IAudioEventQueue audioQueue, Action<EnemyTank, int>? onEnemyKilled = null);
     void Clear();
@@ -28,7 +32,9 @@ public interface IEnemySystem
 public class EnemySystem : IEnemySystem
 {
     public const int MaxConcurrentEnemies = 4;
-    public const int TotalWaveEnemies = 20;
+    public int TotalWaveEnemies { get; set; } = 20;
+    public float SpeedMultiplier { get; set; } = 1.0f;
+    public int FireIntervalFrames { get; set; } = 35;
 
     // 3 NES Spawner positions (X, Y in NES pixels)
     // E1: (0, 0), E2: (6*16, 0) = (96, 0), E3: (12*16, 0) = (192, 0)
@@ -41,7 +47,7 @@ public class EnemySystem : IEnemySystem
 
     private readonly List<EnemyTank> _enemies = new(MaxConcurrentEnemies);
     private readonly EnemyTank[] _enemyPool = new EnemyTank[MaxConcurrentEnemies];
-    private readonly List<EnemyType> _waveQueue = new(TotalWaveEnemies);
+    private readonly List<EnemyType> _waveQueue = new(20);
     private readonly HashSet<int> _flashingIndices = new() { 3, 10, 17 }; // Standard NES 4th, 11th, 18th enemies flash
     private readonly int[] _killsByTypeP1 = new int[4]; // 0: Basic, 1: Fast, 2: Power, 3: Armor
     private readonly int[] _killsByTypeP2 = new int[4];
@@ -268,7 +274,7 @@ public class EnemySystem : IEnemySystem
             }
 
             // E. Physics Step with Obstacle & Tank-vs-Tank Collision
-            var (dx, dy) = e.Direction.ToVector(e.Speed);
+            var (dx, dy) = e.Direction.ToVector(e.Speed * SpeedMultiplier);
             float nextX = e.X + dx;
             float nextY = e.Y + dy;
 
@@ -298,8 +304,9 @@ public class EnemySystem : IEnemySystem
                 e.TurnCooldown = 15;
             }
 
-            // F. Random Enemy Firing (approx 1 in 35 chance per frame when active)
-            if (_rand.Next(0, 35) == 0)
+            // F. Random Enemy Firing (approx 1 in FireIntervalFrames chance per frame when active)
+            int interval = Math.Max(10, FireIntervalFrames);
+            if (_rand.Next(0, interval) == 0)
             {
                 bullets.TryFireEnemyBullet(e, audioQueue);
             }

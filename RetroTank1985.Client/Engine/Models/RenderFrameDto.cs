@@ -31,6 +31,15 @@ public class RenderFrameDto
     [JsonPropertyName("pStarPower")]
     public int PlayerStarPower { get; set; }
 
+    [JsonPropertyName("pHp")]
+    public int PlayerHp { get; set; } = 1;
+
+    [JsonPropertyName("pMaxHp")]
+    public int PlayerMaxHp { get; set; } = 1;
+
+    [JsonPropertyName("pInvuln")]
+    public bool PlayerInvulnerable { get; set; }
+
     // Player 2 Properties (Green Tank)
     [JsonPropertyName("isTwoPlayer")]
     public bool IsTwoPlayer { get; set; }
@@ -58,6 +67,15 @@ public class RenderFrameDto
 
     [JsonPropertyName("p2StarPower")]
     public int Player2StarPower { get; set; }
+
+    [JsonPropertyName("p2Hp")]
+    public int Player2Hp { get; set; } = 1;
+
+    [JsonPropertyName("p2MaxHp")]
+    public int Player2MaxHp { get; set; } = 1;
+
+    [JsonPropertyName("p2Invuln")]
+    public bool Player2Invulnerable { get; set; }
 
     [JsonPropertyName("p2Lives")]
     public int Player2Lives { get; set; }

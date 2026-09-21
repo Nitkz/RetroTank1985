@@ -9,14 +9,19 @@
         <div class="d-flex align-center gap-2">
             <MudIcon Icon="@Icons.Material.Filled.VideogameAsset" Color="Color.Warning" Size="Size.Large" />
             <div>
-                <MudText Typo="Typo.h5" Class="pixel-text" Style="color: #f1c40f; font-size: 1.2rem; text-shadow: 0 0 12px rgba(241, 196, 15, 0.4);">
-                    ARCADE MODE
-                </MudText>
+                <div class="d-flex align-center gap-2">
+                    <MudText Typo="Typo.h5" Class="pixel-text" Style="color: #f1c40f; font-size: 1.2rem; text-shadow: 0 0 12px rgba(241, 196, 15, 0.4);">
+                        ARCADE MODE
+                    </MudText>
+                    <MudChip T="string" Size="Size.Small" Color="@GetDifficultyColor(_settings.Preset)" Variant="Variant.Filled" Class="pixel-text" Style="font-size: 0.6rem;">
+                        @GetDifficultyLabel(_settings.Preset)
+                    </MudChip>
+                </div>
                 <span class="pixel-text" style="color: #94a3b8; font-size: 0.65rem;">1-PLAYER NES CAMPAIGN &bull; STAGES 1–35</span>
             </div>
         </div>
 
-        <div class="d-flex align-center gap-2">
+        <div class="d-flex align-center gap-2 flex-wrap">
             <!-- High Score Badge -->
             <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.5); border-radius: 4px; border: 1px solid #f59e0b;">
                 <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Color="Color.Warning" Size="Size.Small" Class="mr-1" />
@@ -33,10 +38,21 @@
                 <MudIcon Icon="@Icons.Material.Filled.Favorite" Color="Color.Error" Size="Size.Small" Class="mr-1" />
                 <span class="pixel-text" style="color: #ef4444; font-size: 0.7rem;">x@_telemetry.Lives</span>
             </div>
+
+            <!-- Player Armor HP (Hearts / Shield Indicator) -->
+            @if (_settings.PlayerArmorHp > 1)
+            {
+                <div class="d-flex align-center px-3 py-1" style="background: rgba(0,0,0,0.5); border-radius: 4px; border: 1px solid @GetHpBorderColor(_telemetry.Hp);">
+                    <MudIcon Icon="@Icons.Material.Filled.Shield" Style="@($"color: {GetHpBorderColor(_telemetry.Hp)};")" Size="Size.Small" Class="mr-1" />
+                    <span class="pixel-text" style="color: @GetHpBorderColor(_telemetry.Hp); font-size: 0.7rem;">
+                        HP: @_telemetry.Hp/@_settings.PlayerArmorHp
+                    </span>
+                </div>
+            }
         </div>
     </div>
 
-    <!-- Arcade Control Bar (Stage Step, Restart, Sound, Fullscreen) -->
+    <!-- Arcade Control Bar (Stage Step, Options, Restart, Sound, Fullscreen) -->
     <div class="d-flex align-center justify-space-between flex-wrap gap-2 pa-2 w-100 mb-3" 
          style="max-width: 800px; background: #0f172a; border-radius: 8px; border: 1px solid #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
         <div class="d-flex align-center gap-2 flex-wrap">
@@ -55,7 +71,7 @@
                        ValueChanged="OnStageSelected" 
                        Dense="true" 
                        Margin="Margin.Dense" 
-                       Style="min-width: 140px; font-family: var(--retro-font); font-size: 0.75rem;">
+                       Style="min-width: 130px; font-family: var(--retro-font); font-size: 0.75rem;">
                 @for (int s = 1; s <= 35; s++)
                 {
                     var stageNum = s;
@@ -85,6 +101,17 @@
         </div>
 
         <div class="d-flex align-center gap-2 flex-wrap">
+            <!-- Game Options (Kids/Difficulty/Speed/Armor) Modal Trigger -->
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Info" 
+                       Size="Size.Small" 
+                       OnClick="OpenOptionsDialog" 
+                       StartIcon="@Icons.Material.Filled.Tune"
+                       Class="pixel-text"
+                       Style="font-size: 0.65rem; background-color: #0284c7;">
+                OPTIONS (⚙️)
+            </MudButton>
+
             <!-- Audio Mute Toggle -->
             <MudButton Variant="Variant.Filled" 
                        Color="@(_isMuted ? Color.Default : Color.Success)" 

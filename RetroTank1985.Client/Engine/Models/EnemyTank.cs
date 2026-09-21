@@ -13,7 +13,7 @@ public class EnemyTank
 
     // Speeds in NES px/frame (at 60 FPS)
     public const float BasicSpeed = 1.0f;  // ~60 px/s
-    public const float FastSpeed = 2.5f;   // ~150 px/s
+    public const float FastSpeed = 2.0f;   // ~120 px/s (Balanced from 2.5f)
     public const float PowerSpeed = 1.0f;  // ~60 px/s
     public const float ArmorSpeed = 1.0f;  // ~60 px/s
 

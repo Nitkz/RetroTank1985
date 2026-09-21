@@ -37,7 +37,7 @@
         TANK METASPRITE (2x2 CHR) LIVE PREVIEW
     </MudText>
     
-    <MudGrid Spacing="3">
+    <MudGrid Spacing="3" Class="mb-6">
         @foreach (var tank in _previewTanks)
         {
             <MudItem xs="12" sm="6" md="4" lg="2">
@@ -65,4 +65,49 @@
             </MudItem>
         }
     </MudGrid>
+
+    <!-- SHIELD & ARMOR RING INDICATOR SHOWCASE (NEW) -->
+    <div class="pa-4" style="background: rgba(15, 23, 42, 0.7); border-radius: 8px; border: 1px solid #3b82f6;">
+        <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-3">
+            <div class="d-flex align-center gap-2">
+                <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Info" Size="Size.Medium" />
+                <div>
+                    <MudText Typo="Typo.subtitle1" Class="pixel-text font-bold" Style="color: #60a5fa; font-size: 0.85rem;">
+                        🛡️ SHIELD &amp; ARMOR RING INDICATOR SHOWCASE
+                    </MudText>
+                    <MudText Typo="Typo.caption" Style="color: #94a3b8;">
+                        ระบบแสดงผลเกราะพลังชีวิตและความอึดรอบตัวรถถัง (Aura Ring) สำหรับโหมดเล่นง่าย/เด็ก
+                    </MudText>
+                </div>
+            </div>
+            <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined" Class="pixel-text" Style="font-size: 0.65rem;">
+                VISUAL PROTOTYPE
+            </MudChip>
+        </div>
+
+        <MudGrid Spacing="3">
+            @foreach (var sample in _armorShowcaseTanks)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="2">
+                    <div class="pa-3 text-center h-100 d-flex flex-column justify-space-between" 
+                         style="background: #0b0f19; border-radius: 8px; border: 1px solid @sample.BorderColor; box-shadow: 0 4px 14px rgba(0,0,0,0.4);">
+                        <div>
+                            <div class="pixel-text mb-1" style="font-size: 0.7rem; color: @sample.TitleColor;">@sample.Title</div>
+                            <div class="pixel-text mb-2" style="font-size: 0.55rem; color: #94a3b8;">@sample.Description</div>
+                        </div>
+
+                        <div class="d-flex justify-center my-3">
+                            <canvas id="@($"armorCanvas_{sample.Id}")" style="image-rendering: pixelated;"></canvas>
+                        </div>
+
+                        <div class="mt-2">
+                            <span class="pixel-text px-2 py-1" style="font-size: 0.6rem; border-radius: 4px; background: rgba(0,0,0,0.5); color: @sample.TitleColor; border: 1px solid @sample.BorderColor;">
+                                @sample.Badge
+                            </span>
+                        </div>
+                    </div>
+                </MudItem>
+            }
+        </MudGrid>
+    </div>
 </MudCard>

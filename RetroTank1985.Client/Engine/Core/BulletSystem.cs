@@ -8,6 +8,7 @@ public interface IBulletSystem
 {
     IReadOnlyList<Bullet> ActiveBullets { get; }
     IReadOnlyList<Explosion> ActiveExplosions { get; }
+    float SpeedMultiplier { get; set; }
 
     bool TryFirePlayerBullet(PlayerTank player, IAudioEventQueue audioQueue);
     bool TryFireEnemyBullet(EnemyTank enemy, IAudioEventQueue audioQueue);
@@ -25,6 +26,7 @@ public class BulletSystem : IBulletSystem
 {
     private const int MaxBullets = 16;
     private const int MaxExplosions = 16;
+    public float SpeedMultiplier { get; set; } = 1.0f;
 
     private readonly List<Bullet> _bullets = new(MaxBullets);
     private readonly List<Explosion> _explosions = new(MaxExplosions);
@@ -199,7 +201,7 @@ public class BulletSystem : IBulletSystem
                 continue;
             }
 
-            var (dx, dy) = b.Direction.ToVector(b.Speed);
+            var (dx, dy) = b.Direction.ToVector(b.Speed * SpeedMultiplier);
             b.X += dx;
             b.Y += dy;
 
@@ -227,7 +229,14 @@ public class BulletSystem : IBulletSystem
                 continue;
             }
 
-            // 2. Player Bullet vs Enemy Tanks Collision (10x10 px hitbox)
+            // Calculate bullet center point (bullet size = 4x4, center is +2px)
+            float bCenterX = b.X + 2f;
+            float bCenterY = b.Y + 2f;
+
+            // 2. Player Bullet vs Enemy Tanks Collision (Authentic NES 12x12 tank hitbox)
+            // Distance between centers must be <= (Tank Half-Width 6px + Bullet Half-Width 2px) = 8px
+            const float TankHitRadius = 8.0f;
+
             if (b.IsPlayerBullet)
             {
                 bool hitTarget = false;
@@ -236,7 +245,10 @@ public class BulletSystem : IBulletSystem
                     var enemy = enemies[eIdx];
                     if (!enemy.IsActive || enemy.IsSpawning) continue;
 
-                    if (MathF.Abs(b.X - enemy.X) < 14f && MathF.Abs(b.Y - enemy.Y) < 14f)
+                    float eCenterX = enemy.X + 8f;
+                    float eCenterY = enemy.Y + 8f;
+
+                    if (MathF.Abs(bCenterX - eCenterX) <= TankHitRadius && MathF.Abs(bCenterY - eCenterY) <= TankHitRadius)
                     {
                         b.IsActive = false;
                         enemy.Hp--;
@@ -267,7 +279,10 @@ public class BulletSystem : IBulletSystem
                     var otherP = players[pIdx];
                     if (otherP.IsActive && otherP.PlayerIndex != b.OwnerPlayer)
                     {
-                        if (MathF.Abs(b.X - otherP.X) < 14f && MathF.Abs(b.Y - otherP.Y) < 14f)
+                        float pCenterX = otherP.X + 8f;
+                        float pCenterY = otherP.Y + 8f;
+
+                        if (MathF.Abs(bCenterX - pCenterX) <= TankHitRadius && MathF.Abs(bCenterY - pCenterY) <= TankHitRadius)
                         {
                             b.IsActive = false;
                             SpawnExplosion(b.X, b.Y, false);
@@ -287,32 +302,49 @@ public class BulletSystem : IBulletSystem
                 for (int pIdx = 0; pIdx < players.Count; pIdx++)
                 {
                     var player = players[pIdx];
-                    if (player.IsActive && MathF.Abs(b.X - player.X) < 14f && MathF.Abs(b.Y - player.Y) < 14f)
+                    if (player.IsActive)
                     {
-                        b.IsActive = false;
-                        _bullets.RemoveAt(i);
+                        float pCenterX = player.X + 8f;
+                        float pCenterY = player.Y + 8f;
 
-                        if (player.ShieldActive)
+                        if (MathF.Abs(bCenterX - pCenterX) <= TankHitRadius && MathF.Abs(bCenterY - pCenterY) <= TankHitRadius)
                         {
-                            SpawnExplosion(b.X, b.Y, false);
-                            audioQueue.Enqueue(AudioSoundEffect.HitSteel);
+                            b.IsActive = false;
+                            _bullets.RemoveAt(i);
+
+                            // Layer 1: Invulnerable Shield (Spawn or Helmet) or i-Frames active
+                            if (player.ShieldActive || player.InvulnerableTimer > 0)
+                            {
+                                SpawnExplosion(b.X, b.Y, false);
+                                audioQueue.Enqueue(AudioSoundEffect.HitSteel);
+                            }
+                            else if (player.Hp > 1)
+                            {
+                                // Layer 2: Absorb Armor Damage (-1 HP) + Give ~1s i-Frames
+                                player.Hp--;
+                                player.InvulnerableTimer = 60; // 60 frames = 1.0s grace period
+                                SpawnExplosion(b.X, b.Y, false);
+                                audioQueue.Enqueue(AudioSoundEffect.HitArmor);
+                            }
+                            else
+                            {
+                                // Armor depleted: Tank Destroyed
+                                player.IsActive = false;
+                                player.Lives--;
+                                player.Hp = 0;
+                                SpawnExplosion(player.X, player.Y, true);
+                                audioQueue.Enqueue(AudioSoundEffect.Explosion);
+                            }
+                            hitPlayer = true;
+                            break;
                         }
-                        else
-                        {
-                            player.IsActive = false;
-                            player.Lives--;
-                            SpawnExplosion(player.X, player.Y, true);
-                            audioQueue.Enqueue(AudioSoundEffect.Explosion);
-                        }
-                        hitPlayer = true;
-                        break;
                     }
                 }
                 if (hitPlayer) continue;
             }
         }
 
-        // 4. Update Bullet-vs-Bullet collisions
+        // 4. Update Bullet-vs-Bullet collisions (4x4 px bounding box intersection <= 4px center distance)
         for (int i = 0; i < _bullets.Count; i++)
         {
             for (int j = i + 1; j < _bullets.Count; j++)
@@ -321,7 +353,7 @@ public class BulletSystem : IBulletSystem
                 var b2 = _bullets[j];
                 if (b1.IsPlayerBullet != b2.IsPlayerBullet && b1.IsActive && b2.IsActive)
                 {
-                    if (MathF.Abs(b1.X - b2.X) < 6f && MathF.Abs(b1.Y - b2.Y) < 6f)
+                    if (MathF.Abs((b1.X + 2f) - (b2.X + 2f)) <= 4f && MathF.Abs((b1.Y + 2f) - (b2.Y + 2f)) <= 4f)
                     {
                         b1.IsActive = false;
                         b2.IsActive = false;

@@ -142,14 +142,19 @@ window.StageInspector = (function () {
       }
     },
 
-    async renderTankPreview(canvasId, enemyType, dir = 0, animFrame = 0, scale = 3) {
+    async renderTankPreview(canvasId, enemyType, dir = 0, animFrame = 0, scale = 3, armorLevel = 0, shieldType = 0) {
       if (!window.NesCHR) return;
       await window.NesCHR.init();
       const canvas = await waitForCanvas(canvasId);
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      canvas.width = 16 * scale; canvas.height = 16 * scale;
+      const margin = 4 * scale;
+      canvas.width = (16 * scale) + margin * 2;
+      canvas.height = (16 * scale) + margin * 2;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const cx = margin;
+      const cy = margin;
 
       let base = 0x00, pal = 4;
       if (enemyType === 0) { base = 0x80; pal = 6; }
@@ -158,8 +163,90 @@ window.StageInspector = (function () {
       else if (enemyType === 3) { base = 0xE0; pal = 6; }
       else if (enemyType === -2) { base = 0x00; pal = 5; }
 
+      // 1. Draw Armor / Energy Aura Ring under/around tank if requested (Armor > 1 HP)
+      // Logic: 1 HP = Normal/No Armor (1-hit kill, classic NES clean tank)
+      //        2 HP = Level 1 Extra Armor (Amber/Gold ring)
+      //        3 HP = Level 2 Extra Armor (Emerald/Green ring)
+      //        4+ HP = Mega / Kid Safe Armor (Cyan/Blue ring)
+      if (armorLevel >= 2) {
+        ctx.save();
+        const centerX = cx + (8 * scale);
+        const centerY = cy + (8 * scale);
+        const radius = (10 * scale);
+
+        let mainColor = '#10b981';
+        let glowColor = 'rgba(16, 185, 129, 0.45)';
+        let segCount = 4;
+
+        if (armorLevel === 2) {
+          // 2 HP (1 Extra Hit Protection) -> Amber Glow
+          mainColor = '#f59e0b';
+          glowColor = 'rgba(245, 158, 11, 0.45)';
+          segCount = 3;
+        } else if (armorLevel === 3) {
+          // 3 HP (2 Extra Hits Protection) -> Emerald Green Glow
+          mainColor = '#10b981';
+          glowColor = 'rgba(16, 185, 129, 0.45)';
+          segCount = 4;
+        } else if (armorLevel >= 4) {
+          // 4+ HP (Kid Friendly Mega Armor) -> Cyan / Diamond Glow
+          mainColor = '#06b6d4';
+          glowColor = 'rgba(6, 182, 212, 0.55)';
+          segCount = 6;
+        }
+
+        // Outer Hexagonal / Rounded Tech Bracket Ring
+        ctx.strokeStyle = mainColor;
+        ctx.lineWidth = Math.max(2, Math.round(1.5 * scale));
+        ctx.shadowColor = mainColor;
+        ctx.shadowBlur = 6 * scale;
+
+        // Draw segmented energy shield bracket arc
+        for (let seg = 0; seg < segCount; seg++) {
+          const startAngle = (seg * (Math.PI * 2 / segCount)) + 0.25;
+          const endAngle = startAngle + (Math.PI * 2 / segCount) - 0.5;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+          ctx.stroke();
+        }
+
+        // Tech Pip corner nodes
+        ctx.fillStyle = mainColor;
+        for (let seg = 0; seg < segCount; seg++) {
+          const angle = (seg * (Math.PI * 2 / segCount)) + 0.25;
+          const px = centerX + Math.cos(angle) * radius;
+          const py = centerY + Math.sin(angle) * radius;
+          ctx.beginPath();
+          ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      // 2. Draw Tank Sprite
       const T = base + dir * 8 + (animFrame % 2) * 4;
-      window.NesCHR.drawTankMetasprite(ctx, T, pal, 0, 0, true, scale);
+      window.NesCHR.drawTankMetasprite(ctx, T, pal, cx, cy, true, scale);
+
+      // 3. Draw Classic NES Shield Metasprite Overlay if enabled
+      if (shieldType === 1) {
+        // NES Classic animated shield sprite (0x28 / 0x2C)
+        window.NesCHR.drawTankMetasprite(ctx, 0x28, 6, cx, cy, false, scale);
+      } else if (shieldType === 2) {
+        // High-Tech Cyber Ring Shield
+        ctx.save();
+        const centerX = cx + (8 * scale);
+        const centerY = cy + (8 * scale);
+        ctx.strokeStyle = '#60a5fa';
+        ctx.lineWidth = 2 * scale;
+        ctx.setLineDash([4 * scale, 3 * scale]);
+        ctx.shadowColor = '#3b82f6';
+        ctx.shadowBlur = 8 * scale;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 11 * scale, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
     },
 
     async renderMetaspriteCustom(canvasId, tiles, palIdx, pt1 = false, scale = 4) {

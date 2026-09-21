@@ -24,6 +24,19 @@ The project demonstrates:
 
 ---
 
+## 📚 Documentation Index
+
+For modularity and ease of reference, all detailed technical specifications and roadmaps are organized in the [`docs/`](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs) directory:
+
+| Document | Description | Target Audience |
+| :--- | :--- | :--- |
+| 📖 [README.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/README.md) | Project Overview, Architecture, Tech Stack, Setup, Code Structure & Deployment | All Developers & Contributors |
+| 🗺️ [ROADMAP.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/ROADMAP.md) | 9-Phase Development Roadmap, Milestones, and Historical Changelog | Project Tracking & Planning |
+| 🛡️ [GAME_MECHANICS_SPEC.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/GAME_MECHANICS_SPEC.md) | Game Pace Tuning, Kid-Friendly Presets, and Dual-Layer Defense / Armor System | Game Designers & Engine Devs |
+| 👑 [BOSS_DESIGN_SPEC.md](file:///d:/OtherProject/NitkSoft/BattleCity/RetroTank1985/docs/BOSS_DESIGN_SPEC.md) | Giant Boss Mech Battle Mechanics, Attack Patterns, and Special Munitions | Expansion Feature Devs |
+
+---
+
 ## 🛠 Tech Stack
 
 - **Framework**: .NET 9.0 (Blazor WebAssembly with AOT / Linking support)
@@ -195,7 +208,7 @@ Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behav
 - **Multi-Tile Jump Maneuver (กระโดดข้ามสิ่งกีดขวางได้หลายช่อง)**: Boss leaps airborne across brick, steel, and water obstacles.
 - **Tactical Weapon Crates (หีบกระสุนแรงพิเศษ)**: Crates dropping Laser Rails, AOE Plasma Bombs, and Heavy AP Shells.
 
-### 6. Upcoming: 🛠️ Stage Editor & Custom Campaign Builder (Phase 9)
+### 7. Upcoming: 🛠️ Stage Editor & Custom Campaign Builder (Phase 9)
 - **Interactive Visual Tile Painter**: 13×13 tile / 26×26 sub-tile drag-and-drop grid editor for Brick, Steel, Water, Trees, Ice, and Eagle HQ.
 - **Wave & Spawner Configurator**: Custom 20-tank queue composition designer (configure Basic, Fast, Power, Armor + Flashing carriers).
 - **Campaign Slots & LocalStorage**: Multi-slot save/load system for user-created custom maps.
@@ -208,10 +221,13 @@ Authentic real-time 8-bit sound generation replicating Ricoh 2A03 hardware behav
 
 ```
 RetroTank1985/
+├── docs/                        # Modular Technical Specifications & Roadmaps
+│   ├── ROADMAP.md               # Detailed development roadmap (Phases 1 - 9)
+│   ├── GAME_MECHANICS_SPEC.md   # Game Pace, Kid-Friendly, & Dual-Layer Defense Spec
+│   └── BOSS_DESIGN_SPEC.md      # Giant Boss Mech battle mechanics & munitions
 ├── publish-wasm.bat             # Automated Release script (Cloudflare Pages + Zip)
 ├── RetroTank1985.slnx           # Modern .NET Solution File
-├── ROADMAP.md                   # Detailed development roadmap (Phases 1 - 9)
-├── README.md                    # Project documentation
+├── README.md                    # Project overview & documentation index
 │
 ├── RetroTank1985/               # Server host project (Blazor Web App for local dev)
 │   ├── Components/

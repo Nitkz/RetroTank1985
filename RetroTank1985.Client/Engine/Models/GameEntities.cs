@@ -40,11 +40,15 @@ public class TelemetryData
     public string Direction { get; set; } = "UP";
     public bool Shield { get; set; } = true;
     public int Lives { get; set; } = 3;
+    public int Hp { get; set; } = 1;
+    public int MaxHp { get; set; } = 1;
     public int Score { get; set; } = 0;
     public bool IsTwoPlayer { get; set; } = false;
     public int P2X { get; set; } = 128;
     public int P2Y { get; set; } = 192;
     public int P2Lives { get; set; } = 3;
+    public int P2Hp { get; set; } = 1;
+    public int P2MaxHp { get; set; } = 1;
     public int P2Score { get; set; } = 0;
     public int HighScore { get; set; } = 20000;
     public int EnemiesLeft { get; set; } = 20;

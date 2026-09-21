@@ -94,7 +94,7 @@ public class TankPhysics : ITankPhysics
             }
 
             // Calculate next target position
-            var (dx, dy) = player.Direction.ToVector(PlayerTank.NormalSpeed);
+            var (dx, dy) = player.Direction.ToVector(player.Speed);
             float nextX = player.X + dx;
             float nextY = player.Y + dy;
 
@@ -189,6 +189,12 @@ public class TankPhysics : ITankPhysics
             {
                 player.ShieldActive = false;
             }
+        }
+
+        // Armor Hit Invulnerability Countdown (i-Frames)
+        if (player.InvulnerableTimer > 0)
+        {
+            player.InvulnerableTimer--;
         }
     }
 

@@ -465,14 +465,73 @@ window.StageRenderer = (function () {
         }
       }
 
+      // Helper function to render tech armor ring around player tank
+      function drawPlayerArmorRing(tankX, tankY, hp, maxHp) {
+        if (!hp || hp <= 1) return;
+        ctx.save();
+        const centerX = tankX + (8 * SCALE);
+        const centerY = tankY + (8 * SCALE);
+        const radius = (10 * SCALE);
+
+        let mainColor = '#10b981';
+        let segCount = 4;
+
+        if (hp === 2) {
+          mainColor = '#f59e0b'; // Amber Gold
+          segCount = 3;
+        } else if (hp === 3) {
+          mainColor = '#10b981'; // Emerald Green
+          segCount = 4;
+        } else if (hp >= 4) {
+          mainColor = '#06b6d4'; // Cyan Mega Armor
+          segCount = 6;
+        }
+
+        ctx.strokeStyle = mainColor;
+        ctx.lineWidth = 2 * SCALE;
+        ctx.shadowColor = mainColor;
+        ctx.shadowBlur = 6 * SCALE;
+
+        // Draw segmented energy shield bracket arc
+        for (let seg = 0; seg < segCount; seg++) {
+          const startAngle = (seg * (Math.PI * 2 / segCount)) + 0.25;
+          const endAngle = startAngle + (Math.PI * 2 / segCount) - 0.5;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+          ctx.stroke();
+        }
+
+        // Tech Pip corner nodes
+        ctx.fillStyle = mainColor;
+        for (let seg = 0; seg < segCount; seg++) {
+          const angle = (seg * (Math.PI * 2 / segCount)) + 0.25;
+          const px = centerX + Math.cos(angle) * radius;
+          const py = centerY + Math.sin(angle) * radius;
+          ctx.beginPath();
+          ctx.arc(px, py, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      const nowFlicker = Math.floor(performance.now() / 80) % 2 === 0;
+
       // 5. Player 1 Tank (SP0 Yellow palette 4)
       if (frameData.pActive) {
         const px = BORDER + Math.round(frameData.pX) * SCALE;
         const py = BORDER + Math.round(frameData.pY) * SCALE;
-        const starTier = Math.min(3, Math.max(0, frameData.pStarPower || 0));
-        const tierBase = starTier * 0x20;
-        const T = tierBase + frameData.pDir * 8 + (frameData.pAnim % 2) * 4;
-        window.NesCHR.drawTankMetasprite(ctx, T, 4, px, py, true, SCALE);
+
+        // Draw Armor Ring if HP >= 2
+        drawPlayerArmorRing(px, py, frameData.pHp, frameData.pMaxHp);
+
+        // Invulnerability flicker after taking armor hit
+        const shouldDrawP1 = !frameData.pInvuln || nowFlicker;
+        if (shouldDrawP1) {
+          const starTier = Math.min(3, Math.max(0, frameData.pStarPower || 0));
+          const tierBase = starTier * 0x20;
+          const T = tierBase + frameData.pDir * 8 + (frameData.pAnim % 2) * 4;
+          window.NesCHR.drawTankMetasprite(ctx, T, 4, px, py, true, SCALE);
+        }
 
         if (frameData.pShield) {
           const sBase = frameData.pShieldFrame === 0 ? 0x28 : 0x2C;
@@ -484,10 +543,17 @@ window.StageRenderer = (function () {
       if (frameData.isTwoPlayer && frameData.p2Active) {
         const p2x = BORDER + Math.round(frameData.p2X) * SCALE;
         const p2y = BORDER + Math.round(frameData.p2Y) * SCALE;
-        const starTier2 = Math.min(3, Math.max(0, frameData.p2StarPower || 0));
-        const tierBase2 = starTier2 * 0x20;
-        const T2 = tierBase2 + frameData.p2Dir * 8 + (frameData.p2Anim % 2) * 4;
-        window.NesCHR.drawTankMetasprite(ctx, T2, 5, p2x, p2y, true, SCALE);
+
+        // Draw Armor Ring if HP >= 2
+        drawPlayerArmorRing(p2x, p2y, frameData.p2Hp, frameData.p2MaxHp);
+
+        const shouldDrawP2 = !frameData.p2Invuln || nowFlicker;
+        if (shouldDrawP2) {
+          const starTier2 = Math.min(3, Math.max(0, frameData.p2StarPower || 0));
+          const tierBase2 = starTier2 * 0x20;
+          const T2 = tierBase2 + frameData.p2Dir * 8 + (frameData.p2Anim % 2) * 4;
+          window.NesCHR.drawTankMetasprite(ctx, T2, 5, p2x, p2y, true, SCALE);
+        }
 
         if (frameData.p2Shield) {
           const sBase2 = frameData.p2ShieldFrame === 0 ? 0x28 : 0x2C;

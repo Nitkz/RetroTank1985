@@ -21,6 +21,11 @@ public class PlayerTank
     public int ShieldFrame { get; set; }
 
     public int Lives { get; set; } = 3;
+    public int Hp { get; set; } = 1;
+    public int MaxHp { get; set; } = 1;
+    public int InvulnerableTimer { get; set; } = 0; // i-Frames countdown after losing 1 HP armor
+
+    public float Speed { get; set; } = NormalSpeed;
     public int StarPower { get; set; } = 0; // 0=Normal, 1=Fast bullet, 2=Dual bullet, 3=Break steel
     public int Score { get; set; } = 0;
     public bool IsActive { get; set; } = true;
@@ -36,6 +41,8 @@ public class PlayerTank
         ShieldActive = true;
         ShieldTimer = 180;
         ShieldFrame = 0;
+        Hp = MaxHp;
+        InvulnerableTimer = 0;
         IsActive = true;
     }
 }

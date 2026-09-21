@@ -33,9 +33,12 @@ public class GameEngineService : IAsyncDisposable
     {
         _dotNetRef ??= DotNetObjectReference.Create(this);
 
-        // Load persisted high score
+        // Load persisted high score and game settings
         int savedHighScore = await _storageService.GetHighScoreAsync();
         _engine.HighScore = Math.Max(savedHighScore, _engine.HighScore);
+
+        var savedSettings = await _storageService.GetGameSettingsAsync();
+        _engine.ApplySettings(savedSettings);
 
         var stage = await _stageService.GetStageAsync(stageNumber);
         if (stage == null) return false;
@@ -57,6 +60,12 @@ public class GameEngineService : IAsyncDisposable
         return success;
     }
 
+    public async Task ApplySettingsAsync(GameSettings settings)
+    {
+        _engine.ApplySettings(settings);
+        await _storageService.SaveGameSettingsAsync(settings);
+    }
+
     public async Task StartAsync()
     {
         if (!_isInitialized) return;
@@ -74,12 +83,12 @@ public class GameEngineService : IAsyncDisposable
         _engine.SetTwoPlayerMode(enable);
     }
 
-    public async Task SetStageAsync(int stageNumber)
+    public async Task SetStageAsync(int stageNumber, bool preservePlayerState = false)
     {
         var stage = await _stageService.GetStageAsync(stageNumber);
         if (stage == null) return;
 
-        _engine.InitializeStage(stage, stageNumber);
+        _engine.InitializeStage(stage, stageNumber, preservePlayerState);
         await _js.InvokeVoidAsync("GameBridge.setStage", stage.Grid, stageNumber);
         OnStageChanged?.Invoke(stageNumber);
 
@@ -163,7 +172,7 @@ public class GameEngineService : IAsyncDisposable
         {
             _ = Task.Run(async () =>
             {
-                await SetStageAsync(nextStageNum);
+                await SetStageAsync(nextStageNum, preservePlayerState: true);
             });
         }
 
