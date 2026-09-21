@@ -36,14 +36,14 @@
             <TelemetryHud Telemetry="@_telemetry" />
         </div>
 
-        <!-- Game Canvas Screen -->
-        <div class="arcade-bezel mb-2" style="width: 512px; max-width: 100%;">
+        <!-- Game Canvas Screen & Mobile Controller Container -->
+        <div id="playBezelContainer" class="arcade-bezel mb-2" style="width: 512px; max-width: 100%; display: flex; flex-direction: column; align-items: center;">
             <canvas id="gameArenaCanvas" class="game-canvas" width="512" height="480"></canvas>
-        </div>
 
-        <!-- Virtual D-Pad / Direct Touch Controller (Positioned right under canvas for portrait ergonomics) -->
-        <div style="width: 512px; max-width: 100%;">
-            <VirtualDPad />
+            <!-- MOBA-Style Virtual Touch Controller (Floating Dynamic Joystick + Action Cluster) -->
+            <div class="w-100 mt-2">
+                <MobaTouchController PlayerIndex="1" ShowPlayerSwitch="true" />
+            </div>
         </div>
     </MudItem>
 

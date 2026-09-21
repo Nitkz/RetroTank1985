@@ -88,8 +88,8 @@ publish-wasm.bat
 ### 2. Arcade Mode (`/arcade`) — Authentic 1-Player Offline Campaign
 - **Pure Retro Arcade Experience**:
   - Focuses entirely on single-player 1P campaign progression across all 35 original NES stages.
-  - **Zero On-Screen Clutter**: On-screen touch controller/virtual D-pad completely removed for a clean, distraction-free arcade cabinet screen.
-- **Keyboard-Only Control Scheme**:
+  - **Seamless Cross-Platform Play**: Full support for Desktop keyboard controls and Mobile Touch with an ergonomic virtual joystick.
+- **Keyboard Control Scheme (Desktop)**:
   - **Move**: `Arrow Keys` or `W, A, S, D` (with Famicom 8px grid snapping)
   - **Fire**: `Enter`, `Space`, or `J`
   - **Pause**: `P` or `Escape`
@@ -97,6 +97,12 @@ publish-wasm.bat
 - **Fullscreen Cabinet Mode**:
   - Dedicated **FULLSCREEN [F]** toggle button and `F` keyboard shortcut.
   - Integration with browser Fullscreen API and CSS aspect-ratio lock (`:fullscreen`), maintaining sharp NES pixel scaling on any display resolution.
+  - **Mobile HUD Overlay**: Transparent on-screen joystick and fire buttons seamlessly overlay in Fullscreen mode with safe-area notch awareness.
+- **Ergonomic MOBA Virtual Joystick**:
+  - Floating dynamic joystick base spawning and centering directly where the left thumb touches.
+  - Smooth radial clamping with deadzone and 4-way angle snapping (-45°..45° Right, 45°..135° Down, etc.) tailored for authentic Famicom 8px grid alignment.
+  - Cardinal glow directional arrows lighting up dynamically based on active heading.
+  - Prominent right-hand Fire button with tactile press feedback and quick Pause/Fullscreen toggles.
 - **Campaign Flow**:
   - Live HUD displaying Score, High Score, and Lives.
   - Quick Stage Jump selector (`< PREV`, `STAGE 01-35`, `NEXT >`).
@@ -111,7 +117,7 @@ publish-wasm.bat
     - Simulation Triggers: Instantly trigger Stage Curtain wipe, simulate Stage Clear Tally, or simulate Game Over flow.
   - **Live Telemetry & Diagnostics HUD**: Real-time monitor tracking FPS, player coordinates, heading angle, remaining wave queue, and active field tank counts.
   - **Interactive Mission Briefing**: Map preview, sub-tile terrain statistics (Brick/Steel/Water/Trees/Ice), and 20-tank wave queue breakdown.
-  - **Mobile Touch Testing**: Virtual on-screen D-Pad and Fire button with P1/P2 touch selector for mobile/touchscreen ergonomics validation.
+  - **MOBA Touch Controller**: Ergonomic floating joystick with P1 (Yellow) / P2 (Green) tank switcher.
 - **2-Player Co-Op Arena**:
   - Split-keyboard cooperative play: Player 1 (`WASD + Space/J`) & Player 2 (`Arrow Keys + Enter/K/L/Numpad0`).
   - SP1 Green Palette Tank, mutual friendly-fire clink cancellation, and dual side HUD.

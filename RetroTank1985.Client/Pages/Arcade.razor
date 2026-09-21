@@ -111,13 +111,18 @@
         </div>
     </div>
 
-    <!-- Arcade Bezel Screen (Pure Keyboard Controlled — No Touch Overlays) -->
-    <div id="arcadeBezelContainer" class="arcade-bezel mb-3" style="width: 536px; max-width: 100%;">
+    <!-- Arcade Screen Container (Houses Canvas + MOBA Touch Controller in Fullscreen) -->
+    <div id="arcadeBezelContainer" class="arcade-bezel mb-3" style="width: 536px; max-width: 100%; display: flex; flex-direction: column; align-items: stretch;">
         <canvas id="arcadeGameCanvas" class="game-canvas" width="512" height="480"></canvas>
+        
+        <!-- MOBA-Style Virtual Touch Controller (Inline on normal view, Transformed to Overlay on Fullscreen) -->
+        <div class="w-100 mt-2" style="padding: 0;">
+            <MobaTouchController PlayerIndex="1" ShowPlayerSwitch="false" />
+        </div>
     </div>
 
-    <!-- Keyboard-Only Instructions & Legend Badge -->
-    <MudCard Elevation="3" Class="retro-card pa-3 w-100" Style="max-width: 800px; background: #11141c;">
+    <!-- Keyboard-Only Instructions & Legend Badge (Desktop hint) -->
+    <MudCard Elevation="3" Class="retro-card pa-3 w-100 d-none d-md-block" Style="max-width: 800px; background: #11141c;">
         <div class="d-flex align-center justify-space-between flex-wrap gap-2">
             <div class="d-flex align-center gap-2">
                 <MudIcon Icon="@Icons.Material.Filled.Keyboard" Color="Color.Warning" Size="Size.Small" />

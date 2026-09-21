@@ -1,0 +1,329 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+
+<div class="moba-touch-panel pa-3 @Class" style="@Style">
+    <!-- Header with Player Switcher & Utility Actions (Pause & Fullscreen relocated here) -->
+    <div class="moba-panel-header d-flex justify-space-between align-center mb-1 px-1">
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.SportsEsports" Color="Color.Warning" Size="Size.Small" />
+            <span class="pixel-text" style="color: #f1c40f; font-size: 0.65rem;">
+                @(PlayerIndex == 2 ? "P2 GREEN" : "P1 YELLOW")
+            </span>
+            @if (ShowPlayerSwitch)
+            {
+                <button class="mud-button-root mud-button mud-button-filled pixel-text"
+                        @onclick="TogglePlayer"
+                        style="font-size: 0.55rem; padding: 2px 8px; background: @(PlayerIndex == 2 ? "#2ecc71" : "#f1c40f"); color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    @(PlayerIndex == 2 ? "SWITCH TO P1" : "SWITCH TO P2")
+                </button>
+            }
+        </div>
+
+        <!-- Utility Buttons placed on top, keeping Fire button area completely uncluttered -->
+        <div class="d-flex align-center gap-2">
+            <button class="moba-top-util-btn" 
+                    title="Pause"
+                    ontouchstart="window.GameBridge && window.GameBridge.setVirtualInput('pause', true); event.preventDefault();"
+                    onclick="window.GameBridge && window.GameBridge.setVirtualInput('pause', true);">
+                <MudIcon Icon="@Icons.Material.Filled.Pause" Size="Size.Small" />
+                <span class="pixel-text ml-1" style="font-size: 0.6rem;">PAUSE</span>
+            </button>
+            <button class="moba-top-util-btn" 
+                    title="Fullscreen"
+                    ontouchstart="window.GameBridge && window.GameBridge.toggleFullscreen('arcadeBezelContainer'); event.preventDefault();"
+                    onclick="window.GameBridge && window.GameBridge.toggleFullscreen('arcadeBezelContainer');">
+                <MudIcon Icon="@Icons.Material.Filled.Fullscreen" Size="Size.Small" />
+                <span class="pixel-text ml-1" style="font-size: 0.6rem;">FULL</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Controller Area: Left Joystick Touchzone + Right Action Cluster -->
+    <div class="moba-controller-area" id="@_controllerAreaId">
+        <!-- 1. Left Dynamic Joystick Touchzone -->
+        <div class="moba-joystick-touchzone" id="@_touchZoneId">
+            <!-- Floating Joystick Base Ring -->
+            <div class="moba-joystick-base" id="@_baseId">
+                <span class="moba-dir-indicator dir-up" id="@($"{_baseId}_up")">▲</span>
+                <span class="moba-dir-indicator dir-down" id="@($"{_baseId}_down")">▼</span>
+                <span class="moba-dir-indicator dir-left" id="@($"{_baseId}_left")">◀</span>
+                <span class="moba-dir-indicator dir-right" id="@($"{_baseId}_right")">▶</span>
+
+                <!-- Sliding Thumb Knob -->
+                <div class="moba-joystick-knob" id="@_knobId"></div>
+            </div>
+        </div>
+
+        <!-- 2. Right Action Cluster (Spacious Giant Fire Button) -->
+        <div class="moba-action-zone">
+            <!-- Primary Big Attack Button with ample thumb clearance -->
+            <button class="moba-attack-btn" id="@_fireBtnId"
+                    ontouchstart="window.__mobaFire(@PlayerIndex, true); event.preventDefault();"
+                    ontouchend="window.__mobaFire(@PlayerIndex, false); event.preventDefault();"
+                    ontouchcancel="window.__mobaFire(@PlayerIndex, false);"
+                    onmousedown="window.__mobaFire(@PlayerIndex, true);"
+                    onmouseup="window.__mobaFire(@PlayerIndex, false);"
+                    onmouseleave="window.__mobaFire(@PlayerIndex, false);">
+                <MudIcon Icon="@Icons.Material.Filled.FlashOn" Size="Size.Large" Style="margin-bottom: -2px;" />
+                <span>FIRE</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    if (!window.__mobaFire) {
+        window.__mobaFire = function(playerIdx, isPressed) {
+            if (!window.GameBridge) return;
+            const ctrl = playerIdx === 2 ? 'p2Fire' : 'fire';
+            window.GameBridge.setVirtualInput(ctrl, isPressed);
+        };
+    }
+
+    window.initMobaJoystick = function(touchZoneId, baseId, knobId, playerIdx) {
+        const touchZone = document.getElementById(touchZoneId);
+        const base = document.getElementById(baseId);
+        const knob = document.getElementById(knobId);
+        if (!touchZone || !base || !knob) return;
+
+        const upArrow = document.getElementById(baseId + '_up');
+        const downArrow = document.getElementById(baseId + '_down');
+        const leftArrow = document.getElementById(baseId + '_left');
+        const rightArrow = document.getElementById(baseId + '_right');
+
+        let touchId = null;
+        let startX = 0;
+        let startY = 0;
+        let activeDirection = null; // 'up', 'down', 'left', 'right'
+        const maxRadius = 45; // Max knob displacement
+        const deadzone = 10;  // Deadzone before registering movement
+
+        // Position base directly on the left edge by default
+        function resetBasePosition() {
+            base.style.left = '80px';
+            base.style.top = '50%';
+            base.style.transform = 'translate(-50%, -50%)';
+            resetKnob();
+        }
+
+        function resetKnob() {
+            knob.style.transform = 'translate(0px, 0px)';
+            base.classList.remove('active');
+            clearDirection();
+            sendDirection(null);
+        }
+
+        function clearDirection() {
+            if (upArrow) upArrow.classList.remove('lit');
+            if (downArrow) downArrow.classList.remove('lit');
+            if (leftArrow) leftArrow.classList.remove('lit');
+            if (rightArrow) rightArrow.classList.remove('lit');
+        }
+
+        function setLitArrow(dir) {
+            clearDirection();
+            if (dir === 'up' && upArrow) upArrow.classList.add('lit');
+            if (dir === 'down' && downArrow) downArrow.classList.add('lit');
+            if (dir === 'left' && leftArrow) leftArrow.classList.add('lit');
+            if (dir === 'right' && rightArrow) rightArrow.classList.add('lit');
+        }
+
+        function sendDirection(newDir) {
+            if (activeDirection === newDir) return;
+            if (!window.GameBridge) return;
+
+            const prefix = playerIdx === 2 ? 'p2' : '';
+            const directions = ['up', 'down', 'left', 'right'];
+
+            // Clear previous active direction
+            if (activeDirection) {
+                const ctrlOld = prefix ? (prefix + activeDirection.charAt(0).toUpperCase() + activeDirection.slice(1)) : activeDirection;
+                window.GameBridge.setVirtualInput(ctrlOld, false);
+            }
+
+            // Set new active direction
+            if (newDir) {
+                const ctrlNew = prefix ? (prefix + newDir.charAt(0).toUpperCase() + newDir.slice(1)) : newDir;
+                window.GameBridge.setVirtualInput(ctrlNew, true);
+            }
+
+            activeDirection = newDir;
+        }
+
+        function handleTouchStart(e) {
+            if (touchId !== null) return;
+            const touch = e.changedTouches[0];
+            touchId = touch.identifier;
+
+            const rect = touchZone.getBoundingClientRect();
+            // Position base relative to touch zone
+            startX = touch.clientX;
+            startY = touch.clientY;
+
+            // Constrain base within touch zone bounds (hug left edge)
+            const localX = Math.max(80, Math.min(rect.width - 55, touch.clientX - rect.left));
+            const localY = Math.max(50, Math.min(rect.height - 50, touch.clientY - rect.top));
+
+            base.style.left = localX + 'px';
+            base.style.top = localY + 'px';
+            base.style.transform = 'translate(-50%, -50%)';
+            base.classList.add('active');
+
+            e.preventDefault();
+        }
+
+        function handleTouchMove(e) {
+            if (touchId === null) return;
+            let currentTouch = null;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === touchId) {
+                    currentTouch = e.changedTouches[i];
+                    break;
+                }
+            }
+            if (!currentTouch) return;
+
+            const dx = currentTouch.clientX - startX;
+            const dy = currentTouch.clientY - startY;
+            const distance = Math.hypot(dx, dy);
+
+            // Calculate clamped position for knob
+            let knobX = dx;
+            let knobY = dy;
+            if (distance > maxRadius) {
+                const angle = Math.atan2(dy, dx);
+                knobX = Math.cos(angle) * maxRadius;
+                knobY = Math.sin(angle) * maxRadius;
+            }
+
+            knob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+
+            // 4-Way Angle Quadrant Detection (-45° to 45°: Right, 45° to 135°: Down, etc.)
+            if (distance > deadzone) {
+                const deg = Math.atan2(dy, dx) * (180 / Math.PI);
+                let dir = null;
+                if (deg >= -45 && deg <= 45) {
+                    dir = 'right';
+                } else if (deg > 45 && deg < 135) {
+                    dir = 'down';
+                } else if (deg >= 135 || deg <= -135) {
+                    dir = 'left';
+                } else {
+                    dir = 'up';
+                }
+
+                setLitArrow(dir);
+                sendDirection(dir);
+            } else {
+                clearDirection();
+                sendDirection(null);
+            }
+
+            e.preventDefault();
+        }
+
+        function handleTouchEnd(e) {
+            if (touchId === null) return;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === touchId) {
+                    touchId = null;
+                    resetBasePosition();
+                    e.preventDefault();
+                    break;
+                }
+            }
+        }
+
+        // Clean up and bind listeners with { passive: false } for robust Android Chrome touch handling
+        touchZone.removeEventListener('touchstart', handleTouchStart);
+        touchZone.removeEventListener('touchmove', handleTouchMove);
+        touchZone.removeEventListener('touchend', handleTouchEnd);
+        touchZone.removeEventListener('touchcancel', handleTouchEnd);
+
+        touchZone.addEventListener('touchstart', handleTouchStart, { passive: false });
+        touchZone.addEventListener('touchmove', handleTouchMove, { passive: false });
+        touchZone.addEventListener('touchend', handleTouchEnd, { passive: false });
+        touchZone.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
+        // Desktop mouse support for test/debug
+        let isMouseDown = false;
+        touchZone.onmousedown = function(e) {
+            isMouseDown = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = touchZone.getBoundingClientRect();
+            base.style.left = (e.clientX - rect.left) + 'px';
+            base.style.top = (e.clientY - rect.top) + 'px';
+            base.classList.add('active');
+        };
+
+        window.addEventListener('mousemove', function(e) {
+            if (!isMouseDown) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            const distance = Math.hypot(dx, dy);
+
+            let knobX = dx;
+            let knobY = dy;
+            if (distance > maxRadius) {
+                const angle = Math.atan2(dy, dx);
+                knobX = Math.cos(angle) * maxRadius;
+                knobY = Math.sin(angle) * maxRadius;
+            }
+            knob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+
+            if (distance > deadzone) {
+                const deg = Math.atan2(dy, dx) * (180 / Math.PI);
+                let dir = (deg >= -45 && deg <= 45) ? 'right' :
+                          (deg > 45 && deg < 135) ? 'down' :
+                          (deg >= 135 || deg <= -135) ? 'left' : 'up';
+                setLitArrow(dir);
+                sendDirection(dir);
+            } else {
+                clearDirection();
+                sendDirection(null);
+            }
+        });
+
+        window.addEventListener('mouseup', function() {
+            if (isMouseDown) {
+                isMouseDown = false;
+                resetBasePosition();
+            }
+        });
+
+        resetBasePosition();
+    };
+})();
+</script>
+
+@code {
+    [Parameter] public int PlayerIndex { get; set; } = 1;
+    [Parameter] public bool ShowPlayerSwitch { get; set; } = false;
+    [Parameter] public string Class { get; set; } = "";
+    [Parameter] public string Style { get; set; } = "";
+    [Parameter] public EventCallback<int> OnPlayerChanged { get; set; }
+
+    private string _id = Guid.NewGuid().ToString("N").Substring(0, 8);
+    private string _controllerAreaId => $"mobaCtrl_{_id}";
+    private string _touchZoneId => $"mobaZone_{_id}";
+    private string _baseId => $"mobaBase_{_id}";
+    private string _knobId => $"mobaKnob_{_id}";
+    private string _fireBtnId => $"mobaFire_{_id}";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initMobaJoystick", _touchZoneId, _baseId, _knobId, PlayerIndex);
+        }
+    }
+
+    private async Task TogglePlayer()
+    {
+        PlayerIndex = PlayerIndex == 1 ? 2 : 1;
+        await OnPlayerChanged.InvokeAsync(PlayerIndex);
+        await JS.InvokeVoidAsync("initMobaJoystick", _touchZoneId, _baseId, _knobId, PlayerIndex);
+    }
+}
