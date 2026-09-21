@@ -514,6 +514,21 @@ body.retro-body {
     border-color: #f1c40f;
 }
 
+@media (max-width: 480px) {
+    .moba-panel-header {
+        gap: 4px !important;
+    }
+
+    .moba-top-util-btn {
+        padding: 4px 6px;
+    }
+
+    /* ซ่อนเฉพาะปุ่ม Pause, Full, Emote แต่ยังคงแสดงข้อความบอกโหมดของปุ่ม Mode */
+    .moba-top-util-btn:not(.btn-mode) span.pixel-text {
+        display: none !important;
+    }
+}
+
 /* In-Game Disconnection Grace Period Overlay (15s Reconnect Flow) */
 .disconnect-grace-overlay {
     position: absolute;

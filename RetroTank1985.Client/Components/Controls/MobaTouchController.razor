@@ -22,13 +22,13 @@
         <!-- Utility Buttons: D-Pad Mode Toggle, Pause & Fullscreen -->
         <div class="d-flex align-center gap-2">
             <!-- D-Pad Mode Toggle Button (Floating vs Fixed) -->
-            <button class="moba-top-util-btn" 
+            <button class="moba-top-util-btn btn-mode" 
                     id="@_modeBtnId"
-                    title="Toggle D-Pad Mode"
+                    title="Toggle D-Pad Mode (Fixed vs Free)"
                     ontouchstart="window.toggleMobaControlMode && window.toggleMobaControlMode('@_id'); event.preventDefault();"
                     onclick="window.toggleMobaControlMode && window.toggleMobaControlMode('@_id');">
                 <MudIcon Icon="@Icons.Material.Filled.Tune" Size="Size.Small" />
-                <span class="pixel-text ml-1" id="@_modeTextId" style="font-size: 0.6rem; color: #60a5fa;">FIXED</span>
+                <span class="pixel-text ml-1" id="@_modeTextId" style="font-size: 0.6rem; color: #60a5fa;">PAD: FIX</span>
             </button>
 
             @if (ShowEmote)
@@ -83,21 +83,20 @@
                     <div class="cross-center-pivot"></div>
                 </div>
 
-                <!-- Sliding Thumb Knob -->
+                <!-- Floating/Draggable NES Style Red Knob -->
                 <div class="moba-joystick-knob" id="@_knobId"></div>
             </div>
         </div>
 
         <!-- 2. Right Action Cluster (Spacious Giant Fire Button) -->
         <div class="moba-action-zone">
-            <!-- Primary Big Attack Button with ample thumb clearance -->
             <button class="moba-attack-btn" id="@_fireBtnId"
-                    ontouchstart="window.__mobaFire(@PlayerIndex, true); event.preventDefault();"
-                    ontouchend="window.__mobaFire(@PlayerIndex, false); event.preventDefault();"
-                    ontouchcancel="window.__mobaFire(@PlayerIndex, false);"
-                    onmousedown="window.__mobaFire(@PlayerIndex, true);"
-                    onmouseup="window.__mobaFire(@PlayerIndex, false);"
-                    onmouseleave="window.__mobaFire(@PlayerIndex, false);">
+                    ontouchstart="window.__mobaFire && window.__mobaFire(@PlayerIndex, true); event.preventDefault();"
+                    ontouchend="window.__mobaFire && window.__mobaFire(@PlayerIndex, false); event.preventDefault();"
+                    ontouchcancel="window.__mobaFire && window.__mobaFire(@PlayerIndex, false);"
+                    onmousedown="window.__mobaFire && window.__mobaFire(@PlayerIndex, true);"
+                    onmouseup="window.__mobaFire && window.__mobaFire(@PlayerIndex, false);"
+                    onmouseleave="window.__mobaFire && window.__mobaFire(@PlayerIndex, false);">
                 <MudIcon Icon="@Icons.Material.Filled.FlashOn" Size="Size.Large" Style="margin-bottom: -2px;" />
                 <span>FIRE</span>
             </button>
@@ -115,8 +114,32 @@
         };
     }
 
+    if (!window.initMobaJoystick) {
+        window.__mobaTouchStarts = {};
+        window.addEventListener('touchstart', function(e) {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                window.__mobaTouchStarts[t.identifier] = { x: t.clientX, y: t.clientY };
+            }
+        }, { passive: true });
+        window.addEventListener('touchend', function(e) {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                delete window.__mobaTouchStarts[e.changedTouches[i].identifier];
+            }
+        }, { passive: true });
+        window.addEventListener('touchcancel', function(e) {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                delete window.__mobaTouchStarts[e.changedTouches[i].identifier];
+            }
+        }, { passive: true });
+    }
+
     // Default mode: 'fixed' (easy to control with muscle memory) or 'floating'
     window.__mobaMode = window.__mobaMode || localStorage.getItem('retrotank_moba_mode') || 'fixed';
+
+    function getModeLabel(mode) {
+        return mode === 'fixed' ? 'PAD: FIX' : 'PAD: FREE';
+    }
 
     window.toggleMobaControlMode = function(instanceId) {
         window.__mobaMode = (window.__mobaMode === 'fixed') ? 'floating' : 'fixed';
@@ -124,7 +147,7 @@
 
         // Update all active mode badges on screen
         document.querySelectorAll('[id^="mobaModeText_"]').forEach(function(el) {
-            el.textContent = window.__mobaMode.toUpperCase();
+            el.textContent = getModeLabel(window.__mobaMode);
             el.style.color = window.__mobaMode === 'fixed' ? '#60a5fa' : '#f59e0b';
         });
 
@@ -159,7 +182,7 @@
 
         // Set initial label text based on saved mode
         document.querySelectorAll('[id^="mobaModeText_"]').forEach(function(el) {
-            el.textContent = window.__mobaMode.toUpperCase();
+            el.textContent = getModeLabel(window.__mobaMode);
             el.style.color = window.__mobaMode === 'fixed' ? '#60a5fa' : '#f59e0b';
         });
 
