@@ -2,7 +2,7 @@
 @inject IJSRuntime JS
 
 <div class="moba-touch-panel pa-3 @Class" style="@Style">
-    <!-- Header with Player Switcher & Utility Actions (Pause & Fullscreen relocated here) -->
+    <!-- Header with Player Switcher & Utility Actions (Mode Toggle, Pause & Fullscreen) -->
     <div class="moba-panel-header d-flex justify-space-between align-center mb-1 px-1">
         <div class="d-flex align-center gap-2">
             <MudIcon Icon="@Icons.Material.Filled.SportsEsports" Color="Color.Warning" Size="Size.Small" />
@@ -19,8 +19,18 @@
             }
         </div>
 
-        <!-- Utility Buttons placed on top, keeping Fire button area completely uncluttered -->
+        <!-- Utility Buttons: D-Pad Mode Toggle, Pause & Fullscreen -->
         <div class="d-flex align-center gap-2">
+            <!-- D-Pad Mode Toggle Button (Floating vs Fixed) -->
+            <button class="moba-top-util-btn" 
+                    id="@_modeBtnId"
+                    title="Toggle D-Pad Mode"
+                    ontouchstart="window.toggleMobaControlMode && window.toggleMobaControlMode('@_id'); event.preventDefault();"
+                    onclick="window.toggleMobaControlMode && window.toggleMobaControlMode('@_id');">
+                <MudIcon Icon="@Icons.Material.Filled.Tune" Size="Size.Small" />
+                <span class="pixel-text ml-1" id="@_modeTextId" style="font-size: 0.6rem; color: #60a5fa;">FIXED</span>
+            </button>
+
             <button class="moba-top-util-btn" 
                     title="Pause"
                     ontouchstart="window.GameBridge && window.GameBridge.setVirtualInput('pause', true); event.preventDefault();"
@@ -40,14 +50,26 @@
 
     <!-- Main Controller Area: Left Joystick Touchzone + Right Action Cluster -->
     <div class="moba-controller-area" id="@_controllerAreaId">
-        <!-- 1. Left Dynamic Joystick Touchzone -->
+        <!-- 1. Left Cross / Joystick Touchzone -->
         <div class="moba-joystick-touchzone" id="@_touchZoneId">
-            <!-- Floating Joystick Base Ring -->
+            <!-- 4-Way NES Style Cross D-Pad & Floating Ring -->
             <div class="moba-joystick-base" id="@_baseId">
-                <span class="moba-dir-indicator dir-up" id="@($"{_baseId}_up")">▲</span>
-                <span class="moba-dir-indicator dir-down" id="@($"{_baseId}_down")">▼</span>
-                <span class="moba-dir-indicator dir-left" id="@($"{_baseId}_left")">◀</span>
-                <span class="moba-dir-indicator dir-right" id="@($"{_baseId}_right")">▶</span>
+                <!-- Visual Cross D-Pad Arms -->
+                <div class="moba-cross-dpad" id="@($"{_baseId}_cross")">
+                    <div class="cross-arm arm-up" id="@($"{_baseId}_arm_up")">
+                        <span class="moba-dir-indicator dir-up" id="@($"{_baseId}_up")">▲</span>
+                    </div>
+                    <div class="cross-arm arm-down" id="@($"{_baseId}_arm_down")">
+                        <span class="moba-dir-indicator dir-down" id="@($"{_baseId}_down")">▼</span>
+                    </div>
+                    <div class="cross-arm arm-left" id="@($"{_baseId}_arm_left")">
+                        <span class="moba-dir-indicator dir-left" id="@($"{_baseId}_left")">◀</span>
+                    </div>
+                    <div class="cross-arm arm-right" id="@($"{_baseId}_arm_right")">
+                        <span class="moba-dir-indicator dir-right" id="@($"{_baseId}_right")">▶</span>
+                    </div>
+                    <div class="cross-center-pivot"></div>
+                </div>
 
                 <!-- Sliding Thumb Knob -->
                 <div class="moba-joystick-knob" id="@_knobId"></div>
@@ -81,6 +103,25 @@
         };
     }
 
+    // Default mode: 'fixed' (easy to control with muscle memory) or 'floating'
+    window.__mobaMode = window.__mobaMode || localStorage.getItem('retrotank_moba_mode') || 'fixed';
+
+    window.toggleMobaControlMode = function(instanceId) {
+        window.__mobaMode = (window.__mobaMode === 'fixed') ? 'floating' : 'fixed';
+        try { localStorage.setItem('retrotank_moba_mode', window.__mobaMode); } catch(e){}
+
+        // Update all active mode badges on screen
+        document.querySelectorAll('[id^="mobaModeText_"]').forEach(function(el) {
+            el.textContent = window.__mobaMode.toUpperCase();
+            el.style.color = window.__mobaMode === 'fixed' ? '#60a5fa' : '#f59e0b';
+        });
+
+        // Trigger base repositioning if needed
+        if (window.__resetMobaBase) {
+            window.__resetMobaBase();
+        }
+    };
+
     window.initMobaJoystick = function(touchZoneId, baseId, knobId, playerIdx) {
         const touchZone = document.getElementById(touchZoneId);
         const base = document.getElementById(baseId);
@@ -92,20 +133,33 @@
         const leftArrow = document.getElementById(baseId + '_left');
         const rightArrow = document.getElementById(baseId + '_right');
 
+        const armUp = document.getElementById(baseId + '_arm_up');
+        const armDown = document.getElementById(baseId + '_arm_down');
+        const armLeft = document.getElementById(baseId + '_arm_left');
+        const armRight = document.getElementById(baseId + '_arm_right');
+
         let touchId = null;
         let startX = 0;
         let startY = 0;
         let activeDirection = null; // 'up', 'down', 'left', 'right'
-        const maxRadius = 45; // Max knob displacement
-        const deadzone = 10;  // Deadzone before registering movement
+        const maxRadius = 45;       // Max knob displacement
+        const deadzone = 8;         // Quick responsive deadzone
 
-        // Position base directly on the left edge by default
+        // Set initial label text based on saved mode
+        document.querySelectorAll('[id^="mobaModeText_"]').forEach(function(el) {
+            el.textContent = window.__mobaMode.toUpperCase();
+            el.style.color = window.__mobaMode === 'fixed' ? '#60a5fa' : '#f59e0b';
+        });
+
+        // Position base directly on the resting spot
         function resetBasePosition() {
             base.style.left = '80px';
             base.style.top = '50%';
             base.style.transform = 'translate(-50%, -50%)';
             resetKnob();
         }
+
+        window.__resetMobaBase = resetBasePosition;
 
         function resetKnob() {
             knob.style.transform = 'translate(0px, 0px)';
@@ -119,14 +173,31 @@
             if (downArrow) downArrow.classList.remove('lit');
             if (leftArrow) leftArrow.classList.remove('lit');
             if (rightArrow) rightArrow.classList.remove('lit');
+
+            if (armUp) armUp.classList.remove('pressed');
+            if (armDown) armDown.classList.remove('pressed');
+            if (armLeft) armLeft.classList.remove('pressed');
+            if (armRight) armRight.classList.remove('pressed');
         }
 
         function setLitArrow(dir) {
             clearDirection();
-            if (dir === 'up' && upArrow) upArrow.classList.add('lit');
-            if (dir === 'down' && downArrow) downArrow.classList.add('lit');
-            if (dir === 'left' && leftArrow) leftArrow.classList.add('lit');
-            if (dir === 'right' && rightArrow) rightArrow.classList.add('lit');
+            if (dir === 'up') {
+                if (upArrow) upArrow.classList.add('lit');
+                if (armUp) armUp.classList.add('pressed');
+            }
+            if (dir === 'down') {
+                if (downArrow) downArrow.classList.add('lit');
+                if (armDown) armDown.classList.add('pressed');
+            }
+            if (dir === 'left') {
+                if (leftArrow) leftArrow.classList.add('lit');
+                if (armLeft) armLeft.classList.add('pressed');
+            }
+            if (dir === 'right') {
+                if (rightArrow) rightArrow.classList.add('lit');
+                if (armRight) armRight.classList.add('pressed');
+            }
         }
 
         function sendDirection(newDir) {
@@ -134,7 +205,6 @@
             if (!window.GameBridge) return;
 
             const prefix = playerIdx === 2 ? 'p2' : '';
-            const directions = ['up', 'down', 'left', 'right'];
 
             // Clear previous active direction
             if (activeDirection) {
@@ -151,24 +221,62 @@
             activeDirection = newDir;
         }
 
+        /**
+         * 4-Way Direction Calculation with Directional Hysteresis:
+         * Gives current direction a wider angle tolerance (+-15 deg extra)
+         * to prevent unwanted direction jitter when moving through tight 8px corridors.
+         */
+        function calculateDirection(deg, currentDir) {
+            const h = currentDir ? 15 : 0; // Hysteresis threshold bonus
+
+            if (currentDir === 'right') {
+                if (deg >= -(45 + h) && deg <= (45 + h)) return 'right';
+            } else if (currentDir === 'down') {
+                if (deg > (45 - h) && deg < (135 + h)) return 'down';
+            } else if (currentDir === 'left') {
+                if (deg >= (135 - h) || deg <= -(135 - h)) return 'left';
+            } else if (currentDir === 'up') {
+                if (deg < -(45 - h) && deg > -(135 + h)) return 'up';
+            }
+
+            // Standard fallback without hysteresis
+            if (deg >= -45 && deg <= 45) return 'right';
+            if (deg > 45 && deg < 135) return 'down';
+            if (deg >= 135 || deg <= -135) return 'left';
+            return 'up';
+        }
+
         function handleTouchStart(e) {
             if (touchId !== null) return;
             const touch = e.changedTouches[0];
             touchId = touch.identifier;
 
             const rect = touchZone.getBoundingClientRect();
-            // Position base relative to touch zone
-            startX = touch.clientX;
-            startY = touch.clientY;
 
-            // Constrain base within touch zone bounds (hug left edge)
-            const localX = Math.max(80, Math.min(rect.width - 55, touch.clientX - rect.left));
-            const localY = Math.max(50, Math.min(rect.height - 50, touch.clientY - rect.top));
+            if (window.__mobaMode === 'floating') {
+                // Floating Mode: Spawn base directly under touch point
+                startX = touch.clientX;
+                startY = touch.clientY;
 
-            base.style.left = localX + 'px';
-            base.style.top = localY + 'px';
-            base.style.transform = 'translate(-50%, -50%)';
+                const localX = Math.max(80, Math.min(rect.width - 55, touch.clientX - rect.left));
+                const localY = Math.max(50, Math.min(rect.height - 50, touch.clientY - rect.top));
+
+                base.style.left = localX + 'px';
+                base.style.top = localY + 'px';
+                base.style.transform = 'translate(-50%, -50%)';
+            } else {
+                // Fixed Mode: Base stays in place, reference center of base
+                const baseRect = base.getBoundingClientRect();
+                startX = baseRect.left + baseRect.width / 2;
+                startY = baseRect.top + baseRect.height / 2;
+            }
+
             base.classList.add('active');
+
+            // Immediately register direction if tapped in Fixed mode
+            if (window.__mobaMode === 'fixed') {
+                handleTouchMove(e);
+            }
 
             e.preventDefault();
         }
@@ -188,7 +296,7 @@
             const dy = currentTouch.clientY - startY;
             const distance = Math.hypot(dx, dy);
 
-            // Calculate clamped position for knob
+            // Calculate clamped position for visual knob
             let knobX = dx;
             let knobY = dy;
             if (distance > maxRadius) {
@@ -199,19 +307,10 @@
 
             knob.style.transform = `translate(${knobX}px, ${knobY}px)`;
 
-            // 4-Way Angle Quadrant Detection (-45° to 45°: Right, 45° to 135°: Down, etc.)
+            // Direction calculation with Hysteresis
             if (distance > deadzone) {
                 const deg = Math.atan2(dy, dx) * (180 / Math.PI);
-                let dir = null;
-                if (deg >= -45 && deg <= 45) {
-                    dir = 'right';
-                } else if (deg > 45 && deg < 135) {
-                    dir = 'down';
-                } else if (deg >= 135 || deg <= -135) {
-                    dir = 'left';
-                } else {
-                    dir = 'up';
-                }
+                const dir = calculateDirection(deg, activeDirection);
 
                 setLitArrow(dir);
                 sendDirection(dir);
@@ -235,7 +334,7 @@
             }
         }
 
-        // Clean up and bind listeners with { passive: false } for robust Android Chrome touch handling
+        // Clean up and bind listeners with { passive: false }
         touchZone.removeEventListener('touchstart', handleTouchStart);
         touchZone.removeEventListener('touchmove', handleTouchMove);
         touchZone.removeEventListener('touchend', handleTouchEnd);
@@ -250,11 +349,17 @@
         let isMouseDown = false;
         touchZone.onmousedown = function(e) {
             isMouseDown = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            const rect = touchZone.getBoundingClientRect();
-            base.style.left = (e.clientX - rect.left) + 'px';
-            base.style.top = (e.clientY - rect.top) + 'px';
+            if (window.__mobaMode === 'floating') {
+                startX = e.clientX;
+                startY = e.clientY;
+                const rect = touchZone.getBoundingClientRect();
+                base.style.left = (e.clientX - rect.left) + 'px';
+                base.style.top = (e.clientY - rect.top) + 'px';
+            } else {
+                const baseRect = base.getBoundingClientRect();
+                startX = baseRect.left + baseRect.width / 2;
+                startY = baseRect.top + baseRect.height / 2;
+            }
             base.classList.add('active');
         };
 
@@ -275,9 +380,7 @@
 
             if (distance > deadzone) {
                 const deg = Math.atan2(dy, dx) * (180 / Math.PI);
-                let dir = (deg >= -45 && deg <= 45) ? 'right' :
-                          (deg > 45 && deg < 135) ? 'down' :
-                          (deg >= 135 || deg <= -135) ? 'left' : 'up';
+                const dir = calculateDirection(deg, activeDirection);
                 setLitArrow(dir);
                 sendDirection(dir);
             } else {
@@ -311,6 +414,8 @@
     private string _baseId => $"mobaBase_{_id}";
     private string _knobId => $"mobaKnob_{_id}";
     private string _fireBtnId => $"mobaFire_{_id}";
+    private string _modeBtnId => $"mobaModeBtn_{_id}";
+    private string _modeTextId => $"mobaModeText_{_id}";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

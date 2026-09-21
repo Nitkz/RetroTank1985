@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components;
 using RetroTank1985.Client.Pages;
 using RetroTank1985.Components;
 using MudBlazor.Services;
@@ -8,7 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 builder.Services.AddMudServices();
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5085/") });
+builder.Services.AddScoped(sp =>
+{
+    var nav = sp.GetRequiredService<NavigationManager>();
+    return new HttpClient { BaseAddress = new Uri(nav.BaseUri) };
+});
 builder.Services.AddScoped<RetroTank1985.Client.Services.StageService>();
 builder.Services.AddScoped<RetroTank1985.Client.Services.GameStorageService>();
 
