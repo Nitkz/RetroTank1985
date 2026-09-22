@@ -1,0 +1,33 @@
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.Block" Color="Color.Error" />
+            <span class="pixel-text" style="color: #e74c3c; font-size: 0.9rem;">SERVER FULL</span>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <div class="d-flex flex-column align-center justify-center py-2 gap-3">
+            <MudIcon Icon="@Icons.Material.Filled.VideogameAssetOff" Style="font-size: 3.5rem; color: #e74c3c;" />
+            <MudText Align="Align.Center" Style="color: #cbd5e1;">
+                Maximum room limit has been reached on the server.
+            </MudText>
+            <MudText Align="Align.Center" Typo="Typo.caption" Style="color: #64748b;">
+                Please try again later or ask an existing room host to let you join theirs.
+            </MudText>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="Close">
+            OK
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private void Close() => MudDialog.Close();
+}

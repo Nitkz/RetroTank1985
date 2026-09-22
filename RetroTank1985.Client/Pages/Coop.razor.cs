@@ -82,7 +82,8 @@ public partial class Coop : IAsyncDisposable
             {
                 if (result.Message == "SERVER_FULL")
                 {
-                    await DialogService.ShowMessageBox("Server Full", "Maximum room limit reached on the server. Please try again later.", yesText: "OK");
+                    var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
+                    await DialogService.ShowAsync<ServerFullDialog>("Server Full", options);
                 }
                 else
                 {
