@@ -132,16 +132,60 @@ public partial class Coop : IAsyncDisposable
     private async Task CopyRoomCode()
     {
         if (LobbyService.CurrentRoom == null) return;
-        await JS.InvokeVoidAsync("navigator.clipboard.writeText", LobbyService.CurrentRoom.RoomCode);
-        Snackbar.Add($"Room Code '{LobbyService.CurrentRoom.RoomCode}' copied to clipboard!", Severity.Info);
+        var code = LobbyService.CurrentRoom.RoomCode;
+        try
+        {
+            var success = await JS.InvokeAsync<bool>("GameBridge.copyText", code);
+            if (success)
+            {
+                Snackbar.Add($"Room Code '{code}' copied to clipboard!", Severity.Info);
+            }
+            else
+            {
+                Snackbar.Add($"Room Code: {code}", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CopyRoomCode] Interop error: {ex.Message}");
+            Snackbar.Add($"Room Code: {code}", Severity.Info);
+        }
+    }
+
+    private class ShareResult
+    {
+        public bool Success { get; set; }
+        public string? Method { get; set; }
     }
 
     private async Task ShareInviteLink()
     {
         if (LobbyService.CurrentRoom == null) return;
         var inviteUrl = NavigationManager.ToAbsoluteUri($"/coop?room={LobbyService.CurrentRoom.RoomCode}").ToString();
-        await JS.InvokeVoidAsync("navigator.clipboard.writeText", inviteUrl);
-        Snackbar.Add("Invite URL copied to clipboard! Share it with your teammate.", Severity.Success);
+        try
+        {
+            var result = await JS.InvokeAsync<ShareResult>("GameBridge.shareLink", "RetroTank 1985 Co-Op", $"Join my room: {LobbyService.CurrentRoom.RoomCode}", inviteUrl);
+            if (result != null && result.Success)
+            {
+                if (result.Method == "share")
+                {
+                    Snackbar.Add("Invite link shared!", Severity.Success);
+                }
+                else if (result.Method == "copy")
+                {
+                    Snackbar.Add("Invite URL copied to clipboard! Share it with your teammate.", Severity.Success);
+                }
+            }
+            else
+            {
+                Snackbar.Add($"Invite URL: {inviteUrl}", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ShareInviteLink] Interop error: {ex.Message}");
+            Snackbar.Add("Invite URL ready. You can also share the QR Code!", Severity.Info);
+        }
     }
 
     private async Task ShowQrDialog()

@@ -382,6 +382,59 @@ window.GameBridge = (function () {
       }
     },
 
+    async copyText(text) {
+      if (!text) return false;
+      // Method 1: Modern Clipboard API
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (err) {
+          console.warn('GameBridge.copyText clipboard API failed, trying fallback:', err);
+        }
+      }
+      // Method 2: Fallback textarea + execCommand for iOS/Android/HTTP
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.top = "0";
+        textArea.style.left = "-9999px";
+        textArea.setAttribute("readonly", "");
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        textArea.setSelectionRange(0, 99999); // For mobile devices
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return successful;
+      } catch (err) {
+        console.error('GameBridge.copyText fallback failed:', err);
+        return false;
+      }
+    },
+
+    async shareLink(title, text, url) {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: title || 'RetroTank 1985 Co-Op',
+            text: text || 'Join my RetroTank 1985 2-Player Co-Op battle!',
+            url: url
+          });
+          return { success: true, method: 'share' };
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            return { success: true, method: 'abort' };
+          }
+          console.warn('GameBridge.shareLink navigator.share failed, fallback to copy:', err);
+        }
+      }
+      const copied = await this.copyText(url || text);
+      return { success: copied, method: 'copy' };
+    },
+
     registerPlayComponent(playDotNetRef) {
       window.__playRef = playDotNetRef;
       if (!window.__playEmoteHandlerInstalled) {
@@ -399,3 +452,4 @@ window.GameBridge = (function () {
     }
   };
 })();
+
