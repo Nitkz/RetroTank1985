@@ -80,7 +80,14 @@ public partial class Coop : IAsyncDisposable
             var result = await LobbyService.CreateRoomAsync(PlayerName, SelectedInitialStage, _settings.Preset.ToString(), _settings);
             if (!result.Success)
             {
-                Snackbar.Add(result.Message ?? "Failed to create room", Severity.Error);
+                if (result.Message == "SERVER_FULL")
+                {
+                    await DialogService.ShowMessageBox("Server Full", "Maximum room limit reached on the server. Please try again later.", yesText: "OK");
+                }
+                else
+                {
+                    Snackbar.Add(result.Message ?? "Failed to create room", Severity.Error);
+                }
             }
             else
             {

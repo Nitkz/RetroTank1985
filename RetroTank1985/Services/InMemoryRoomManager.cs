@@ -9,12 +9,16 @@ namespace RetroTank1985.Services;
 /// <summary>
 /// ตัวจัดการห้อง Co-Op ในหน่วยความจำ (Thread-safe In-Memory Room Manager)
 /// รองรับการสร้างรหัสห้อง, จับคู่ผู้เล่น 2P, ตรวจจับ Heartbeat และ Auto-cleanup
+/// 
+/// Configuration:
+/// - MaxRooms: ควบคุมจำนวนห้องสูงสุดที่เซิร์ฟเวอร์เปิดรับได้ (ตั้งค่าผ่าน MAX_ROOMS env var หรือ GameSettings:MaxRooms ใน appsettings.json, ค่าเริ่มต้น = 10)
 /// </summary>
 public class InMemoryRoomManager : IRoomManager, IDisposable
 {
     private readonly ConcurrentDictionary<string, CoopRoomInfo> _rooms = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, string> _connectionToRoomMap = new();
     private readonly ILogger<InMemoryRoomManager> _logger;
+    private readonly IConfiguration _configuration;
     private readonly Timer _cleanupTimer;
     private readonly TimeSpan _roomInactivityTimeout = TimeSpan.FromMinutes(30);
     private readonly TimeSpan _playerHeartbeatTimeout = TimeSpan.FromSeconds(30);
@@ -22,15 +26,26 @@ public class InMemoryRoomManager : IRoomManager, IDisposable
 
     private static readonly char[] RoomCodeChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".ToCharArray(); // ตัด 0, O, 1, I ออกเพื่อลดความสับสน
 
-    public InMemoryRoomManager(ILogger<InMemoryRoomManager> logger)
+    public InMemoryRoomManager(ILogger<InMemoryRoomManager> logger, IConfiguration configuration)
     {
         _logger = logger;
+        _configuration = configuration;
         // Run cleanup every 1 minute
         _cleanupTimer = new Timer(CleanupInactiveRooms, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
     }
 
     public async Task<RoomActionResult> CreateRoomAsync(string connectionId, string playerId, CreateRoomRequest request)
     {
+        // Fallback hierarchy: MAX_ROOMS env var -> GameSettings:MaxRooms from config -> default 10
+        int maxRooms = _configuration.GetValue<int>("MAX_ROOMS", 
+            _configuration.GetValue<int>("GameSettings:MaxRooms", 10));
+            
+        if (_rooms.Count >= maxRooms)
+        {
+            _logger.LogWarning("Room limit reached. Cannot create room. MaxRooms={MaxRooms}", maxRooms);
+            return RoomActionResult.Fail("SERVER_FULL");
+        }
+
         // Check if player already in a room
         if (_connectionToRoomMap.TryGetValue(connectionId, out var existingRoomCode))
         {

@@ -71,6 +71,14 @@ dotnet watch
 
 Open your browser at the local URL (e.g., `http://localhost:5093`).
 
+### 2. Server Configuration (Docker/Env)
+If you are running the backend in a container or production environment, you can configure the maximum number of concurrent Co-Op rooms (default is 10) by passing the `MAX_ROOMS` environment variable:
+```bash
+# Example Docker run command
+docker run -e MAX_ROOMS=20 -p 5093:80 retrotank1985-server
+```
+Alternatively, configure `"MaxRooms": 20` inside the `"GameSettings"` block in `appsettings.json`.
+
 ---
 
 ## 📦 Build & Publish for Cloudflare Pages
