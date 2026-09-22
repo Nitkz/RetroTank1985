@@ -176,21 +176,13 @@ public class BattleCityEngine : IBattleCityEngine
     {
         Settings = settings;
 
-        // 1. Speeds & Fire Rate
-        Player.Speed = PlayerTank.NormalSpeed * settings.GameSpeedMultiplier;
-        Player2.Speed = PlayerTank.NormalSpeed * settings.GameSpeedMultiplier;
+        Player.ApplySettings(settings.GameSpeedMultiplier, settings.PlayerArmorHp);
+        Player2.ApplySettings(settings.GameSpeedMultiplier, settings.PlayerArmorHp);
 
         Bullets.SpeedMultiplier = settings.GameSpeedMultiplier;
         Enemies.SpeedMultiplier = settings.GameSpeedMultiplier;
         Enemies.TotalWaveEnemies = settings.EnemyWaveSize;
         Enemies.FireIntervalFrames = settings.Preset == GameDifficultyPreset.KidsFriendly ? 55 : (settings.Preset == GameDifficultyPreset.Veteran ? 25 : 35);
-
-        // 2. Armor & Lives
-        Player.MaxHp = settings.PlayerArmorHp;
-        Player.Hp = settings.PlayerArmorHp;
-
-        Player2.MaxHp = settings.PlayerArmorHp;
-        Player2.Hp = settings.PlayerArmorHp;
     }
 
     public void SetTwoPlayerMode(bool enable)
@@ -200,7 +192,7 @@ public class BattleCityEngine : IBattleCityEngine
         if (enable && Player2.Lives <= 0)
         {
             Player2.Lives = Settings.StartingLives;
-            Player2.Reset(8 * 16f, 12 * 16f);
+            Player2.Reset();
         }
     }
 
@@ -223,21 +215,9 @@ public class BattleCityEngine : IBattleCityEngine
         _borrowLifeCooldownFrames = 0;
         _pendingNetworkAudioEvents.Clear();
 
-        int p1Lives = preservePlayerState ? Math.Max(1, Player.Lives) : Settings.StartingLives;
-        int p1Stars = preservePlayerState ? Player.StarPower : 0;
-        Player.Lives = p1Lives;
-        Player.MaxHp = Settings.PlayerArmorHp;
-        Player.Hp = Settings.PlayerArmorHp; // Restore full armor HP on new stage
-        Player.StarPower = p1Stars;
-        Player.Reset(4 * 16f, 12 * 16f);
+        Player.InitializeForStage(Settings.StartingLives, Settings.PlayerArmorHp, preservePlayerState, PlayerTank.SpawnP1X, PlayerTank.SpawnY);
 
-        int p2Lives = preservePlayerState ? Math.Max(1, Player2.Lives) : Settings.StartingLives;
-        int p2Stars = preservePlayerState ? Player2.StarPower : 0;
-        Player2.Lives = p2Lives;
-        Player2.MaxHp = Settings.PlayerArmorHp;
-        Player2.Hp = Settings.PlayerArmorHp;
-        Player2.StarPower = p2Stars;
-        Player2.Reset(8 * 16f, 12 * 16f);
+        Player2.InitializeForStage(Settings.StartingLives, Settings.PlayerArmorHp, preservePlayerState, PlayerTank.SpawnP2X, PlayerTank.SpawnY);
         Player2.IsActive = IsTwoPlayerMode;
 
         _netStateP1.Reset();
@@ -255,29 +235,22 @@ public class BattleCityEngine : IBattleCityEngine
         Audio.Enqueue(AudioSoundEffect.IntroBgm);
     }
 
+    /// <summary>
+    /// Soft-resets the active players (e.g., after a continue or manual restart).
+    /// Revives players if they have no lives remaining, resets respawn/game over timers,
+    /// and clears active bullets and network states.
+    /// </summary>
     public void ResetPlayer()
     {
-        if (Player.Lives <= 0)
-        {
-            Player.Lives = Settings.StartingLives;
-        }
         _player1RespawnTimer = 0;
         _gameOverDelayTimer = 0;
         _gameOverSoundTriggered = false;
-        Player.MaxHp = Settings.PlayerArmorHp;
-        Player.Hp = Settings.PlayerArmorHp;
-        Player.Reset(4 * 16f, 12 * 16f);
+        Player.ReviveIfNeeded(Settings.StartingLives, Settings.PlayerArmorHp);
 
         if (IsTwoPlayerMode)
         {
-            if (Player2.Lives <= 0)
-            {
-                Player2.Lives = Settings.StartingLives;
-            }
             _player2RespawnTimer = 0;
-            Player2.MaxHp = Settings.PlayerArmorHp;
-            Player2.Hp = Settings.PlayerArmorHp;
-            Player2.Reset(8 * 16f, 12 * 16f);
+            Player2.ReviveIfNeeded(Settings.StartingLives, Settings.PlayerArmorHp);
         }
 
         _netStateP1.Reset();
@@ -352,7 +325,7 @@ public class BattleCityEngine : IBattleCityEngine
             _borrowLifeCooldownFrames = 120; // 2-second cooldown to prevent duplicate/spam deductions
             Player.Lives--;
             Player2.Lives = 1;
-            Player2.Reset(8 * 16f, 12 * 16f);
+            Player2.Reset();
             Audio.Enqueue(AudioSoundEffect.Life);
             _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.Life);
         }
@@ -1021,7 +994,7 @@ public class BattleCityEngine : IBattleCityEngine
                         _borrowLifeCooldownFrames = 120;
                         Player2.Lives--;
                         Player.Lives = 1;
-                        Player.Reset(4 * 16f, 12 * 16f);
+                        Player.Reset();
                         Audio.Enqueue(AudioSoundEffect.Life);
                         _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.Life);
                     }
@@ -1031,7 +1004,7 @@ public class BattleCityEngine : IBattleCityEngine
                         _borrowLifeCooldownFrames = 120;
                         Player.Lives--;
                         Player2.Lives = 1;
-                        Player2.Reset(8 * 16f, 12 * 16f);
+                        Player2.Reset();
                         Audio.Enqueue(AudioSoundEffect.Life);
                         _pendingNetworkAudioEvents.Add((byte)AudioSoundEffect.Life);
                     }
@@ -1108,7 +1081,7 @@ public class BattleCityEngine : IBattleCityEngine
                     if (_player1RespawnTimer >= 60) // 1 second delay
                     {
                         _player1RespawnTimer = 0;
-                        Player.Reset(4 * 16f, 12 * 16f);
+                        Player.Reset();
                     }
                 }
 
@@ -1119,7 +1092,7 @@ public class BattleCityEngine : IBattleCityEngine
                     if (_player2RespawnTimer >= 60)
                     {
                         _player2RespawnTimer = 0;
-                        Player2.Reset(8 * 16f, 12 * 16f);
+                        Player2.Reset();
                     }
                 }
 

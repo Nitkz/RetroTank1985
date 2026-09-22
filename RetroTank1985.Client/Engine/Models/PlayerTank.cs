@@ -4,12 +4,17 @@ namespace RetroTank1985.Client.Engine.Models;
 
 public class PlayerTank
 {
+    public const float TileSize = 16f;
     public const float TankSize = 16f;
     public const float NormalSpeed = 1.25f; // ~75 NES px/sec at 60Hz
 
+    public const float SpawnP1X = 4 * TileSize;
+    public const float SpawnP2X = 8 * TileSize;
+    public const float SpawnY = 12 * TileSize;
+
     public int PlayerIndex { get; set; } = 1; // 1 = P1 (Yellow), 2 = P2 (Green)
-    public float X { get; set; } = 4 * 16f;  // Col 4 (64 px) for P1, Col 8 (128 px) for P2
-    public float Y { get; set; } = 12 * 16f; // Row 12 (192 px)
+    public float X { get; set; } = SpawnP1X;  // Default for P1
+    public float Y { get; set; } = SpawnY;
     public Direction Direction { get; set; } = Direction.Up;
 
     public bool IsMoving { get; set; }
@@ -40,10 +45,15 @@ public class PlayerTank
         EmoteTimer = 150; // 2.5 seconds at 60Hz
     }
 
+    /// <summary>
+    /// Resets the tank's state (health, shield, invulnerability) and positions it at the spawn point.
+    /// </summary>
+    /// <param name="spawnX">Optional specific X coordinate to spawn at. If null, defaults to the standard P1 or P2 spawn location.</param>
+    /// <param name="spawnY">Optional specific Y coordinate to spawn at. If null, defaults to the standard spawn row.</param>
     public void Reset(float? spawnX = null, float? spawnY = null)
     {
-        X = spawnX ?? (PlayerIndex == 2 ? 8 * 16f : 4 * 16f);
-        Y = spawnY ?? (12 * 16f);
+        X = spawnX ?? (PlayerIndex == 2 ? SpawnP2X : SpawnP1X);
+        Y = spawnY ?? SpawnY;
         Direction = Direction.Up;
         IsMoving = false;
         AnimFrame = 0;
@@ -54,6 +64,32 @@ public class PlayerTank
         Hp = MaxHp;
         InvulnerableTimer = 0;
         IsActive = true;
+    }
+
+    public void InitializeForStage(int defaultLives, int maxHp, bool preserveState, float spawnX, float spawnY)
+    {
+        Lives = preserveState ? Math.Max(1, Lives) : defaultLives;
+        StarPower = preserveState ? StarPower : 0;
+        MaxHp = maxHp;
+        Reset(spawnX, spawnY);
+    }
+
+    public void ApplySettings(float gameSpeedMultiplier, int playerArmorHp)
+    {
+        Speed = NormalSpeed * gameSpeedMultiplier;
+        MaxHp = playerArmorHp;
+        Hp = playerArmorHp;
+    }
+
+    public void ReviveIfNeeded(int defaultLives, int armorHp)
+    {
+        if (Lives <= 0)
+        {
+            Lives = defaultLives;
+        }
+        MaxHp = armorHp;
+        Hp = armorHp;
+        Reset();
     }
 }
 
